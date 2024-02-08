@@ -1,0 +1,16 @@
+
+.vs/
+Binaries/
+bin/
+bin-int/
+Assets/
+
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.sln
+*.log
+Makefile
+
+
+!Vendor/Binaries
