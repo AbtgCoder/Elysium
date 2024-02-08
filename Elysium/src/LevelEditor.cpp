@@ -18,38 +18,52 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::G, "TOGGLE_GRID");
 	registerAction(sf::Keyboard::Escape, "QUIT");
 
-	std::string assetDir = ".. /../../assets/textures/";
+	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
+	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
+	m_gridRect.setFillColor(sf::Color::Transparent);
+	m_gridRect.setOutlineColor(sf::Color::White);
+	m_gridRect.setOutlineThickness(1);
+	m_gridText.setFont(m_game->assets().getFont("Tech"));
+	m_gridText.setCharacterSize(10);
+
+
+	m_cursorDot.setFillColor(sf::Color::Red);
+	m_cursorDot.setRadius(8);
+	m_cursorDot.setOrigin(8, 8);
+
+	std::string assetDir = "../../../Assets/textures/";
 	loadAssets(assetDir);
+	loadLevel();
 }
 
 void LevelEditor::loadLevel()
 {
-
 	m_entityManager = EntityManager();
 
-	std::string filename = "level_test.txt";
+	std::string filename = "../../../Assets/levels/level_test.txt";
 	std::ifstream levelFile(filename);
 	std::string entityType;
 	while (levelFile >> entityType)
 	{
-		if (entityType == "tile")
+		if (entityType == "Tile")
 		{
 			std::string tileName;
 			int gridX, gridY;
 			levelFile >> tileName >> gridX >> gridY;
-			auto tile = m_entityManager.addEntity("tile");
+			auto tile = m_entityManager.addEntity("Tile");
 			tile->addComponent<CAnimation>(Animation(tileName, m_assets[tileName]), true);
 			tile->addComponent<CTransform>(gridToMidPixel(gridX, gridY, tile));
-			//tile->addComponent<CBoundingBox>(tile->getComponent<CAnimation>().animation.getSize());
+			tile->addComponent<CDraggable>(false);
 		}
 		if (entityType == "Dec")
 		{
 			std::string tileName;
 			int gridX, gridY;
 			levelFile >> tileName >> gridX >> gridY;
-			auto tile = m_entityManager.addEntity("dec");
+			auto tile = m_entityManager.addEntity("Dec");
 			tile->addComponent<CAnimation>(Animation(tileName, m_assets[tileName]), true);
 			tile->addComponent<CTransform>(gridToMidPixel(gridX, gridY, tile));
+			tile->addComponent<CDraggable>(false);
 		}
 		if (entityType == "Player")
 		{
@@ -59,10 +73,8 @@ void LevelEditor::loadLevel()
 	levelFile.close();
 }
 
-void LevelEditor::loadAssets(const std::string& path)
+void LevelEditor::loadAssets(const std::string& assetDir)
 {
-	std::string assetDir =  "D:/Game Development/comp4300_game_programming/Mega Mario/Assets/textures";
-
 	for (const auto& entry : std::filesystem::directory_iterator(assetDir))
 	{
 		if (!entry.is_directory())
@@ -79,13 +91,11 @@ void LevelEditor::loadAssets(const std::string& path)
 			}
 		}
 	}
-
-	m_entityManager = EntityManager();
 }
 
 void LevelEditor::saveLevel()
 {
-	std::ofstream outputFile("level_test.txt");
+	std::ofstream outputFile("../../../Assets/levels/level_test.txt");
 
 	if (!outputFile.is_open()) {
 		std::cerr << "Error: Unable to open file!" << std::endl;
@@ -109,6 +119,8 @@ void LevelEditor::saveLevel()
 	outputFile.close();
 
 }
+
+
 
 Vec2 LevelEditor::worldToGrid(std::shared_ptr<Entity> entity)
 {
@@ -139,17 +151,18 @@ void LevelEditor::snapToGrid(std::shared_ptr<Entity> entity)
 
 void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 {
-	auto e = m_entityManager.addEntity("tile");
+	auto e = m_entityManager.addEntity("Tile");
 	e->addComponent<CAnimation>(Animation(name, tex), true);
 	e->addComponent<CTransform>(m_mousePos);
 	e->addComponent<CDraggable>(true);
 }
 
-Vec2 LevelEditor::windowToWorld(const Vec2& window) const
+Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 {
 	auto view = m_game->window().getView();
 	float wx = view.getCenter().x - (m_game->window().getSize().x / 2);
-	return Vec2(window.x + wx, window.y);
+	float wy = view.getCenter().y - (m_game->window().getSize().y / 2);
+	return Vec2(windowPos.x + wx, windowPos.y + wy);
 }
 
 
@@ -157,6 +170,10 @@ void LevelEditor::update()
 {
 	m_entityManager.update();
 	sDrag();
+	if (m_inspectedEntity)
+	{
+		entityInspectorGUI();
+	}
 	sGUI();
 	sRender();
 }
@@ -173,6 +190,57 @@ void LevelEditor::sDrag()
 	}
 }
 
+void LevelEditor::entityInspectorGUI()
+{
+	Vec2 eWorldPos = m_inspectedEntity->getComponent<CTransform>().pos;
+	ImGui::SetNextWindowPos(ImVec2(eWorldPos.x, eWorldPos.y));
+
+	Vec2 scale = m_inspectedEntity->getComponent<CTransform>().scale;
+	float angle = m_inspectedEntity->getComponent<CTransform>().angle;
+	Vec2 eGridPos = worldToGrid(m_inspectedEntity);
+	int gridX = (int)eGridPos.x, gridY = (int)eGridPos.y;
+	ImGui::Begin("Entity Inspector");
+	if (ImGui::CollapsingHeader("Transform"))
+	{
+		ImGui::Columns(2, "", false);
+		ImGui::Text("Grid X: ");
+		ImGui::SameLine();
+		ImGui::SliderInt("##Slider1", &gridX, 0, 20);
+		ImGui::NextColumn();
+		ImGui::Text("Grid Y: ");
+		ImGui::SameLine();
+		ImGui::SliderInt("##Slider2", &gridY, 0, 20);
+		ImGui::NextColumn();
+		ImGui::Text("Scale X: ");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##Slider3", &scale.x, 0, 20);
+		ImGui::NextColumn();
+		ImGui::Text("Scale Y: ");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##Slider4", &scale.y, 0, 20);
+		ImGui::Columns(1);
+		ImGui::Text("Angle: ");
+		ImGui::SameLine();
+		ImGui::SliderFloat("##Slider5", &angle, 0, 360);
+	}
+	if (ImGui::CollapsingHeader("Animation"))
+	{
+		ImGui::Text("Sprite: ");
+		ImGui::SameLine();
+		ImGui::Image(m_inspectedEntity->getComponent<CAnimation>().animation.getSprite(), sf::Vector2f(64, 64));
+		ImGui::Text("Animation Speed: ");
+		ImGui::SameLine();
+		int animSpeed = (int)m_inspectedEntity->getComponent<CAnimation>().animation.Speed();
+		ImGui::SliderInt("##Slider6", &animSpeed, 0, 120);
+		ImGui::Text("Num of Animation Frames: ");
+		ImGui::SameLine();
+		ImGui::SliderInt("##Slider7", &animSpeed, 0, 120);
+		ImGui::Checkbox("Repeatable", &m_inspectedEntity->getComponent<CAnimation>().repeat);
+	}
+	ImGui::End();
+	//m_inspectedEntity->getComponent<CAnimation>().animation.Speed() = 1;
+	m_inspectedEntity->addComponent<CTransform>(gridToMidPixel(gridX, gridY, m_inspectedEntity), scale, angle);
+}
 void LevelEditor::sGUI()
 {
 
@@ -199,13 +267,21 @@ void LevelEditor::sGUI()
 		}
 		if (ImGui::BeginTabItem("Assets"))
 		{
+			ImGui::Columns(ImGui::GetContentRegionAvailWidth() / 64.0f, nullptr, false);
 			for (const auto& [name, texture] : m_assets)
 			{
-				if (ImGui::ImageButton(texture))
+				float aspectRatio = (float)(texture.getSize().y) / (float)(texture.getSize().x);
+				float height = 64.0f * aspectRatio;
+				ImGui::BeginGroup();
+				if (ImGui::ImageButton(texture, sf::Vector2f(64.0f, height)))
 				{
 					spawnEntity(name, texture);
 				}
+				ImGui::Text("%s", name.c_str());
+				ImGui::EndGroup();
+				ImGui::NextColumn();
 			}
+			ImGui::Columns(1);
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -217,47 +293,39 @@ void LevelEditor::sRender()
 {
 	sf::RenderWindow& window = m_game->window();
 	window.clear(sf::Color(100, 100, 255));
-
 	for (auto& e : m_entityManager.getEntities())
 	{
 		if (e->hasComponent<CAnimation>())
 		{
 			e->getComponent<CAnimation>().animation.getSprite().setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+			e->getComponent<CAnimation>().animation.getSprite().setScale(e->getComponent<CTransform>().scale.x, e->getComponent<CTransform>().scale.y);
+			e->getComponent<CAnimation>().animation.getSprite().setRotation(e->getComponent<CTransform>().angle);
+
+
 			window.draw(e->getComponent<CAnimation>().animation.getSprite());
 		}
 	}
 
 	if (m_drawGrid)
 	{
-		for (int x = 0; x < 50; x++)
+		for (int x = -50; x < 50; x++)
 		{
-			for (int y = 0; y < 12; y++)
+			for (int y = -20; y < 20; y++)
 			{
-				sf::RectangleShape rect(sf::Vector2f(m_gridSize.x, m_gridSize.y));
-				rect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
 				Vec2 gridCellPos = gridToMidPixel(x, y);
-				rect.setPosition(gridCellPos.x, gridCellPos.y);
-				rect.setFillColor(sf::Color::Transparent);
-				rect.setOutlineColor(sf::Color::White);
-				rect.setOutlineThickness(1);
-				window.draw(rect);
-				sf::Text text;
-				text.setFont(m_game->assets().getFont("Tech"));
-				text.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
-				text.setCharacterSize(12);
-				text.setPosition(gridCellPos.x - (m_gridSize.x / 2) + 5, gridCellPos.y - (m_gridSize.y / 2) + 5);
-				window.draw(text);
+				m_gridRect.setPosition(gridCellPos.x, gridCellPos.y);
+				window.draw(m_gridRect);
+				/*m_gridText.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
+				m_gridText.setPosition(gridCellPos.x - (m_gridSize.x / 2) + 5, gridCellPos.y - (m_gridSize.y / 2) + 5);
+				window.draw(m_gridText);*/
 			}
 		}
 	}
 
-	sf::CircleShape dot;
-	dot.setFillColor(sf::Color::Red);
-	dot.setRadius(8);
-	dot.setOrigin(8, 8);
 	Vec2 worldPos = windowToWorld(m_mousePos);
-	dot.setPosition(worldPos.x, worldPos.y);
-	window.draw(dot);
+	m_cursorDot.setPosition(worldPos.x, worldPos.y);
+	//m_cursorDot.setPosition(window.mapPixelToCoords(sf::Vector2i(m_mousePos.x, m_mousePos.y)));
+	window.draw(m_cursorDot);
 }
 
 bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
@@ -289,7 +357,44 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 		else if (action.name() == "LEFT_CLICK")
 		{
-			// detect the picking up of entities
+			Vec2 wPos = action.pos(); // m_mousePos; // windowToWorld(m_mousePos);
+			if (m_inspectedEntity)
+			{
+				if (!IsInside(wPos, m_inspectedEntity))
+				{
+					m_inspectedEntity = nullptr;
+				}
+			}
+			else
+			{
+				// detect the picking up of entities
+				for (auto e : m_entityManager.getEntities())
+				{
+					Vec2 ePos = e->getComponent<CTransform>().pos;
+					if (IsInside(wPos, e))
+					{
+						if (!e->hasComponent<CDraggable>()) { continue; }
+
+						auto& dragging = e->getComponent<CDraggable>().dragging;
+					
+						if (!dragging)
+						{
+							dragging = true;
+						}
+						else
+						{
+							dragging = false;
+							snapToGrid(e);
+						}
+						break;
+					}
+				}
+			}
+
+		}
+		else if (action.name() == "RIGHT_CLICK")
+		{
+			// open entity editor
 			Vec2 wPos = windowToWorld(m_mousePos);
 			for (auto e : m_entityManager.getEntities())
 			{
@@ -298,16 +403,14 @@ void LevelEditor::sDoAction(const Action& action)
 					if (!e->hasComponent<CDraggable>()) { continue; }
 
 					auto& dragging = e->getComponent<CDraggable>().dragging;
-					
-					if (!dragging)
-					{
-						dragging = true;
-					}
-					else
+
+					if (dragging)
 					{
 						dragging = false;
 						snapToGrid(e);
 					}
+					m_inspectedEntity = e;
+
 					break;
 				}
 			}

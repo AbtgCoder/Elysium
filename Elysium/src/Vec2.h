@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Graphics.hpp>
 
 class Vec2
 {
@@ -9,6 +10,9 @@ public:
 
 	Vec2();
 	Vec2(float xin, float yin);
+	Vec2(sf::Vector2f v);
+	Vec2(sf::Vector2i v);
+
 	
 	bool operator == (const Vec2& v) const;
 	bool operator != (const Vec2& v) const;

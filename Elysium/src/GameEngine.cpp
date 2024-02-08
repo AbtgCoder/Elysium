@@ -103,8 +103,8 @@ void GameEngine::sUserInput()
 	{
 		ImGui::SFML::ProcessEvent(event);
 
-		/*if (ImGui::GetIO().WantCaptureMouse)
-			continue;*/
+		if (ImGui::GetIO().WantCaptureMouse)
+			continue;
 
 		if (event.type == sf::Event::Closed)
 		{
@@ -132,8 +132,8 @@ void GameEngine::sUserInput()
 			switch (event.mouseButton.button)
 			{
 			case sf::Mouse::Left: { currentScene()->sDoAction(Action("LEFT_CLICK", "START", pos)); break; }
-			case sf::Mouse::Right: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "START", pos)); break; }
-			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("RIGHT_CLICK", "START", pos)); break; }
+			case sf::Mouse::Right: { currentScene()->sDoAction(Action("RIGHT_CLICK", "START", pos)); break; }
+			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "START", pos)); break; }
 			default: break;
 			}
 		}
@@ -142,8 +142,8 @@ void GameEngine::sUserInput()
 			switch (event.mouseButton.button)
 			{
 			case sf::Mouse::Left: { currentScene()->sDoAction(Action("LEFT_CLICK", "END", pos)); break; }
-			case sf::Mouse::Right: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "END", pos)); break; }
-			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("RIGHT_CLICK", "END", pos)); break; }
+			case sf::Mouse::Right: { currentScene()->sDoAction(Action("RIGHT_CLICK", "END", pos)); break; }
+			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "END", pos)); break; }
 			default: break;
 			}
 		}
