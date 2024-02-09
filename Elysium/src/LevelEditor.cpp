@@ -16,7 +16,12 @@ LevelEditor::LevelEditor(GameEngine* gameEngine)
 void LevelEditor::init()
 {
 	registerAction(sf::Keyboard::G, "TOGGLE_GRID");
+	registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
 	registerAction(sf::Keyboard::Escape, "QUIT");
+	registerAction(sf::Keyboard::Delete, "DELETE");
+	registerAction(sf::Keyboard::D, "DUPLICATE");
+
+
 
 	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
 	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
@@ -26,6 +31,9 @@ void LevelEditor::init()
 	m_gridText.setFont(m_game->assets().getFont("Tech"));
 	m_gridText.setCharacterSize(10);
 
+	m_collisionRect.setFillColor(sf::Color::Transparent);
+	m_collisionRect.setOutlineColor(sf::Color::White);
+	m_collisionRect.setOutlineThickness(1);
 
 	m_cursorDot.setFillColor(sf::Color::Red);
 	m_cursorDot.setRadius(8);
@@ -40,7 +48,7 @@ void LevelEditor::loadLevel()
 {
 	m_entityManager = EntityManager();
 
-	std::string filename = "../../../Assets/levels/level_test.txt";
+	std::string filename = "../../../Assets/levels/level_test2.txt";
 	std::ifstream levelFile(filename);
 	std::string entityType;
 	while (levelFile >> entityType)
@@ -169,10 +177,9 @@ Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 void LevelEditor::update()
 {
 	m_entityManager.update();
-	sDrag();
-	if (m_inspectedEntity)
+	if (m_enableDragging)
 	{
-		entityInspectorGUI();
+		sDrag();
 	}
 	sGUI();
 	sRender();
@@ -193,13 +200,12 @@ void LevelEditor::sDrag()
 void LevelEditor::entityInspectorGUI()
 {
 	Vec2 eWorldPos = m_inspectedEntity->getComponent<CTransform>().pos;
-	ImGui::SetNextWindowPos(ImVec2(eWorldPos.x, eWorldPos.y));
-
 	Vec2 scale = m_inspectedEntity->getComponent<CTransform>().scale;
 	float angle = m_inspectedEntity->getComponent<CTransform>().angle;
 	Vec2 eGridPos = worldToGrid(m_inspectedEntity);
 	int gridX = (int)eGridPos.x, gridY = (int)eGridPos.y;
-	ImGui::Begin("Entity Inspector");
+	int animSpeed = (int)m_inspectedEntity->getComponent<CAnimation>().animation.Speed();
+	bool boundingBox = m_inspectedEntity->hasComponent<CBoundingBox>();
 	if (ImGui::CollapsingHeader("Transform"))
 	{
 		ImGui::Columns(2, "", false);
@@ -230,16 +236,28 @@ void LevelEditor::entityInspectorGUI()
 		ImGui::Image(m_inspectedEntity->getComponent<CAnimation>().animation.getSprite(), sf::Vector2f(64, 64));
 		ImGui::Text("Animation Speed: ");
 		ImGui::SameLine();
-		int animSpeed = (int)m_inspectedEntity->getComponent<CAnimation>().animation.Speed();
 		ImGui::SliderInt("##Slider6", &animSpeed, 0, 120);
-		ImGui::Text("Num of Animation Frames: ");
+		// TODO: implement functionality to change animaiton frames
+		/*ImGui::Text("Num of Animation Frames: ");
 		ImGui::SameLine();
-		ImGui::SliderInt("##Slider7", &animSpeed, 0, 120);
+		ImGui::SliderInt("##Slider7", &animSpeed, 0, 120);*/
 		ImGui::Checkbox("Repeatable", &m_inspectedEntity->getComponent<CAnimation>().repeat);
+		// TODO: rendering layers
 	}
-	ImGui::End();
+	if (ImGui::CollapsingHeader("Collision"))
+	{
+		ImGui::Checkbox("Box Collider", &boundingBox);
+	}
 	//m_inspectedEntity->getComponent<CAnimation>().animation.Speed() = 1;
 	m_inspectedEntity->addComponent<CTransform>(gridToMidPixel(gridX, gridY, m_inspectedEntity), scale, angle);
+	if (boundingBox)
+	{
+		m_inspectedEntity->addComponent<CBoundingBox>(m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
+	}
+	else
+	{
+		m_inspectedEntity->removeComponent<CBoundingBox>();
+	}
 }
 void LevelEditor::sGUI()
 {
@@ -284,7 +302,33 @@ void LevelEditor::sGUI()
 			ImGui::Columns(1);
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Entity Manager"))
+		{
+			for (auto& e : m_entityManager.getEntities())
+			{
+				ImGui::Text(std::to_string(e->id()).c_str());
+				ImGui::SameLine();
+				ImGui::Text((e->tag()).c_str());
+				ImGui::SameLine();
+				ImGui::Text(("(" + std::to_string((int)e->getComponent<CTransform>().pos.x) + ", " + std::to_string((int)e->getComponent<CTransform>().pos.y) + ")").c_str());
+			}
+			ImGui::EndTabItem();
+		}
 		ImGui::EndTabBar();
+	}
+	if (m_inspectedEntity && !m_enableDragging)
+	{
+		ImGui::SetCursorPosY(ImGui::GetContentRegionAvail().y/2);
+		ImGui::Separator();
+		if (ImGui::BeginTabBar("tab bar2"))
+		{
+			if (ImGui::BeginTabItem("Entity Inspector"))
+			{
+				entityInspectorGUI();
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
 	}
 	ImGui::End();
 }
@@ -300,12 +344,31 @@ void LevelEditor::sRender()
 			e->getComponent<CAnimation>().animation.getSprite().setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
 			e->getComponent<CAnimation>().animation.getSprite().setScale(e->getComponent<CTransform>().scale.x, e->getComponent<CTransform>().scale.y);
 			e->getComponent<CAnimation>().animation.getSprite().setRotation(e->getComponent<CTransform>().angle);
-
-
 			window.draw(e->getComponent<CAnimation>().animation.getSprite());
 		}
+		if (m_drawCollision)
+		{
+			if (e->hasComponent<CBoundingBox>())
+			{
+				Vec2 rectSize = e->getComponent<CBoundingBox>().size;
+				m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
+				m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
+				m_collisionRect.setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+				window.draw(m_collisionRect);
+			}
+		}
 	}
-
+	if (m_inspectedEntity)
+	{
+		if (m_inspectedEntity->hasComponent<CBoundingBox>())
+		{
+			Vec2 rectSize = m_inspectedEntity->getComponent<CBoundingBox>().size;
+			m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
+			m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
+			m_collisionRect.setPosition(m_inspectedEntity->getComponent<CTransform>().pos.x, m_inspectedEntity->getComponent<CTransform>().pos.y);
+			window.draw(m_collisionRect);
+		}
+	}
 	if (m_drawGrid)
 	{
 		for (int x = -50; x < 50; x++)
@@ -355,65 +418,57 @@ void LevelEditor::sDoAction(const Action& action)
 		{
 			m_drawGrid = !m_drawGrid;
 		}
-		else if (action.name() == "LEFT_CLICK")
+		else if (action.name() == "TOGGLE_COLLISION")
 		{
-			Vec2 wPos = action.pos(); // m_mousePos; // windowToWorld(m_mousePos);
+			m_drawCollision = !m_drawCollision;
+		}
+		else if (action.name() == "DELETE")
+		{
 			if (m_inspectedEntity)
 			{
-				if (!IsInside(wPos, m_inspectedEntity))
-				{
-					m_inspectedEntity = nullptr;
-				}
+				m_inspectedEntity->destroy();
+				m_inspectedEntity = nullptr;
 			}
-			else
-			{
-				// detect the picking up of entities
-				for (auto e : m_entityManager.getEntities())
-				{
-					Vec2 ePos = e->getComponent<CTransform>().pos;
-					if (IsInside(wPos, e))
-					{
-						if (!e->hasComponent<CDraggable>()) { continue; }
-
-						auto& dragging = e->getComponent<CDraggable>().dragging;
-					
-						if (!dragging)
-						{
-							dragging = true;
-						}
-						else
-						{
-							dragging = false;
-							snapToGrid(e);
-						}
-						break;
-					}
-				}
-			}
-
 		}
-		else if (action.name() == "RIGHT_CLICK")
+		else if (action.name() == "DUPLICATE")
 		{
-			// open entity editor
+			if (m_inspectedEntity)
+			{
+				m_inspectedEntity->getComponent<CDraggable>().dragging = false;
+				snapToGrid(m_inspectedEntity);
+				auto e = m_entityManager.addEntity(m_inspectedEntity);
+				m_inspectedEntity = e;
+			}
+		}
+		else if (action.name() == "LEFT_CLICK")
+		{
 			Vec2 wPos = windowToWorld(m_mousePos);
+			// detect the picking up of entities
 			for (auto e : m_entityManager.getEntities())
 			{
 				if (IsInside(wPos, e))
 				{
+					m_inspectedEntity = e;
 					if (!e->hasComponent<CDraggable>()) { continue; }
 
 					auto& dragging = e->getComponent<CDraggable>().dragging;
-
-					if (dragging)
+					
+					if (!dragging)
+					{
+						dragging = true;
+					}
+					else
 					{
 						dragging = false;
 						snapToGrid(e);
 					}
-					m_inspectedEntity = e;
-
 					break;
 				}
 			}
+		}
+		else if (action.name() == "RIGHT_CLICK")
+		{
+			m_enableDragging = !m_enableDragging;
 		}
 		else if (action.name() == "QUIT")
 		{

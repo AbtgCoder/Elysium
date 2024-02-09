@@ -16,6 +16,7 @@ public:
 	Animation();
 	Animation(const std::string& name, const sf::Texture& t);
 	Animation(const std::string& name, const sf::Texture& t, size_t frameCount, size_t speed);
+	//Animation(Animation& other);
 private:
 	sf::Sprite m_sprite;
 	size_t m_frameCount = 1; // number of frames of animation

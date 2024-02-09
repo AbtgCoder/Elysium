@@ -25,6 +25,8 @@ public:
 		: pos(p), prevPos(p), scale(sc), angle(a) {}
 	CTransform(const Vec2& p, const Vec2& sp, const Vec2& sc, float a)
 		: pos(p), prevPos(p), velocity(sp), scale(sc), angle(a) {}
+	CTransform(CTransform& other)
+		: pos(other.pos), prevPos(other.prevPos), velocity(other.velocity), scale(other.scale), angle(other.angle) {}
 };
 
 class CLifespan : public Component
@@ -35,6 +37,8 @@ public:
 	CLifespan() {}
 	CLifespan(int duration, int frame)
 		: lifespan(duration), frameCreated(frame) {}
+	CLifespan(CLifespan& other)
+		: lifespan(other.lifespan), frameCreated(other.frameCreated) {}
 };
 
 class CInput : public Component
@@ -49,7 +53,14 @@ public:
 	bool canJump = true;
 	
 	CInput() {}
-
+	CInput(CInput& other)
+		: up(other.up)
+		, left(other.left)
+		, right(other.right)
+		, down(other.down)
+		, shoot(other.shoot)
+		, canShoot(other.canShoot)
+		, canJump(other.canJump) {}
 };
 
 class CBoundingBox : public Component
@@ -60,6 +71,8 @@ public:
 	CBoundingBox() {}
 	CBoundingBox(const Vec2& s)
 		: size(s), halfSize(s.x/2,s.y/2) {}
+	CBoundingBox(CBoundingBox& other)
+		: size(other.size), halfSize(other.halfSize) {}
 };
 
 class CAnimation : public Component
@@ -70,7 +83,8 @@ public:
 	CAnimation() {}
 	CAnimation(const Animation& animation, bool r)
 		: animation(animation), repeat(r) {}
-
+	CAnimation(CAnimation& ca)
+		: animation(ca.animation), repeat(ca.repeat) {}
 };
 
 class CGravity : public Component
@@ -80,6 +94,8 @@ public:
 	CGravity() {}
 	CGravity(float g) 
 		: gravity(g) {}
+	CGravity(CGravity& other)
+		: gravity(other.gravity) {}
 };
 
 class CState : public Component
@@ -89,6 +105,8 @@ public:
 	CState() {}
 	CState(const std::string& s)
 		: state(s) {}
+	CState(CState& other)
+		: state(other.state) {}
 };
 
 class CScore : public Component
@@ -98,6 +116,8 @@ public:
 	CScore() {}
 	CScore(int s)
 		: score(s) {}
+	CScore(CScore& other)
+		: score(other.score) {}
 };
 
 class CDraggable : public Component
@@ -107,6 +127,8 @@ public:
 	CDraggable() {}
 	CDraggable(bool d)
 		: dragging(d) {}
+	CDraggable(CDraggable& other)
+		: dragging(true) {}
 };
 
 #if 0

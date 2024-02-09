@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 
 typedef std::tuple<
 	CTransform,
@@ -45,6 +46,15 @@ public:
 	bool hasComponent() const
 	{
 		return getComponent<T>().has;
+	}
+
+	template <typename T>
+	T& addComponent(T& originalComponent)
+	{
+		auto& newComponent = getComponent<T>();
+		newComponent = T(originalComponent);
+		newComponent.has = true;
+		return newComponent;
 	}
 
 	template <typename T, typename... TArgs>
