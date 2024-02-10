@@ -22,7 +22,7 @@ Elysium is a comprehensive tool designed to empower game developers with a user-
 - [ ] Select and Manipulate multiple entities
 - [ ] Circle collider
 - [ ] Detect collision from particular directions
-- [ ] Rendering layers (demonstrate using parallax if done)
+- [X] Rendering layers (demonstrate using parallax)
   
 ### Optional Features
 #### AI System 

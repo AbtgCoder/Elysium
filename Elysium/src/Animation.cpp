@@ -75,9 +75,14 @@ sf::Sprite& Animation::getSprite()
 	return m_sprite;
 }
 
-size_t Animation::Speed()
+size_t Animation::getSpeed()
 {
 	return m_speed;
+}
+
+size_t Animation::getFrameCount()
+{
+	return m_frameCount;
 }
 
 

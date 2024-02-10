@@ -11,7 +11,9 @@ public:
 	std::string& getName();
 	Vec2& getSize();
 	sf::Sprite& getSprite();
-	size_t Speed();
+	size_t getSpeed();
+	size_t getFrameCount();
+
 
 	Animation();
 	Animation(const std::string& name, const sf::Texture& t);

@@ -1,4 +1,5 @@
 #include "EntityManager.h"
+#include <algorithm>
 
 EntityManager::EntityManager()
 {
@@ -13,15 +14,23 @@ void EntityManager::update()
 		m_entityMap[e->tag()].push_back(e);
 	}
 
-	// clearing m_entitiesToAdd 
-	m_entitiesToAdd.clear();
-	
 	// deleting entities
 	removeDeadEntities(m_entities);
 	for (auto& [tag, entityVec] : m_entityMap)
 	{
 		removeDeadEntities(entityVec);
 	}
+
+	/*if (m_entitiesToAdd.size() > 0) // TODO: do this for optimization, but then it needs to be called whenever you change rendering layer via entity inspector
+	{*/
+		std::sort(m_entities.begin(), m_entities.end(), [](const std::shared_ptr<Entity>& a, const std::shared_ptr<Entity>& b) {
+			return a->getComponent<CAnimation>().layer < b->getComponent<CAnimation>().layer;
+			});
+	//}
+
+	// clearing m_entitiesToAdd 
+	m_entitiesToAdd.clear();
+
 }
 
 std::shared_ptr<Entity> EntityManager::addEntity(const std::string& tag)

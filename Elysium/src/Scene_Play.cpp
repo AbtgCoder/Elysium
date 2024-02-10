@@ -121,7 +121,7 @@ void Scene_Play::sAnimation()
 			{
 				e->destroy();
 			}
-			if (e->getComponent<CAnimation>().animation.Speed() != 0)
+			if (e->getComponent<CAnimation>().animation.getSpeed() != 0)
 			{
 				e->getComponent<CAnimation>().animation.update();
 			}

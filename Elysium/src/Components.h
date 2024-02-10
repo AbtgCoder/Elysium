@@ -80,11 +80,14 @@ class CAnimation : public Component
 public:
 	Animation animation;
 	bool repeat = false; // repetable animation or not ??
+	int layer = 0; // rendering layer
 	CAnimation() {}
 	CAnimation(const Animation& animation, bool r)
 		: animation(animation), repeat(r) {}
+	CAnimation(const Animation& animation, bool r, int l)
+		: animation(animation), repeat(r), layer(l) {}
 	CAnimation(CAnimation& ca)
-		: animation(ca.animation), repeat(ca.repeat) {}
+		: animation(ca.animation), repeat(ca.repeat), layer(ca.layer) {}
 };
 
 class CGravity : public Component

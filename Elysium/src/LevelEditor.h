@@ -8,6 +8,7 @@ class LevelEditor : public Scene
 public:
 	LevelEditor(GameEngine* gameEngine = nullptr);
 	void sGUI();
+	void sAnimation();
 	void sRender();
 	void sDrag();
 protected:
