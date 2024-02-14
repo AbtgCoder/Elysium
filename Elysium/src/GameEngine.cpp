@@ -3,6 +3,7 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
+#include "IconsFontAwesome6.h"
 
 GameEngine::GameEngine(const std::string& path)
 {
@@ -15,12 +16,19 @@ void GameEngine::init(const std::string& path)
 	m_assets.addFont("Tech", path);
 
 	// create window
-	m_window.create(sf::VideoMode(1280, 762), "Elysium");
+	m_window.create(sf::VideoMode(1580, 762), "Elysium");
 	m_window.setFramerateLimit(60);
 
 	// Initialize ImGui
 	ImGui::SFML::Init(m_window);
-
+	ImGui::SFML::Init(m_window);
+	ImGuiIO& io = ImGui::GetIO();
+	ImFontConfig config;
+	config.MergeMode = true;
+	static const ImWchar icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	ImFont* font = io.Fonts->AddFontFromFileTTF("../../../Assets/fonts/fa-regular.ttf", 8.0f, &config, icon_ranges);
+	//io.Fonts->Build();
+	ImGui::SFML::UpdateFontTexture();
 
 	// Initialize Level Editor Scene
 	std::shared_ptr<Scene> levelEditor = std::make_shared<LevelEditor>(this);
@@ -83,9 +91,9 @@ void GameEngine::run()
 	// main game loop
 	while (m_running && m_window.isOpen())
 	{
+		sUserInput();
 		ImGui::SFML::Update(m_window, m_deltaClock.restart());
 		update();
-		sUserInput();
 		ImGui::SFML::Render(m_window);
 		m_window.display();
 	}

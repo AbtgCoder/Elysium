@@ -9,9 +9,13 @@ public:
 	LevelEditor(GameEngine* gameEngine = nullptr);
 	void sGUI();
 	void sAnimation();
+	void sCollision();
 	void sRender();
 	void sDrag();
 protected:
+	sf::View m_gameView;
+	sf::RectangleShape m_gameBG;
+
 	std::map<std::string, sf::Texture> m_assets;
 	
 	bool m_drawCollision = false;
@@ -27,6 +31,9 @@ protected:
 	sf::CircleShape m_cursorDot;
 	bool m_enableDragging = false;
 
+	bool m_playAnimation = false;
+
+	void setImGuiStyle();
 	void entityInspectorGUI();
 	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);

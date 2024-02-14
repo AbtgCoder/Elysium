@@ -68,11 +68,14 @@ class CBoundingBox : public Component
 public:
 	Vec2 size;
 	Vec2 halfSize;
+	float angle = 0.0f;
 	CBoundingBox() {}
 	CBoundingBox(const Vec2& s)
 		: size(s), halfSize(s.x/2,s.y/2) {}
+	CBoundingBox(const Vec2& s, float a)
+		: size(s), halfSize(s.x / 2, s.y / 2), angle(a) {}
 	CBoundingBox(CBoundingBox& other)
-		: size(other.size), halfSize(other.halfSize) {}
+		: size(other.size), halfSize(other.halfSize), angle(other.angle) {}
 };
 
 class CAnimation : public Component
@@ -86,8 +89,8 @@ public:
 		: animation(animation), repeat(r) {}
 	CAnimation(const Animation& animation, bool r, int l)
 		: animation(animation), repeat(r), layer(l) {}
-	CAnimation(CAnimation& ca)
-		: animation(ca.animation), repeat(ca.repeat), layer(ca.layer) {}
+	CAnimation(CAnimation& other)
+		: animation(other.animation), repeat(other.repeat), layer(other.layer) {}
 };
 
 class CGravity : public Component

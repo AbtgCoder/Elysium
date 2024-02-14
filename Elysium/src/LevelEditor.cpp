@@ -1,7 +1,10 @@
 #include "GameEngine.h"
 #include "LevelEditor.h"
+#include "Physics.h"
+
 #include "imgui.h"
 #include "imgui-SFML.h"
+
 #include <filesystem>
 #include <cmath>
 #include <fstream>
@@ -22,7 +25,11 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
 
+	// Set ImGui Styles
+	setImGuiStyle();
 
+	m_gameView.reset(sf::FloatRect(0, 0, 1264, 762));
+	m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
 
 	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
 	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
@@ -40,9 +47,96 @@ void LevelEditor::init()
 	m_cursorDot.setRadius(8);
 	m_cursorDot.setOrigin(8, 8);
 
+	m_gameBG.setSize(sf::Vector2f(m_gameView.getSize().x, m_gameView.getSize().y-2));
+	m_gameBG.setFillColor(sf::Color(100, 100, 255));
+	m_gameBG.setOutlineThickness(1);
+	m_gameBG.setOutlineColor(sf::Color(45, 45, 45));
+	m_gameBG.setPosition(sf::Vector2f(1.f, 1.f));
+
 	std::string assetDir = "../../../Assets/textures/";
 	loadAssets(assetDir);
 	loadLevel();
+}
+
+void LevelEditor::setImGuiStyle()
+{
+
+
+	auto& colors = ImGui::GetStyle().Colors;
+	colors[ImGuiCol_WindowBg] = ImVec4{ 0.08f, 0.08f, 0.08f, 1.0f };
+	//colors[ImGuiCol_WindowBg] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
+	colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+
+	// Border
+	colors[ImGuiCol_Border] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.29f };
+	colors[ImGuiCol_BorderShadow] = ImVec4{ 0.0f, 0.0f, 0.0f, 0.24f };
+
+	// Text
+	colors[ImGuiCol_Text] = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f };
+	colors[ImGuiCol_TextDisabled] = ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f };
+
+	// Headers
+	colors[ImGuiCol_Header] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
+	colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
+	colors[ImGuiCol_HeaderActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+
+	// Buttons
+	colors[ImGuiCol_Button] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
+	colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
+	colors[ImGuiCol_ButtonActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_CheckMark] = ImVec4{ 0.74f, 0.58f, 0.98f, 1.0f };
+
+	// Popups
+	colors[ImGuiCol_PopupBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 0.92f };
+
+	// Slider
+	colors[ImGuiCol_SliderGrab] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.54f };
+	colors[ImGuiCol_SliderGrabActive] = ImVec4{ 0.74f, 0.58f, 0.98f, 0.54f };
+
+	// Frame BG
+	colors[ImGuiCol_FrameBg] = ImVec4{ 0.13f, 0.13, 0.17, 1.0f };
+	colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
+	colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+
+	// Tabs
+	colors[ImGuiCol_Tab] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_TabHovered] = ImVec4{ 0.24, 0.24f, 0.32f, 1.0f };
+	colors[ImGuiCol_TabActive] = ImVec4{ 0.2f, 0.22f, 0.27f, 1.0f };
+	colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+
+	// Title
+	colors[ImGuiCol_TitleBg] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+
+	// Scrollbar
+	colors[ImGuiCol_ScrollbarBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 1.0f };
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4{ 0.24f, 0.24f, 0.32f, 1.0f };
+
+	// Seperator
+	colors[ImGuiCol_Separator] = ImVec4{ 0.44f, 0.37f, 0.61f, 1.0f };
+	colors[ImGuiCol_SeparatorHovered] = ImVec4{ 0.74f, 0.58f, 0.98f, 1.0f };
+	colors[ImGuiCol_SeparatorActive] = ImVec4{ 0.84f, 0.58f, 1.0f, 1.0f };
+
+	// Resize Grip
+	colors[ImGuiCol_ResizeGrip] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.29f };
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4{ 0.74f, 0.58f, 0.98f, 0.29f };
+	colors[ImGuiCol_ResizeGripActive] = ImVec4{ 0.84f, 0.58f, 1.0f, 0.29f };
+
+
+	auto& style = ImGui::GetStyle();
+	style.TabRounding = 4;
+	style.ScrollbarRounding = 9;
+	//style.WindowRounding = 7;
+	style.GrabRounding = 3;
+	style.FrameRounding = 3;
+	style.PopupRounding = 4;
+	style.ChildRounding = 4;
+
+
 }
 
 void LevelEditor::loadLevel()
@@ -167,10 +261,9 @@ Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 {
 	auto e = m_entityManager.addEntity("Tile");
-	e->addComponent<CAnimation>(Animation(name, tex), true);
+	e->addComponent<CAnimation>(Animation(name, tex), true, 0);
 	e->addComponent<CTransform>(m_mousePos);
 	e->addComponent<CDraggable>(true);
-	e->getComponent<CAnimation>().layer = (rand() % (6));
 	m_inspectedEntity = e;
 }
 
@@ -180,6 +273,14 @@ void LevelEditor::update()
 	if (m_enableDragging)
 	{
 		sDrag();
+	}
+	if (m_playAnimation)
+	{
+		sAnimation();
+	}
+	if (m_inspectedEntity)
+	{
+		//sCollision();
 	}
 	sGUI();
 	sRender();
@@ -199,21 +300,19 @@ void LevelEditor::sDrag()
 
 void LevelEditor::sAnimation()
 {
+	m_inspectedEntity->getComponent<CAnimation>().animation.update();
+}
+
+void LevelEditor::sCollision()
+{
 	for (auto& e : m_entityManager.getEntities())
 	{
-		if (e->hasComponent<CAnimation>())
+		Vec2 overlap = Physics::GetOverlap(m_inspectedEntity, e);
+
+		if (overlap.x > 0 && overlap.y > 0)
 		{
-			if (!e->getComponent<CAnimation>().repeat && e->getComponent<CAnimation>().animation.hasEnded())
-			{
-				e->destroy();
-			}
-			if (e->getComponent<CAnimation>().animation.getSpeed() != 0)
-			{
-				e->getComponent<CAnimation>().animation.update();
-			}
 		}
 	}
-
 }
 
 void LevelEditor::entityInspectorGUI()
@@ -257,23 +356,31 @@ void LevelEditor::entityInspectorGUI()
 		ImGui::Text("Animation Speed: ");
 		ImGui::SameLine();
 		ImGui::SliderInt("##Slider6", &animSpeed, 0, 120);
-		// TODO: implement functionality to change animaiton frames
-		/*ImGui::Text("Num of Animation Frames: ");
+		ImGui::Text("Num of Animation Frames: ");
 		ImGui::SameLine();
-		ImGui::SliderInt("##Slider7", &animSpeed, 0, 120);*/
+		ImGui::SliderInt("##Slider7", &frameCount, 1, 20);
 		ImGui::Checkbox("Repeatable", &m_inspectedEntity->getComponent<CAnimation>().repeat);
 		ImGui::SliderInt("Layer", &m_inspectedEntity->getComponent<CAnimation>().layer, -1, 10);
+		ImGui::Checkbox("Play Animation", &m_playAnimation);
 	}
 	if (ImGui::CollapsingHeader("Collision"))
 	{
 		ImGui::Checkbox("Box Collider", &boundingBox);
+		if (boundingBox)
+		{
+			/*ImGui::Text("Angle: ");
+			ImGui::SameLine();
+			ImGui::SliderFloat("##Slider8", &angle, 0, 360);*/
+		}
 	}
-	//m_inspectedEntity->getComponent<CAnimation>().animation.Speed() = 1;
-	//m_inspectedEntity->addComponent<CAnimation>(Animation(m_inspectedEntity->getComponent<CAnimation>().animation.getName(), m_inspectedEntity->getComponent<CAnimation>().animation.getSprite().getTexture(), frameCount, animSpeed), m_inspectedEntity->getComponent<CAnimation>().repeat);
+	if (!m_playAnimation)
+	{
+		m_inspectedEntity->addComponent<CAnimation>(Animation(m_inspectedEntity->getComponent<CAnimation>().animation.getName(), m_assets[m_inspectedEntity->getComponent<CAnimation>().animation.getName()], frameCount, animSpeed), m_inspectedEntity->getComponent<CAnimation>().repeat);
+	}
 	m_inspectedEntity->addComponent<CTransform>(gridToMidPixel(gridX, gridY, m_inspectedEntity), scale, angle);
 	if (boundingBox)
 	{
-		m_inspectedEntity->addComponent<CBoundingBox>(m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
+		m_inspectedEntity->addComponent<CBoundingBox>(m_inspectedEntity->getComponent<CAnimation>().animation.getSize(), m_inspectedEntity->getComponent<CTransform>().angle);
 	}
 	else
 	{
@@ -282,8 +389,9 @@ void LevelEditor::entityInspectorGUI()
 }
 void LevelEditor::sGUI()
 {
-
-	ImGui::Begin("Level Editor");
+	ImGui::SetNextWindowPos(ImVec2(1265.f, 0.f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(315.f, 762.f), ImGuiCond_Always);
+	ImGui::Begin("Level Editor", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	if (ImGui::BeginChild("child1", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2)))
 	{
@@ -345,14 +453,18 @@ void LevelEditor::sGUI()
 	if (m_inspectedEntity && !m_enableDragging)
 	{
 		ImGui::Separator();
-		if (ImGui::BeginTabBar("tab bar2"))
+		if (ImGui::BeginChild("child2", ImGui::GetContentRegionAvail()))
 		{
-			if (ImGui::BeginTabItem("Entity Inspector"))
+			if (ImGui::BeginTabBar("tab bar2"))
 			{
-				entityInspectorGUI();
-				ImGui::EndTabItem();
+				if (ImGui::BeginTabItem("Entity Inspector"))
+				{
+					entityInspectorGUI();
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
 			}
-			ImGui::EndTabBar();
+			ImGui::EndChild();
 		}
 	}
 	ImGui::End();
@@ -361,7 +473,10 @@ void LevelEditor::sGUI()
 void LevelEditor::sRender()
 {
 	sf::RenderWindow& window = m_game->window();
-	window.clear(sf::Color(100, 100, 255));
+	window.setView(m_gameView);
+	window.clear();
+	window.draw(m_gameBG);
+
 	for (auto& e : m_entityManager.getEntities())
 	{
 		if (e->hasComponent<CAnimation>())
@@ -391,6 +506,7 @@ void LevelEditor::sRender()
 			m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
 			m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
 			m_collisionRect.setPosition(m_inspectedEntity->getComponent<CTransform>().pos.x, m_inspectedEntity->getComponent<CTransform>().pos.y);
+			m_collisionRect.setRotation(m_inspectedEntity->getComponent<CBoundingBox>().angle);
 			window.draw(m_collisionRect);
 		}
 	}
@@ -411,9 +527,11 @@ void LevelEditor::sRender()
 	}
 
 	Vec2 worldPos = windowToWorld(m_mousePos);
-	m_cursorDot.setPosition(worldPos.x, worldPos.y);
-	//m_cursorDot.setPosition(window.mapPixelToCoords(sf::Vector2i(m_mousePos.x, m_mousePos.y)));
+	//m_cursorDot.setPosition(worldPos.x, worldPos.y);
+	m_cursorDot.setPosition(window.mapPixelToCoords(sf::Vector2i(m_mousePos.x, m_mousePos.y)));
 	window.draw(m_cursorDot);
+	window.setView(window.getDefaultView());
+
 }
 
 bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
@@ -459,7 +577,7 @@ void LevelEditor::sDoAction(const Action& action)
 		{
 			if (m_inspectedEntity)
 			{
-				m_inspectedEntity->getComponent<CDraggable>().dragging = false;
+				//m_inspectedEntity->getComponent<CDraggable>().dragging = false;
 				snapToGrid(m_inspectedEntity);
 				auto e = m_entityManager.addEntity(m_inspectedEntity);
 				m_inspectedEntity = e;

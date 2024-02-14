@@ -27,6 +27,7 @@ public:
 	void operator *= (const float val);
 	void operator /= (const float val);
 
+	friend std::ostream& operator << (std::ostream& out, const Vec2& v);
 
 
 	Vec2 normalize();
