@@ -3,6 +3,7 @@
 #include "Physics.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui-SFML.h"
 
 #include <filesystem>
@@ -27,6 +28,13 @@ void LevelEditor::init()
 
 	// Set ImGui Styles
 	setImGuiStyle();
+	m_BaseDirectory.assign("../../../Assets/");
+	m_CurrentDirectory.assign("../../../Assets/");
+
+
+	m_DirectoryIcon = m_game->assets().getTexture("DirectoryIcon");
+	m_FileIcon = m_game->assets().getTexture("FileIcon");
+	m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>("../../../Assets");
 
 	m_gameView.reset(sf::FloatRect(0, 0, 1264, 762));
 	m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
@@ -60,8 +68,6 @@ void LevelEditor::init()
 
 void LevelEditor::setImGuiStyle()
 {
-
-
 	auto& colors = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_WindowBg] = ImVec4{ 0.08f, 0.08f, 0.08f, 1.0f };
 	//colors[ImGuiCol_WindowBg] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
@@ -174,6 +180,8 @@ void LevelEditor::loadLevel()
 		}
 	}
 	levelFile.close();
+	m_LevelHierarchyPanel.setLevelEM(m_entityManager);
+
 }
 
 void LevelEditor::loadAssets(const std::string& assetDir)
@@ -274,7 +282,7 @@ void LevelEditor::update()
 	{
 		sDrag();
 	}
-	if (m_playAnimation)
+	if (m_playAnimation && m_inspectedEntity)
 	{
 		sAnimation();
 	}
@@ -288,13 +296,10 @@ void LevelEditor::update()
 
 void LevelEditor::sDrag()
 {
-	for (auto& e : m_entityManager.getEntities())
+	if (m_inspectedEntity && m_inspectedEntity->getComponent<CDraggable>().dragging)
 	{
-		if (e->hasComponent<CDraggable>() && e->getComponent<CDraggable>().dragging)
-		{
-			Vec2 wPos = windowToWorld(m_mousePos);
-			e->getComponent<CTransform>().pos = wPos;
-		}
+		Vec2 wPos = windowToWorld(m_mousePos);
+		m_inspectedEntity->getComponent<CTransform>().pos = wPos;
 	}
 }
 
@@ -315,78 +320,381 @@ void LevelEditor::sCollision()
 	}
 }
 
-void LevelEditor::entityInspectorGUI()
+template<typename T, typename UIFunction>
+static void DrawComponentGUI(const std::string& name, std::shared_ptr<Entity> entity, UIFunction uiFunction)
 {
-	Vec2 eWorldPos = m_inspectedEntity->getComponent<CTransform>().pos;
-	Vec2 scale = m_inspectedEntity->getComponent<CTransform>().scale;
-	float angle = m_inspectedEntity->getComponent<CTransform>().angle;
-	Vec2 eGridPos = worldToGrid(m_inspectedEntity);
-	int gridX = (int)eGridPos.x, gridY = (int)eGridPos.y;
-	int animSpeed = (int)m_inspectedEntity->getComponent<CAnimation>().animation.getSpeed();
-	int frameCount = (int)m_inspectedEntity->getComponent<CAnimation>().animation.getFrameCount();
-	bool boundingBox = m_inspectedEntity->hasComponent<CBoundingBox>();
-	if (ImGui::CollapsingHeader("Transform"))
+	const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+	if (entity->hasComponent<T>())
 	{
-		ImGui::Columns(2, "", false);
-		ImGui::Text("Grid X: ");
-		ImGui::SameLine();
-		ImGui::SliderInt("##Slider1", &gridX, 0, 20);
-		ImGui::NextColumn();
-		ImGui::Text("Grid Y: ");
-		ImGui::SameLine();
-		ImGui::SliderInt("##Slider2", &gridY, 0, 20);
-		ImGui::NextColumn();
-		ImGui::Text("Scale X: ");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##Slider3", &scale.x, 0, 20);
-		ImGui::NextColumn();
-		ImGui::Text("Scale Y: ");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##Slider4", &scale.y, 0, 20);
-		ImGui::Columns(1);
-		ImGui::Text("Angle: ");
-		ImGui::SameLine();
-		ImGui::SliderFloat("##Slider5", &angle, 0, 360);
-	}
-	if (ImGui::CollapsingHeader("Animation"))
-	{
-		ImGui::Text("Sprite: ");
-		ImGui::SameLine();
-		ImGui::Image(m_inspectedEntity->getComponent<CAnimation>().animation.getSprite(), sf::Vector2f(64, 64));
-		ImGui::Text("Animation Speed: ");
-		ImGui::SameLine();
-		ImGui::SliderInt("##Slider6", &animSpeed, 0, 120);
-		ImGui::Text("Num of Animation Frames: ");
-		ImGui::SameLine();
-		ImGui::SliderInt("##Slider7", &frameCount, 1, 20);
-		ImGui::Checkbox("Repeatable", &m_inspectedEntity->getComponent<CAnimation>().repeat);
-		ImGui::SliderInt("Layer", &m_inspectedEntity->getComponent<CAnimation>().layer, -1, 10);
-		ImGui::Checkbox("Play Animation", &m_playAnimation);
-	}
-	if (ImGui::CollapsingHeader("Collision"))
-	{
-		ImGui::Checkbox("Box Collider", &boundingBox);
-		if (boundingBox)
+		auto& component = entity->getComponent<T>();
+		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImGui::Separator();
+		bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+		ImGui::PopStyleVar();
+		ImGui::SameLine(contentRegionAvailable.x - lineHeight);
+		if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight }))
 		{
-			/*ImGui::Text("Angle: ");
-			ImGui::SameLine();
-			ImGui::SliderFloat("##Slider8", &angle, 0, 360);*/
+			ImGui::OpenPopup("ComponentSettings");
+		}
+
+		bool removeComponent = false;
+		if (ImGui::BeginPopup("ComponentSettings"))
+		{
+			if (ImGui::MenuItem("Remove Component"))
+			{
+				removeComponent = true;
+			}
+			ImGui::EndPopup();
+		}
+
+		if (open)
+		{
+			uiFunction(component);
+			ImGui::TreePop();
+		}
+
+		if (removeComponent)
+		{
+			entity->removeComponent<T>();
 		}
 	}
-	if (!m_playAnimation)
+}
+
+static void DrawVec2Control(const std::string& label, Vec2& values, float resetValue = 0.0f, float columnWidth = 64.0f)
+{
+	ImGui::PushID(label.c_str());
+
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5});
+
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 3.0f;
+	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+	// TODO: button styles ??
+	if (ImGui::Button("X", buttonSize))
 	{
-		m_inspectedEntity->addComponent<CAnimation>(Animation(m_inspectedEntity->getComponent<CAnimation>().animation.getName(), m_assets[m_inspectedEntity->getComponent<CAnimation>().animation.getName()], frameCount, animSpeed), m_inspectedEntity->getComponent<CAnimation>().repeat);
+		values.x = resetValue;
 	}
-	m_inspectedEntity->addComponent<CTransform>(gridToMidPixel(gridX, gridY, m_inspectedEntity), scale, angle);
-	if (boundingBox)
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	if (ImGui::Button("Y", buttonSize))
 	{
-		m_inspectedEntity->addComponent<CBoundingBox>(m_inspectedEntity->getComponent<CAnimation>().animation.getSize(), m_inspectedEntity->getComponent<CTransform>().angle);
+		values.y = resetValue;
 	}
-	else
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::PopItemWidth();
+
+	ImGui::PopStyleVar();
+
+	ImGui::Columns(1);
+	ImGui::PopID();
+}
+
+static void DrawFloatControl(const std::string& label, float& value, float vMin = 0.0f, float vMax = 360.0f, float columnWidth = 80.0f)
+{
+	ImGui::PushID(label.c_str());
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImVec2 contentPos = ImGui::GetCursorPos();
+	float columnWidth2 = ImGui::GetColumnWidth();
+	float widgetWidth = ImGui::CalcItemWidth();
+	contentPos.x += (columnWidth2 - widgetWidth) / 2;
+	ImGui::SetCursorPos(contentPos);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
+	ImGui::DragFloat("##val", &value, 0.1f, vMin, vMax, "%.2f");
+	ImGui::PopStyleVar();
+
+	ImGui::Columns(1);
+	ImGui::PopID();
+}
+
+static void DrawIntControl(const std::string& label, int& value, int vMin = 0, int vMax = 120, float columnWidth = 80.0f)
+{
+	ImGui::PushID(label.c_str());
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImVec2 contentPos = ImGui::GetCursorPos();
+	float columnWidth2 = ImGui::GetColumnWidth();
+	float widgetWidth = ImGui::CalcItemWidth();
+	contentPos.x += (columnWidth2 - widgetWidth) / 2;
+	ImGui::SetCursorPos(contentPos);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
+	ImGui::DragInt("##val", &value, 0.1f, vMin, vMax);
+	ImGui::PopStyleVar();
+
+	ImGui::Columns(1);
+	ImGui::PopID();
+}
+
+void LevelEditor::entityInspectorGUI()
+{
+	auto& tag = m_inspectedEntity->tag();
+	char buffer[256];
+	memset(buffer, 0, sizeof(buffer));
+	strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
+	if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
 	{
-		m_inspectedEntity->removeComponent<CBoundingBox>();
+		//tag = std::string(buffer);
+		// TODO: Ability to change tag of entity, TagComponent ??
+	}
+	
+	ImGui::SameLine();
+	ImGui::PushItemWidth(-1);
+
+	if (ImGui::Button("Add Component"))
+	{
+		ImGui::OpenPopup("AddComponent");
+	}
+
+	if (ImGui::BeginPopup("AddComponent"))
+	{
+		DisplayAddComponentEntry<CTransform>("Transform");
+		DisplayAddComponentEntry<CAnimation>("Animation");
+		DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
+		ImGui::EndPopup();
+	}
+
+	ImGui::PopItemWidth();
+
+
+	DrawComponentGUI<CTransform>("Transform", m_inspectedEntity, [](auto& component)
+		{
+			DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
+			DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
+			DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
+		});
+
+	DrawComponentGUI<CAnimation>("Animation", m_inspectedEntity, [](auto& component)
+		{
+			float imgSize = 80.0f;
+			ImGui::PushID("Sprite");
+			ImGui::Columns(2);
+			ImGui::SetColumnWidth(0, 80.0f);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize/2 - 7.0f);
+			ImGui::Text("Sprite");
+			ImGui::NextColumn();
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize)/2);
+			float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
+			float imgHeight = imgSize * aspectRatio;
+			float diff = imgSize - imgHeight;
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
+			ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
+			ImGui::Columns(1);
+			ImGui::PopID();
+
+			int animSpeed = (int)component.animSpeed;
+			DrawIntControl("Speed", animSpeed, 0, 120);
+			component.animSpeed = animSpeed;
+
+			int frameCount = (int)component.frameCount;
+			DrawIntControl("Frames", frameCount, 1, 20);
+			component.frameCount = frameCount;
+
+			DrawIntControl("Layer", component.layer, -1, 10);
+			
+			ImGui::Checkbox("Repeatable", &component.repeat);
+			//ImGui::Checkbox("Play Animation", &m_playAnimation);
+		});
+
+	DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_inspectedEntity, [](auto& component)
+		{
+			DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
+			DrawVec2Control("Size", component.size, 0.0f, 80.0f);
+			component.halfSize = component.size / 2;
+		});
+	
+}
+
+
+template<typename T>
+void LevelEditor::DisplayAddComponentEntry(const std::string& entryName)
+{
+	if (!m_inspectedEntity->hasComponent<T>())
+	{
+		if (ImGui::MenuItem(entryName.c_str()))
+		{
+			m_inspectedEntity->addComponent<T>();
+			ImGui::CloseCurrentPopup();
+		}
 	}
 }
+
+
+void LevelEditor::contentBrowserGUI()
+{
+	if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory))
+	{
+		if (ImGui::Button("<-"))
+		{
+			m_CurrentDirectory = m_CurrentDirectory.parent_path();
+		}
+	}
+
+	static float padding = 8.0f;
+	static float thumbnailSize = 64.0f;
+	float cellSize = thumbnailSize + padding;
+
+	float panelWidth = ImGui::GetContentRegionAvail().x;
+	int columnCount = (int)(panelWidth / cellSize);
+	if (columnCount < 1)
+	{
+		columnCount = 1;
+	}
+
+	ImGui::Columns(columnCount, 0, false);
+
+	for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+	{
+		const auto& path = directoryEntry.path();
+		std::string filenameString = path.filename().string();
+		ImGui::PushID(filenameString.c_str());
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		if (directoryEntry.is_directory())
+		{
+			ImGui::ImageButton(m_DirectoryIcon, { thumbnailSize, thumbnailSize });
+		}
+		else
+		{
+			auto it = m_assets.find(directoryEntry.path().stem().string());
+			if (it != m_assets.end())
+			{
+				sf::Texture& texture = it->second;
+				float aspectRatio = (float)(texture.getSize().y) / (float)(texture.getSize().x);
+				float thumbnailHeight = thumbnailSize * aspectRatio;
+				float diff = thumbnailSize - thumbnailHeight;
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
+				if (ImGui::ImageButton(texture, { thumbnailSize, thumbnailHeight }))
+				{
+					spawnEntity(directoryEntry.path().stem().string(), texture);
+				}
+			}
+			else
+			{
+				ImGui::ImageButton(m_FileIcon, { thumbnailSize, thumbnailSize });
+			}
+
+		}
+		if (ImGui::BeginPopupContextItem())
+		{
+			if (ImGui::MenuItem("Import"))
+			{
+				// TODO: Import assets
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleColor();
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			if (directoryEntry.is_directory())
+			{
+				m_CurrentDirectory /= path.filename();
+			}
+		}
+		ImGui::TextWrapped(filenameString.c_str());
+
+		ImGui::NextColumn();
+		ImGui::PopID();
+	}
+	ImGui::Columns(1);
+
+	/*ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
+	ImGui::SliderFloat("Padding", &padding, 0, 32);*/
+}
+
+
+void LevelEditor::entityManagerGUI()
+{
+	for (auto& e : m_entityManager.getEntities())
+	{
+		drawEntityNode(e);
+	}
+
+	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
+	{
+		m_inspectedEntity = nullptr;
+	}
+
+	// Right click on blank space
+	if (ImGui::BeginPopupContextWindow(0, 1, false))
+	{
+		if (ImGui::MenuItem("Create Empty Entity"))
+		{
+			m_entityManager.addEntity("Empty Entity");
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
+{
+	auto& tag = entity->tag();
+
+	ImGuiTreeNodeFlags flags = ((m_inspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+	bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(entity->id()), flags, tag.c_str());
+	if (ImGui::IsItemClicked())
+	{
+		m_inspectedEntity = entity;
+	}
+
+	bool entityDeleted = false;
+	if (ImGui::BeginPopupContextItem())
+	{
+		if (ImGui::MenuItem("Delete Entity"))
+		{
+			entityDeleted = true;
+		}
+		ImGui::EndPopup();
+	}
+
+	if (opened)
+	{
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+		bool opened = ImGui::TreeNodeEx((void*)9817239, flags, tag.c_str());
+		if (opened)
+		{
+			ImGui::TreePop();
+		}
+		ImGui::TreePop();
+	}
+
+	if (entityDeleted)
+	{
+		entity->destroy();
+		if (m_inspectedEntity == entity)
+		{
+			m_inspectedEntity = nullptr;
+		}
+	}
+}
+
 void LevelEditor::sGUI()
 {
 	ImGui::SetNextWindowPos(ImVec2(1265.f, 0.f), ImGuiCond_Always);
@@ -397,6 +705,7 @@ void LevelEditor::sGUI()
 	{
 		if (ImGui::BeginTabBar("tab bar"))
 		{
+#if 0
 			if (ImGui::BeginTabItem("File"))
 			{
 				if (ImGui::Button("Load Assets"))
@@ -414,36 +723,17 @@ void LevelEditor::sGUI()
 
 				ImGui::EndTabItem();
 			}
+#endif
 			if (ImGui::BeginTabItem("Assets"))
 			{
-				ImGui::Columns(ImGui::GetContentRegionAvailWidth() / 64.0f, nullptr, false);
-				for (const auto& [name, texture] : m_assets)
-				{
-					float aspectRatio = (float)(texture.getSize().y) / (float)(texture.getSize().x);
-					float height = 64.0f * aspectRatio;
-					ImGui::BeginGroup();
-					if (ImGui::ImageButton(texture, sf::Vector2f(64.0f, height)))
-					{
-						m_enableDragging = true;
-						spawnEntity(name, texture);
-					}
-					ImGui::Text("%s", name.c_str());
-					ImGui::EndGroup();
-					ImGui::NextColumn();
-				}
-				ImGui::Columns(1);
+				contentBrowserGUI();
+				//m_ContentBrowserPanel->OnImGuiRender();
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Entity Manager"))
 			{
-				for (auto& e : m_entityManager.getEntities())
-				{
-					ImGui::Text(std::to_string(e->id()).c_str());
-					ImGui::SameLine();
-					ImGui::Text((e->tag()).c_str());
-					ImGui::SameLine();
-					ImGui::Text(("(" + std::to_string((int)e->getComponent<CTransform>().pos.x) + ", " + std::to_string((int)e->getComponent<CTransform>().pos.y) + ")").c_str());
-				}
+				entityManagerGUI();
+				//m_LevelHierarchyPanel.OnImGuiRender();
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
@@ -453,19 +743,23 @@ void LevelEditor::sGUI()
 	if (m_inspectedEntity && !m_enableDragging)
 	{
 		ImGui::Separator();
-		if (ImGui::BeginChild("child2", ImGui::GetContentRegionAvail()))
-		{
-			if (ImGui::BeginTabBar("tab bar2"))
-			{
-				if (ImGui::BeginTabItem("Entity Inspector"))
-				{
-					entityInspectorGUI();
-					ImGui::EndTabItem();
-				}
-				ImGui::EndTabBar();
-			}
-			ImGui::EndChild();
-		}
+		m_EntityInspectorPanel.setInspectedEntity(m_inspectedEntity);
+		m_EntityInspectorPanel.OnImGuiRender();
+		//if (ImGui::BeginChild("child2", ImGui::GetContentRegionAvail()))
+		//{
+		//	if (ImGui::BeginTabBar("tab bar2"))
+		//	{
+		//		if (ImGui::BeginTabItem("Entity Inspector"))
+		//		{
+		//			//entityInspectorGUI();
+		//			m_EntityInspectorPanel.setInspectedEntity(m_inspectedEntity);
+		//			m_EntityInspectorPanel.OnImGuiRender();
+		//			ImGui::EndTabItem();
+		//		}
+		//		ImGui::EndTabBar();
+		//	}
+		//	ImGui::EndChild();
+		//}
 	}
 	ImGui::End();
 }
@@ -491,9 +785,10 @@ void LevelEditor::sRender()
 			if (e->hasComponent<CBoundingBox>())
 			{
 				Vec2 rectSize = e->getComponent<CBoundingBox>().size;
+				Vec2 offset = e->getComponent<CBoundingBox>().offset;
 				m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
 				m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-				m_collisionRect.setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+				m_collisionRect.setPosition(e->getComponent<CTransform>().pos.x + offset.x, e->getComponent<CTransform>().pos.y + offset.y);
 				window.draw(m_collisionRect);
 			}
 		}
@@ -503,10 +798,10 @@ void LevelEditor::sRender()
 		if (m_inspectedEntity->hasComponent<CBoundingBox>())
 		{
 			Vec2 rectSize = m_inspectedEntity->getComponent<CBoundingBox>().size;
+			Vec2 offset = m_inspectedEntity->getComponent<CBoundingBox>().offset;
 			m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
 			m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-			m_collisionRect.setPosition(m_inspectedEntity->getComponent<CTransform>().pos.x, m_inspectedEntity->getComponent<CTransform>().pos.y);
-			m_collisionRect.setRotation(m_inspectedEntity->getComponent<CBoundingBox>().angle);
+			m_collisionRect.setPosition(m_inspectedEntity->getComponent<CTransform>().pos.x + offset.x, m_inspectedEntity->getComponent<CTransform>().pos.y + offset.y);
 			window.draw(m_collisionRect);
 		}
 	}

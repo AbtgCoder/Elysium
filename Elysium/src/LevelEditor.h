@@ -1,7 +1,11 @@
 #pragma once
 
-
 #include "Scene.h"
+#include "Panels/LevelHierarchyPanel.h"
+#include "Panels/ContentBrowserPanel.h"
+#include "Panels/EntityInspectorPanel.h"
+
+#include <filesystem>
 
 class LevelEditor : public Scene
 {
@@ -31,10 +35,27 @@ protected:
 	sf::CircleShape m_cursorDot;
 	bool m_enableDragging = false;
 
-	bool m_playAnimation = false;
+	bool m_playAnimation = true;
 
 	void setImGuiStyle();
+
+	std::filesystem::path m_BaseDirectory;
+	std::filesystem::path m_CurrentDirectory;
+	sf::Texture m_DirectoryIcon;
+	sf::Texture m_FileIcon;
+	void contentBrowserGUI();
+
+	// Panels
+	LevelHierarchyPanel m_LevelHierarchyPanel;
+	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
+	EntityInspectorPanel m_EntityInspectorPanel;
+
+	void drawEntityNode(std::shared_ptr<Entity> entity);
+	void entityManagerGUI();
 	void entityInspectorGUI();
+	template<typename T>
+	void DisplayAddComponentEntry(const std::string& entryName);
+
 	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY);

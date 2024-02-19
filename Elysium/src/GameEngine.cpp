@@ -12,6 +12,9 @@ GameEngine::GameEngine(const std::string& path)
 
 void GameEngine::init(const std::string& path)
 {
+	// content browser icons
+	m_assets.addTexture("DirectoryIcon", "../../../resources/icons/DirectoryIcon.png");
+	m_assets.addTexture("FileIcon", "../../../resources/icons/FileIcon.png");
 
 	m_assets.addFont("Tech", path);
 

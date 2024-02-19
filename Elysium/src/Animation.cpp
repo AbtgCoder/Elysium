@@ -23,21 +23,6 @@ Animation::Animation(const std::string& name, const sf::Texture& t, size_t frame
 	m_sprite.setTextureRect(sf::IntRect(std::floor(m_currentFrame)*m_size.x, 0, m_size.x, m_size.y));
 }
 
-//Animation::Animation(Animation& other)
-//	: m_name(other.m_name)
-//	, m_sprite(other.m_sprite)
-//	, m_frameCount(other.m_frameCount)
-//	, m_currentFrame(other.m_currentFrame)
-//	, m_speed(other.m_speed)
-//	, m_size(other.m_size)
-//{
-//	// Copy the texture rect from the original sprite to the new sprite
-//	sf::IntRect textureRect = other.m_sprite.getTextureRect();
-//	m_sprite.setTextureRect(textureRect);
-//
-//	// Set the origin of the new sprite
-//	m_sprite.setOrigin(other.m_sprite.getOrigin());
-//}
 
 void Animation::update()
 {

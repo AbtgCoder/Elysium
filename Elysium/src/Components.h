@@ -66,22 +66,24 @@ public:
 class CBoundingBox : public Component
 {
 public:
+	Vec2 offset = { 0.0f, 0.0f };
 	Vec2 size;
 	Vec2 halfSize;
-	float angle = 0.0f;
 	CBoundingBox() {}
 	CBoundingBox(const Vec2& s)
 		: size(s), halfSize(s.x/2,s.y/2) {}
-	CBoundingBox(const Vec2& s, float a)
-		: size(s), halfSize(s.x / 2, s.y / 2), angle(a) {}
+	CBoundingBox(const Vec2& s, const Vec2& o)
+		: size(s), halfSize(s.x / 2, s.y / 2), offset(o) {}
 	CBoundingBox(CBoundingBox& other)
-		: size(other.size), halfSize(other.halfSize), angle(other.angle) {}
+		: size(other.size), halfSize(other.halfSize) {}
 };
 
 class CAnimation : public Component
 {
 public:
 	Animation animation;
+	size_t animSpeed = 0;
+	size_t frameCount = 1;
 	bool repeat = false; // repetable animation or not ??
 	int layer = 0; // rendering layer
 	CAnimation() {}
