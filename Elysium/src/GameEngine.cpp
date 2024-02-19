@@ -15,6 +15,10 @@ void GameEngine::init(const std::string& path)
 
 	m_assets.addFont("Tech", path);
 
+	// content browser icons
+	m_assets.addTexture("DirectoryIcon", "../../../resources/icons/DirectoryIcon.png");
+	m_assets.addTexture("FileIcon", "../../../resources/icons/FileIcon.png");
+
 	// create window
 	m_window.create(sf::VideoMode(1580, 762), "Elysium");
 	m_window.setFramerateLimit(60);

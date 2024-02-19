@@ -45,10 +45,10 @@ void Assets::addFont(std::string name, std::string path)
     }
     m_fonts[name] = font;
 }
-
-const sf::Texture& Assets::getTexture(const std::string& name)
+ 
+const sf::Texture& Assets::getTexture(const std::string& name) const
 {
-	return m_textures[name];
+	return m_textures.at(name);
 }
 
 const Animation& Assets::getAnimation(const std::string& name) const

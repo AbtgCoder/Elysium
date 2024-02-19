@@ -1,7 +1,8 @@
 #pragma once
 
-
 #include "Scene.h"
+
+#include <filesystem>
 
 class LevelEditor : public Scene
 {
@@ -34,7 +35,19 @@ protected:
 	bool m_playAnimation = false;
 
 	void setImGuiStyle();
+	std::filesystem::path m_BaseDirectory;
+	std::filesystem::path m_CurrentDirectory;
+	sf::Texture m_DirectoryIcon;
+	sf::Texture m_FileIcon;
+	void contentBrowserGUI();
+	
+	void drawEntityNode(std::shared_ptr<Entity> entity);
+	void entityManagerGUI();
 	void entityInspectorGUI();
+	template<typename T>
+	void DisplayAddComponentEntry(const std::string& entryName);
+
+
 	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY);
