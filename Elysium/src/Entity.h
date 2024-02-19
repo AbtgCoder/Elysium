@@ -11,6 +11,7 @@ typedef std::tuple<
 	CLifespan,
 	CInput,
 	CBoundingBox,
+	CPolygonCollider,
 	CAnimation,
 	CGravity,
 	CState,

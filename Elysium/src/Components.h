@@ -68,7 +68,7 @@ class CBoundingBox : public Component
 public:
 	Vec2 size;
 	Vec2 halfSize;
-	Vec2 offset;
+	Vec2 offset = {0.0f, 0.0f};
 	CBoundingBox() {}
 	CBoundingBox(const Vec2& s)
 		: size(s), halfSize(s.x/2,s.y/2) {}
@@ -76,6 +76,18 @@ public:
 		: size(s), halfSize(s.x / 2, s.y / 2), offset(o) {}
 	CBoundingBox(CBoundingBox& other)
 		: size(other.size), halfSize(other.halfSize), offset(other.offset) {}
+};
+
+class CPolygonCollider : public Component
+{
+public:
+	std::vector<Vec2> colliderVertices;
+	Vec2 offset = {0.0f, 0.0f};
+	CPolygonCollider() {}
+	CPolygonCollider(const std::vector<Vec2>& vertices)
+		: colliderVertices(vertices) {}
+	CPolygonCollider(CPolygonCollider& other)
+		: colliderVertices(other.colliderVertices), offset(other.offset) {}
 };
 
 class CAnimation : public Component

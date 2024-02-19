@@ -34,4 +34,7 @@ public:
 	float length();
 
 	float dist(const Vec2& v) const;
+	float squaredDist(const Vec2& v) const;
+
+	float polar_angle(const Vec2& v) const;
 };

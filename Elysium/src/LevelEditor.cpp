@@ -1,6 +1,7 @@
 #include "GameEngine.h"
 #include "LevelEditor.h"
 #include "Physics.h"
+#include "graham_scan.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -320,6 +321,67 @@ void LevelEditor::sCollision()
 	}
 }
 
+std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(std::shared_ptr<Entity> entity)
+{
+	sf::Texture tex = m_assets[entity->getComponent<CAnimation>().animation.getName()];
+	sf::Image image = tex.copyToImage();
+	sf::Vector2u imageSize = image.getSize();
+
+	sf::Image paddedBinaryImage;
+	paddedBinaryImage.create(imageSize.x + 2, imageSize.y + 2);
+
+	for (int y = 0; y < imageSize.y + 2; ++y) {
+		for (int x = 0; x < imageSize.x + 2; ++x) {
+			if (y - 1 >= 0 && y - 1 < imageSize.y && x - 1 >= 0 && x - 1 < imageSize.x)
+			{
+				sf::Color pixelColor = image.getPixel(x - 1, y - 1);
+				int grayscaleColor = static_cast<int>((pixelColor.r + pixelColor.g + pixelColor.b) / 3);
+				if (grayscaleColor != 0)
+				{
+					paddedBinaryImage.setPixel(x, y, sf::Color::White);
+				}
+				else
+				{
+					paddedBinaryImage.setPixel(x, y, sf::Color::Black);
+				}
+			}
+			else
+			{
+				paddedBinaryImage.setPixel(x, y, sf::Color::Black);
+			}
+		}
+	}
+
+
+	// boundaryPoints = countourTracing(paddedBinaryImage) TODO: moore neighborhood contour tracing ??
+	std::vector<Vec2> boundaryPoints;
+	for (uint32_t y = 0; y < imageSize.y; ++y)
+	{
+		for (uint32_t x = 0; x < imageSize.x; ++x)
+		{
+			if (paddedBinaryImage.getPixel(x, y) == sf::Color::White &&
+				(paddedBinaryImage.getPixel(x - 1, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x - 1, y) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x - 1, y + 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x, y + 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y + 1) == sf::Color::Black))
+			{
+				boundaryPoints.push_back(Vec2(x, imageSize.y - y));
+			}
+		}
+	}
+
+	// TODO: reducing points ?? ramer-douglas-peucker algorithm
+
+	// TODO: more algs :  jarvis march, chan's algorithm etc
+	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
+
+	return convexHull;
+}
+
 template<typename T, typename UIFunction>
 static void DrawComponentGUI(const std::string& name, std::shared_ptr<Entity> entity, UIFunction uiFunction)
 {
@@ -475,7 +537,16 @@ void LevelEditor::entityInspectorGUI()
 	{
 		DisplayAddComponentEntry<CTransform>("Transform");
 		DisplayAddComponentEntry<CAnimation>("Animation");
-		DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
+		if (m_inspectedEntity->hasComponent<CAnimation>())
+		{
+			DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
+			DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
+		}
+		else
+		{
+			DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
+			DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
+		}
 		ImGui::EndPopup();
 	}
 
@@ -485,66 +556,76 @@ void LevelEditor::entityInspectorGUI()
 	DrawComponentGUI<CTransform>("Transform", m_inspectedEntity, [](auto& component)
 		{
 			DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
-	DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
-	DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
+			DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
+			DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
 		});
 
 	DrawComponentGUI<CAnimation>("Animation", m_inspectedEntity, [](auto& component)
 		{
 			float imgSize = 80.0f;
-	ImGui::PushID("Sprite");
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, 80.0f);
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize / 2 - 7.0f);
-	ImGui::Text("Sprite");
-	ImGui::NextColumn();
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize) / 2);
-	float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
-	float imgHeight = imgSize * aspectRatio;
-	float diff = imgSize - imgHeight;
-	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
-	ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
-	ImGui::Columns(1);
-	ImGui::PopID();
+			ImGui::PushID("Sprite");
+			ImGui::Columns(2);
+			ImGui::SetColumnWidth(0, 80.0f);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize / 2 - 7.0f);
+			ImGui::Text("Sprite");
+			ImGui::NextColumn();
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize) / 2);
+			float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
+			float imgHeight = imgSize * aspectRatio;
+			float diff = imgSize - imgHeight;
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
+			ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
+			ImGui::Columns(1);
+			ImGui::PopID();
 
-	int animSpeed = (int)component.animSpeed;
-	DrawIntControl("Speed", animSpeed, 0, 120);
-	component.animSpeed = animSpeed;
+			int animSpeed = (int)component.animSpeed;
+			DrawIntControl("Speed", animSpeed, 0, 120);
+			component.animSpeed = animSpeed;
 
-	int frameCount = (int)component.frameCount;
-	DrawIntControl("Frames", frameCount, 1, 20);
-	component.frameCount = frameCount;
+			int frameCount = (int)component.frameCount;
+			DrawIntControl("Frames", frameCount, 1, 20);
+			component.frameCount = frameCount;
 
-	DrawIntControl("Layer", component.layer, -1, 10);
+			DrawIntControl("Layer", component.layer, -1, 10);
 
-	ImGui::Checkbox("Repeatable", &component.repeat);
-	//ImGui::Checkbox("Play Animation", &m_playAnimation);
+			ImGui::Checkbox("Repeatable", &component.repeat);
+			//ImGui::Checkbox("Play Animation", &m_playAnimation);
 		});
 
 	DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_inspectedEntity, [](auto& component)
 		{
 			DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
-	DrawVec2Control("Size", component.size, 0.0f, 80.0f);
-	component.halfSize = component.size / 2;
+			DrawVec2Control("Size", component.size, 0.0f, 80.0f);
+			component.halfSize = component.size / 2;
 		});
 
+	DrawComponentGUI<CPolygonCollider>("Polygon Collider 2D", m_inspectedEntity, [](auto& component)
+		{
+			DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
+			if (ImGui::CollapsingHeader("Points"))
+			{
+				for (size_t i = 0; i < component.colliderVertices.size(); i++)
+				{
+					std::string label = "Point " + std::to_string(i);
+					DrawVec2Control(label, component.colliderVertices[i], 0.0f, 80.0f);
+				}
+			}
+		});
 }
 
-
-template<typename T>
-void LevelEditor::DisplayAddComponentEntry(const std::string& entryName)
+template<typename T, typename... TArgs>
+void LevelEditor::DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs)
 {
 	if (!m_inspectedEntity->hasComponent<T>())
 	{
 		if (ImGui::MenuItem(entryName.c_str()))
 		{
-			m_inspectedEntity->addComponent<T>();
+			m_inspectedEntity->addComponent<T>(std::forward<TArgs>(mArgs)...);
 			ImGui::CloseCurrentPopup();
 		}
 	}
 }
-
 
 void LevelEditor::contentBrowserGUI()
 {
@@ -628,7 +709,6 @@ void LevelEditor::contentBrowserGUI()
 	ImGui::SliderFloat("Padding", &padding, 0, 32);*/
 }
 
-
 void LevelEditor::entityManagerGUI()
 {
 	for (auto& e : m_entityManager.getEntities())
@@ -694,7 +774,6 @@ void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 		}
 	}
 }
-
 
 void LevelEditor::sGUI()
 {
@@ -787,20 +866,25 @@ void LevelEditor::sRender()
 				m_collisionRect.setPosition(e->getComponent<CTransform>().pos.x + offset.x, e->getComponent<CTransform>().pos.y + offset.y);
 				window.draw(m_collisionRect);
 			}
+			if (e->hasComponent<CPolygonCollider>())
+			{
+				sf::ConvexShape polygon;
+				std::vector<Vec2> vertices = e->getComponent<CPolygonCollider>().colliderVertices;
+				Vec2 offset = e->getComponent<CPolygonCollider>().offset;
+				Vec2 ePos = e->getComponent<CTransform>().pos;
+				Vec2 eSize = e->getComponent<CAnimation>().animation.getSize();
+				polygon.setPointCount(vertices.size());
+				for (size_t i = 0; i < vertices.size(); i++)
+				{
+					polygon.setPoint(i, sf::Vector2f(ePos.x + offset.x - eSize.x/2 + vertices[i].x, ePos.y + offset.y + eSize.y/2 - vertices[i].y));
+				}
+				polygon.setFillColor(sf::Color::Transparent);
+				polygon.setOutlineColor(sf::Color::White);
+				polygon.setOutlineThickness(1);
+				window.draw(polygon);
+			}
 		}
 	}
-	/*if (m_inspectedEntity)
-	{
-		if (m_inspectedEntity->hasComponent<CBoundingBox>())
-		{
-			Vec2 rectSize = m_inspectedEntity->getComponent<CBoundingBox>().size;
-			Vec2 offset = m_inspectedEntity->getComponent<CBoundingBox>().offset;
-			m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
-			m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-			m_collisionRect.setPosition(m_inspectedEntity->getComponent<CTransform>().pos.x + offset.x, m_inspectedEntity->getComponent<CTransform>().pos.y + offset.y);
-			window.draw(m_collisionRect);
-		}
-	}*/
 	if (m_drawGrid)
 	{
 		for (int x = -50; x < 50; x++)

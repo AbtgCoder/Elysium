@@ -44,8 +44,8 @@ protected:
 	void drawEntityNode(std::shared_ptr<Entity> entity);
 	void entityManagerGUI();
 	void entityInspectorGUI();
-	template<typename T>
-	void DisplayAddComponentEntry(const std::string& entryName);
+	template<typename T, typename... TArgs>
+	void DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs);
 
 
 	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
@@ -53,6 +53,8 @@ protected:
 	Vec2 gridToMidPixel(float gridX, float gridY);
 	void snapToGrid(std::shared_ptr<Entity> entity);
 	Vec2 windowToWorld(const Vec2& windowPos) const;
+
+	std::vector<Vec2> generatePolygonColliderVertices(std::shared_ptr<Entity> entity);
 
 	void loadLevel();
 	void loadAssets(const std::string& assetDir);

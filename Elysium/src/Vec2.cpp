@@ -37,9 +37,20 @@ float Vec2::dist(const Vec2& v) const
 {	
 	float dx = v.x - x;
 	float dy = v.y - y;
-	return ((dx * dx) + (dy * dy));
-	//	return sqrtf((dx*dx)+(dy*dy));
+	return sqrtf((dx*dx)+(dy*dy));
 //	return (v - *this).length();
+}
+
+float Vec2::squaredDist(const Vec2& v) const
+{
+	float dx = v.x - x;
+	float dy = v.y - y;
+	return ((dx * dx) + (dy * dy));
+}
+
+float Vec2::polar_angle(const Vec2& v) const
+{
+	return std::atan2(v.y - y, v.x - x);
 }
 
 void Vec2::operator+=(const Vec2& v)
