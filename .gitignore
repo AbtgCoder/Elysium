@@ -3,7 +3,6 @@
 Binaries/
 bin/
 bin-int/
-Assets/
 
 *.vcxproj
 *.vcxproj.user

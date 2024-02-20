@@ -56,7 +56,7 @@ protected:
 
 	std::vector<Vec2> generatePolygonColliderVertices(std::shared_ptr<Entity> entity);
 
-	void loadLevel();
+	bool loadLevel();
 	void loadAssets(const std::string& assetDir);
 	void saveLevel();
 	void spawnEntity(const std::string& name, const sf::Texture& tex);

@@ -1,19 +1,29 @@
 workspace "Elysium"
    architecture "x64"
+   startproject "Elysium"
    configurations { "Debug", "Release", "Dist" }
 
+   flags
+	{
+		"MultiProcessorCompile"
+	}
+
    -- Workspace-wide build options for MSVC
-   filter "system:windows"
-      buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
+  -- filter "system:windows"
+     -- buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
+
 
 OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+
+IncludeDir = {}
+IncludeDir["yaml_cpp"] = "%{wks.location}/Elysium/vendor/yaml-cpp/include"
 
 project "Elysium"
    location "Elysium" 
    kind "ConsoleApp"
    language "C++"
-   cppdialect "C++20"
+   cppdialect "C++17"
 
    targetdir("bin/" ..OutputDir.. "/%{prj.name}") 
    objdir("bin-int/" ..OutputDir.. "/%{prj.name}") 
@@ -30,11 +40,13 @@ project "Elysium"
    includedirs
    {
        "%{prj.name}/imgui/",
+       "%{IncludeDir.yaml_cpp}"
    }
 
    links
    {
-    "opengl32.lib"
+        "opengl32.lib",
+        "yaml-cpp"
    }
 
    externalincludedirs {"../SFML-2.5.1/include"}
@@ -83,5 +95,9 @@ project "Elysium"
            "sfml-system.lib"
        }
     
-        
-    
+     
+group "Dependencies"
+    include "Elysium/vendor/yaml-cpp"
+   
+   
+

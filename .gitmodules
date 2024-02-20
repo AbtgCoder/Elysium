@@ -1,0 +1,3 @@
+[submodule "Elysium/vendor/yaml-cpp"]
+	path = Elysium/vendor/yaml-cpp
+	url = https://github.com/AbtgCoder/yaml-cpp

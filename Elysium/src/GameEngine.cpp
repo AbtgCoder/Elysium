@@ -25,7 +25,6 @@ void GameEngine::init(const std::string& path)
 
 	// Initialize ImGui
 	ImGui::SFML::Init(m_window);
-	ImGui::SFML::Init(m_window);
 	ImGuiIO& io = ImGui::GetIO();
 	ImFontConfig config;
 	config.MergeMode = true;

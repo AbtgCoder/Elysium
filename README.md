@@ -10,9 +10,9 @@ Elysium is a comprehensive tool designed to empower game developers with a user-
 ### Must Do Features
 - [X] Entity Drag and Drop
 - [X] Duplicating Entities
-- [ ] Good UI
-- [ ] Entity Inspector and Attach Components to Entities. Progress: [===     ] 30% 
-- [ ] Save and load Entity component data. Progress: [=     ] 10% 
+- [X] Good UI
+- [X] Entity Inspector and Attach Components to Entities. 
+- [X] Save and load Entity component data. 
 - [ ] Make a Play Test Scene, where the created level and its systems(collision, animation, etc) can be tested. Progress: [ ] 0%
 - [ ] World view/camera to make bigger levels
 - [ ] Audio components
@@ -20,8 +20,10 @@ Elysium is a comprehensive tool designed to empower game developers with a user-
   
 ### Recommended Features
 - [ ] Select and Manipulate multiple entities
+- [X] Polygon Collider
 - [ ] Circle collider
-- [ ] Detect collision from particular directions
+- [ ] SAT for narrow phase detection
+- [ ] Broad Phase Collision detection 
 - [X] Rendering layers (demonstrate using parallax)
   
 ### Optional Features
