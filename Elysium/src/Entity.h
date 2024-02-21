@@ -7,6 +7,7 @@
 #include <utility>
 
 typedef std::tuple<
+	CTag,
 	CTransform,
 	CLifespan,
 	CInput,
@@ -17,7 +18,7 @@ typedef std::tuple<
 	CState,
 	CScore,
 	CDraggable
-> ComponentTyple;
+> ComponentTuple;
 
 class Entity
 {
@@ -78,7 +79,7 @@ private:
 	bool m_active = true;
 	size_t m_id = 0;
 	std::string m_tag = "default";
-	ComponentTyple m_components;
+	ComponentTuple m_components;
 	
 	Entity(const size_t id, const std::string& tag);
 

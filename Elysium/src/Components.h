@@ -9,6 +9,17 @@ public:
 	bool has = false;
 };
 
+class CTag : public Component
+{
+public:
+	std::string tag;
+	CTag() {}
+	CTag(const std::string& t)
+		: tag(t) {}
+	CTag(CTag& other)
+		: tag(other.tag) {}
+};
+
 class CTransform : public Component
 {
 public:

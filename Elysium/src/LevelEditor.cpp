@@ -2,6 +2,7 @@
 #include "LevelEditor.h"
 #include "Physics.h"
 #include "graham_scan.h"
+#include "Scene_Play.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -60,6 +61,7 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::Escape, "QUIT");
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
+	registerAction(sf::Keyboard::T, "PLAY_LEVEL");
 
 	// Set ImGui Styles
 	setImGuiStyle();
@@ -68,7 +70,7 @@ void LevelEditor::init()
 	m_DirectoryIcon = m_game->assets().getTexture("DirectoryIcon");
 	m_FileIcon = m_game->assets().getTexture("FileIcon");
 
-	m_gameView.reset(sf::FloatRect(0, 0, 1264, 762));
+	m_gameView.reset(sf::FloatRect(0, 0, 1262, 762));
 	m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
 
 	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
@@ -95,7 +97,7 @@ void LevelEditor::init()
 
 	std::string assetDir = "../../../Assets/textures/";
 	loadAssets(assetDir);
-	loadLevel();
+	loadLevel("../../../Assets/levels/level_test.elysium");
 }
 
 void LevelEditor::setImGuiStyle()
@@ -199,12 +201,8 @@ void LevelEditor::loadAssets(const std::string& assetDir)
 	}
 }
 
-bool LevelEditor::loadLevel()
+bool LevelEditor::loadLevel(const std::filesystem::path& filepath)
 {
-	m_entityManager = EntityManager();
-
-	std::filesystem::path filepath = "../../../Assets/levels/level_test.elysium";
-
 	YAML::Node data;
 	try
 	{
@@ -222,6 +220,8 @@ bool LevelEditor::loadLevel()
 		return false;
 	}
 
+	m_entityManager = EntityManager();
+
 	std::string levelName = data["Level"].as<std::string>();
 
 	auto entities = data["Entities"];
@@ -231,6 +231,7 @@ bool LevelEditor::loadLevel()
 		{
 			auto tag = entity["Entity"].as<std::string>();
 			std::shared_ptr<Entity> deserializedEntity = m_entityManager.addEntity(tag);
+			deserializedEntity->addComponent<CTag>(tag);
 
 			auto transformComponent = entity["Transform"];
 			if (transformComponent)
@@ -275,6 +276,15 @@ bool LevelEditor::loadLevel()
 					pc2d.colliderVertices.push_back(element.as<Vec2>());
 				}
 			}
+
+			auto gravityComponent = entity["Gravity"];
+			if (gravityComponent)
+			{
+				auto& gc = deserializedEntity->addComponent<CGravity>();
+				gc.gravity = gravityComponent["Gravity"].as<float>();
+			}
+
+			deserializedEntity->addComponent<CDraggable>();
 		}
 	}
 
@@ -284,7 +294,7 @@ bool LevelEditor::loadLevel()
 static void serializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
 {
 	out << YAML::BeginMap; // Entity
-	out << YAML::Key << "Entity" << YAML::Value << entity->tag();
+	out << YAML::Key << "Entity" << YAML::Value << entity->getComponent<CTag>().tag;
 	if (entity->hasComponent<CTransform>())
 	{
 		out << YAML::Key << "Transform";
@@ -341,7 +351,15 @@ static void serializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
 		out << YAML::EndMap;
 		out << YAML::EndMap;
 	}
+	if (entity->hasComponent<CGravity>())
+	{
+		out << YAML::Key << "Gravity";
+		out << YAML::BeginMap;
 
+		auto& gc = entity->getComponent<CGravity>();
+		out << YAML::Key << "Gravity" << YAML::Value << gc.gravity;
+		out << YAML::EndMap;
+	}
 	out << YAML::EndMap;
 }
 
@@ -406,6 +424,7 @@ Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 {
 	auto e = m_entityManager.addEntity("Tile");
+	e->addComponent<CTag>("Tile");
 	e->addComponent<CAnimation>(Animation(name, tex), true, 0);
 	e->addComponent<CTransform>(m_mousePos);
 	e->addComponent<CDraggable>(true);
@@ -414,21 +433,14 @@ void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 
 void LevelEditor::update()
 {
+	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_entityManager.update();
 	if (m_enableDragging)
 	{
 		sDrag();
 	}
-	if (m_playAnimation)
-	{
-		sAnimation();
-	}
-	if (m_inspectedEntity)
-	{
-		//sCollision();
-	}
-	sGUI();
 	sRender();
+	sGUI();
 }
 
 void LevelEditor::sDrag()
@@ -654,14 +666,13 @@ static void DrawIntControl(const std::string& label, int& value, int vMin = 0, i
 
 void LevelEditor::entityInspectorGUI()
 {
-	auto& tag = m_inspectedEntity->tag();
+	auto& tag = m_inspectedEntity->getComponent<CTag>().tag;
 	char buffer[256];
 	memset(buffer, 0, sizeof(buffer));
 	strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
 	if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
 	{
-		//tag = std::string(buffer);
-		// TODO: Ability to change tag of entity, TagComponent ??
+		tag = std::string(buffer);
 	}
 
 	ImGui::SameLine();
@@ -676,6 +687,7 @@ void LevelEditor::entityInspectorGUI()
 	{
 		DisplayAddComponentEntry<CTransform>("Transform");
 		DisplayAddComponentEntry<CAnimation>("Animation");
+		DisplayAddComponentEntry<CGravity>("Gravity");
 		if (m_inspectedEntity->hasComponent<CAnimation>())
 		{
 			DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
@@ -751,6 +763,11 @@ void LevelEditor::entityInspectorGUI()
 				}
 			}
 		});
+
+	DrawComponentGUI<CGravity>("Gravity", m_inspectedEntity, [](auto& component)
+		{
+			DrawFloatControl("Gravity", component.gravity, 0.0f, 10.0f);
+		});
 }
 
 template<typename T, typename... TArgs>
@@ -819,15 +836,19 @@ void LevelEditor::contentBrowserGUI()
 				ImGui::ImageButton(m_FileIcon, { thumbnailSize, thumbnailSize });
 			}
 
-		}
-		if (ImGui::BeginPopupContextItem())
-		{
-			if (ImGui::MenuItem("Import"))
+			if (directoryEntry.path().extension().string() == ".elysium")
 			{
-				// TODO: Import assets
+				if (ImGui::BeginPopupContextItem())
+				{
+					if (ImGui::MenuItem("Load Level"))
+					{
+						loadLevel(directoryEntry.path());
+					}
+					ImGui::EndPopup();
+				}
 			}
-			ImGui::EndPopup();
 		}
+		
 		ImGui::PopStyleColor();
 
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
@@ -865,7 +886,8 @@ void LevelEditor::entityManagerGUI()
 	{
 		if (ImGui::MenuItem("Create Empty Entity"))
 		{
-			m_entityManager.addEntity("Empty Entity");
+			auto entity = m_entityManager.addEntity("Empty Entity");
+			entity->addComponent<CTag>("Empty Entity");
 		}
 		ImGui::EndPopup();
 	}
@@ -873,7 +895,7 @@ void LevelEditor::entityManagerGUI()
 
 void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 {
-	auto& tag = entity->tag();
+	auto& tag = entity->getComponent<CTag>().tag;
 
 	ImGuiTreeNodeFlags flags = ((m_inspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -895,6 +917,7 @@ void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 
 	if (opened)
 	{
+		// TODO: add entity info  ?? (id, pos, etc)
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 		bool opened = ImGui::TreeNodeEx((void*)9817239, flags, tag.c_str());
 		if (opened)
@@ -916,8 +939,13 @@ void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 
 void LevelEditor::sGUI()
 {
-	ImGui::SetNextWindowPos(ImVec2(1265.f, 0.f), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(315.f, 762.f), ImGuiCond_Always);
+	ImVec2 guiWinSize;
+	guiWinSize.x = 315.0f;
+	guiWinSize.y = m_game->window().getSize().y;
+	ImGui::SetNextWindowPos(ImVec2(1265.0f, 0.0f));
+	ImGui::SetNextWindowSize(guiWinSize);
+
+
 	ImGui::Begin("Level Editor", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	if (ImGui::BeginChild("child1", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2)))
@@ -976,6 +1004,7 @@ void LevelEditor::sGUI()
 		}
 	}
 	ImGui::End();
+	ImGui::SFML::Render(m_game->window());
 }
 
 void LevelEditor::sRender()
@@ -1132,6 +1161,13 @@ void LevelEditor::sDoAction(const Action& action)
 			saveLevel();
 			m_hasEnded = true;
 			onEnd();
+		}
+		else if (action.name() == "PLAY_LEVEL")
+		{
+			saveLevel();
+			std::string levelPath = "../../../Assets/levels/level_test.elysium";
+ 			std::shared_ptr<Scene> scenePlay = std::make_shared<Scene_Play>(m_game, levelPath);
+			m_game->changeScene("Play", scenePlay, true);
 		}
 	}
 	

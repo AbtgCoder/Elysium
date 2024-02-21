@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 
+#include <filesystem>
 
 class Scene_Play : public Scene
 {
@@ -47,7 +48,10 @@ protected:
 	void init(const std::string& levelPath);
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY);
-	void loadLevel(const std::string& filename);
+
+	std::map<std::string, sf::Texture> m_assets;
+	void loadAssets(const std::string& assetDir);
+	bool loadLevel(const std::filesystem::path& filepath);
 	void spawnPlayer();
 
 

@@ -79,6 +79,7 @@ void GameEngine::changeScene(const std::string& sceneName, std::shared_ptr<Scene
 	{
 		m_sceneMap.erase(m_currentScene);
 	}
+	
 	m_currentScene = sceneName;
 	m_sceneMap[m_currentScene] = scene;
 }
@@ -95,9 +96,7 @@ void GameEngine::run()
 	while (m_running && m_window.isOpen())
 	{
 		sUserInput();
-		ImGui::SFML::Update(m_window, m_deltaClock.restart());
 		update();
-		ImGui::SFML::Render(m_window);
 		m_window.display();
 	}
 

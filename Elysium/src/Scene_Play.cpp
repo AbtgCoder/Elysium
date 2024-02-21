@@ -1,14 +1,46 @@
 #include "Scene_Play.h"
 #include "Scene_Menu.h"
-
+#include "LevelEditor.h"
 #include "Physics.h"
 #include "Assets.h"
 #include "GameEngine.h"
 #include "Components.h"
 #include "Action.h"
 
+#include "imgui.h"
+#include "imgui-SFML.h"
+
+#include <yaml-cpp/yaml.h>
+
 #include <iostream>
 #include <fstream>
+
+namespace YAML
+{
+	template<>
+	struct convert<Vec2>
+	{
+		static Node encode(const Vec2& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+		static bool decode(const Node& node, Vec2& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 2)
+			{
+				return false;
+			}
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			return true;
+		}
+	};
+}
+
 
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, std::string& levelPath)
@@ -34,6 +66,8 @@ void Scene_Play::init(const std::string& levelPath)
 	m_gridText.setFont(m_game->assets().getFont("Tech"));
 	m_gridText.setPosition(sf::Vector2f(5, 5));
 
+	std::string assetDir = "../../../Assets/textures/";
+	loadAssets(assetDir);
 	loadLevel(levelPath);
 }
 
@@ -50,60 +84,135 @@ Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY)
 
 void Scene_Play::spawnPlayer()
 {
-	auto entity = m_entityManager.addEntity("player");
-	entity->addComponent<CAnimation>(m_game->assets().getAnimation("air"), true);
-	entity->addComponent<CTransform>(gridToMidPixel(m_playerConfig.X, m_playerConfig.Y, entity));
-	entity->addComponent<CBoundingBox>(entity->getComponent<CAnimation>().animation.getSize());
-	entity->addComponent<CState>("air");
-	entity->addComponent<CGravity>(m_playerConfig.GRAVITY);
-	entity->addComponent<CInput>();
-	m_player = entity;
+	for (auto entity : m_entityManager.getEntities())
+	{
+		if (entity->tag() == "Player")
+		{
+			entity->addComponent<CState>("air");
+			entity->addComponent<CInput>();
+			m_player = entity;
+			break;
+		}
+	}
+
 }
 
-void Scene_Play::loadLevel(const std::string& filename)
+void Scene_Play::loadAssets(const std::string& assetDir)
 {
+	for (const auto& entry : std::filesystem::directory_iterator(assetDir))
+	{
+		if (!entry.is_directory())
+		{
+			std::string fileName = entry.path().string();
+			sf::Texture texture;
+			if (texture.loadFromFile(fileName))
+			{
+				m_assets[entry.path().stem().string()] = texture;
+			}
+			else
+			{
+				std::cerr << "Failed to load texture from file: " << fileName << std::endl;
+			}
+		}
+	}
+}
+
+bool Scene_Play::loadLevel(const std::filesystem::path& filepath)
+{
+	YAML::Node data;
+	try
+	{
+		data = YAML::LoadFile(filepath.string());
+	}
+	catch (YAML::ParserException e)
+	{
+		std::cout << "Couldnt load file: " << filepath << "\n";
+		return false;
+	}
+
+	if (!data["Level"])
+	{
+		std::cout << "no level data\n";
+		return false;
+	}
 
 	m_entityManager = EntityManager();
 
-	std::ifstream levelFile(filename);
-	std::string entityType;
-	while (levelFile >> entityType)
-	{
-		if (entityType == "Tile")
-		{
-			std::string tileName;
-			int gridX, gridY;
-			levelFile >> tileName >> gridX >> gridY;
-			auto tile = m_entityManager.addEntity("tile");
-			tile->addComponent<CAnimation>(m_game->assets().getAnimation(tileName), true);
-			tile->addComponent<CTransform>(gridToMidPixel(gridX, gridY, tile));
-			tile->addComponent<CBoundingBox>(tile->getComponent<CAnimation>().animation.getSize());
-		}
-		if (entityType == "Dec")
-		{
-			std::string tileName;
-			int gridX, gridY;
-			levelFile >> tileName >> gridX >> gridY;
-			auto tile = m_entityManager.addEntity("dec");
-			tile->addComponent<CAnimation>(m_game->assets().getAnimation(tileName), true);
-			tile->addComponent<CTransform>(gridToMidPixel(gridX, gridY, tile));
-		}
-		if (entityType == "Player")
-		{
-			levelFile >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED >> m_playerConfig.MAXSPEED >> m_playerConfig.JUMP >> m_playerConfig.GRAVITY >> m_playerConfig.WEAPON;
+	std::string levelName = data["Level"].as<std::string>();
 
+	auto entities = data["Entities"];
+	if (entities)
+	{
+		for (auto entity : entities)
+		{
+			auto tag = entity["Entity"].as<std::string>();
+			auto deserializedEntity = m_entityManager.addEntity(tag);
+			deserializedEntity->addComponent<CTag>(tag);
+			
+			auto transformComponent = entity["Transform"];
+			if (transformComponent)
+			{
+				auto& tc = deserializedEntity->addComponent<CTransform>();
+				tc.pos = transformComponent["Position"].as<Vec2>();
+				tc.prevPos = tc.pos;
+				tc.scale = transformComponent["Scale"].as<Vec2>();
+				tc.angle = transformComponent["Angle"].as<float>();
+			}
+
+			auto animationComponent = entity["Animation"];
+			if (animationComponent)
+			{
+				std::string textureName = animationComponent["Texture"].as<std::string>();
+				size_t animationSpeed = animationComponent["Speed"].as<size_t>();
+				size_t frameCount = animationComponent["Frames"].as<size_t>();
+				bool repeat = animationComponent["Repeatable"].as<bool>();
+				auto& ac = deserializedEntity->addComponent<CAnimation>(Animation(textureName, m_assets[textureName], frameCount, animationSpeed), repeat);
+				ac.animSpeed = animationSpeed;
+				ac.frameCount = frameCount;
+				ac.layer = animationComponent["Layer"].as<int>();
+			}
+
+			auto boundingBoxComponent = entity["AABB"];
+			if (boundingBoxComponent)
+			{
+				auto& bc2d = deserializedEntity->addComponent<CBoundingBox>();
+				bc2d.offset = boundingBoxComponent["Offset"].as<Vec2>();
+				bc2d.size = boundingBoxComponent["Size"].as<Vec2>();
+				bc2d.halfSize = bc2d.size / 2;
+			}
+
+			auto polygonColliderComponent = entity["PolygonCollider"];
+			if (polygonColliderComponent)
+			{
+				auto& pc2d = deserializedEntity->addComponent<CPolygonCollider>();
+				pc2d.offset = polygonColliderComponent["Offset"].as<Vec2>();
+				auto verticesData = polygonColliderComponent["Points"];
+				auto elements = verticesData["Elements"];
+				for (auto element : elements)
+				{
+					pc2d.colliderVertices.push_back(element.as<Vec2>());
+				}
+			}
+
+			auto gravityComponent = entity["Gravity"];
+			if (gravityComponent)
+			{
+				auto& gc = deserializedEntity->addComponent<CGravity>();
+				gc.gravity = gravityComponent["Gravity"].as<float>();
+			}
 		}
 	}
-	levelFile.close();
+
+	m_entityManager.update();
 	spawnPlayer();
-	
+	return true;
 }
 
 void Scene_Play::update()
 {
 	m_currentFrame++;
 	m_entityManager.update();
-	sEnemySpawner();
+	//sEnemySpawner();
 	sMovement();
 	sCollision();
 	sAnimation();
@@ -132,8 +241,6 @@ void Scene_Play::sAnimation()
 
 void Scene_Play::sMovement()
 {
-	// within bounds //
-
 	// Check for left/right movement and apply acceleration
 	if (m_player->getComponent<CState>().state != "air") 
 	{
@@ -142,9 +249,9 @@ void Scene_Play::sMovement()
 			if (m_player->getComponent<CState>().state != "running_left")
 			{
 				m_player->getComponent<CState>().state = "running_left";
-				m_player->addComponent<CAnimation>(m_game->assets().getAnimation("runleft"), true);
+				//m_player->addComponent<CAnimation>(m_game->assets().getAnimation("runleft"), true);
 			}
-			m_player->getComponent<CTransform>().velocity.x -= m_playerConfig.SPEED;
+			m_player->getComponent<CTransform>().velocity.x -= 5.0f;
 			if (m_player->getComponent<CTransform>().velocity.x < -5.0f)
 			{
 				m_player->getComponent<CTransform>().velocity.x = -5.0f;
@@ -155,9 +262,9 @@ void Scene_Play::sMovement()
 			if (m_player->getComponent<CState>().state != "running_right")
 			{
 				m_player->getComponent<CState>().state = "running_right";
-				m_player->addComponent<CAnimation>(m_game->assets().getAnimation("runright"), true);
+				//m_player->addComponent<CAnimation>(m_game->assets().getAnimation("runright"), true);
 			}
-			m_player->getComponent<CTransform>().velocity.x += m_playerConfig.SPEED;
+			m_player->getComponent<CTransform>().velocity.x += 5.0f;
 			if (m_player->getComponent<CTransform>().velocity.x > 5.0f)
 			{
 				m_player->getComponent<CTransform>().velocity.x = 5.0f;
@@ -169,7 +276,7 @@ void Scene_Play::sMovement()
 			if (m_player->getComponent<CState>().state != "ground")
 			{
 				m_player->getComponent<CState>().state = "ground";
-				m_player->addComponent<CAnimation>(m_game->assets().getAnimation("player"), true);
+				//m_player->addComponent<CAnimation>(m_game->assets().getAnimation("player"), true);
 			}
 		}
 	}
@@ -177,19 +284,19 @@ void Scene_Play::sMovement()
 
 	// Apply gravity
 	m_player->getComponent<CTransform>().velocity.y +=  m_player->getComponent<CGravity>().gravity;
-	
+
 
 	// Check for jump
 	if (m_player->getComponent<CState>().state != "air" && m_player->getComponent<CInput>().up) 
 	{
-		m_player->getComponent<CTransform>().velocity.y = -m_playerConfig.JUMP;
+		m_player->getComponent<CTransform>().velocity.y = -20.0f;
 		m_player->getComponent<CState>().state = "air";
-		m_player->addComponent<CAnimation>(m_game->assets().getAnimation("air"), true);
+		//m_player->addComponent<CAnimation>(m_game->assets().getAnimation("air"), true);
 	}
 
-	if (m_player->getComponent<CTransform>().velocity.y > m_playerConfig.MAXSPEED)
+	if (m_player->getComponent<CTransform>().velocity.y > 20)
 	{
-		m_player->getComponent<CTransform>().velocity.y = m_playerConfig.MAXSPEED;
+		m_player->getComponent<CTransform>().velocity.y = 20.0f;
 	}
 
 
@@ -236,12 +343,10 @@ void Scene_Play::sEnemySpawner()
 	}
 }
 
-
 void Scene_Play::sCollision()
 {
-	for (auto& e : m_entityManager.getEntities("tile"))
+	for (auto& e : m_entityManager.getEntities("Tile"))
 	{
-
 		Vec2 overlap = Physics::GetOverlap(m_player, e);
 		if (overlap.x > 0 && overlap.y > 0)
 		{
@@ -271,6 +376,7 @@ void Scene_Play::sCollision()
 				}
 				if (prevOverlap.x > 0)
 				{
+
 					// vertical
 					if (m_player->getComponent<CTransform>().prevPos.y < m_player->getComponent<CTransform>().pos.y)
 					{
@@ -281,7 +387,7 @@ void Scene_Play::sCollision()
 						if (m_player->getComponent<CState>().state == "air")
 						{
 							m_player->getComponent<CState>().state = "ground";
-							m_player->addComponent<CAnimation>(m_game->assets().getAnimation("player"), true);
+							//m_player->addComponent<CAnimation>(m_game->assets().getAnimation("player"), true);
 						}
 					}
 					else
@@ -422,7 +528,7 @@ void Scene_Play::sRender()
 	m_gridText.setString("Score: " + std::to_string(m_score));
 	m_gridText.setPosition(m_gameView.getCenter() - 0.5f*m_gameView.getSize() + sf::Vector2f(5, 5));
 	window.draw(m_gridText);
-	window.display();
+	//window.display();
 }
 
 void Scene_Play::sDoAction(const Action& action)
@@ -481,9 +587,9 @@ void Scene_Play::sDoAction(const Action& action)
 
 }
 
-
 void Scene_Play::onEnd()
 {
+
 	// change back to menu scene
 	for (auto& e : m_entityManager.getEntities())
 	{
@@ -492,6 +598,6 @@ void Scene_Play::onEnd()
 	m_entityManager.update();
 	m_hasEnded = true;
 	m_game->window().setView(m_game->window().getDefaultView());
-	std::shared_ptr<Scene> sceneMenu = std::make_shared<Scene_Menu>(m_game);
-	m_game->changeScene("menu", sceneMenu, m_hasEnded);
+	std::shared_ptr<Scene> levelEditor = std::make_shared<LevelEditor>(m_game);
+	m_game->changeScene("level_editor", levelEditor, m_hasEnded);
 }

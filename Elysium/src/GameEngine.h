@@ -18,6 +18,7 @@ public:
 	void run();
 
 	sf::RenderWindow& window();
+	sf::Clock m_deltaClock;
 	const Assets& assets() const;
 	bool isRunning();
 	const SceneMap& scenes() const;
@@ -26,7 +27,6 @@ protected:
 	sf::RenderWindow m_window;
 	Assets m_assets;
 
-	sf::Clock m_deltaClock;
 	std::string m_currentScene;
 	SceneMap m_sceneMap;
 	size_t m_simulationSpeed = 1;
