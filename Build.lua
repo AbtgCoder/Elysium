@@ -35,12 +35,12 @@ project "Elysium"
        "%{prj.name}/imgui/**.h",
        "%{prj.name}/imgui/**.cpp",
    }
-   removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
+   --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
    includedirs
    {
        "%{prj.name}/imgui/",
-       "%{IncludeDir.yaml_cpp}"
+       "%{IncludeDir.yaml_cpp}",
    }
 
    links
@@ -98,6 +98,7 @@ project "Elysium"
      
 group "Dependencies"
     include "Elysium/vendor/yaml-cpp"
+   -- include "Elysium/vendor/imgui"
    
    
 

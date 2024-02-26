@@ -2,7 +2,7 @@ Level: Untitled
 Entities:
   - Entity: Tile
     Transform:
-      Position: [160, 730]
+      Position: [288, 537]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -13,7 +13,7 @@ Entities:
       Layer: 0
   - Entity: Tile
     Transform:
-      Position: [224, 730]
+      Position: [224, 729]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -51,7 +51,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [352, 730]
+      Position: [414.75, 538.25]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -89,7 +89,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [416, 730]
+      Position: [416, 729]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -108,7 +108,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [416, 666]
+      Position: [416, 665]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -184,7 +184,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [544, 538]
+      Position: [992, 601]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -195,7 +195,7 @@ Entities:
       Layer: 0
     AABB:
       Offset: [0, 0]
-      Size: [0, 0]
+      Size: [64, 64]
     PolygonCollider:
       Offset: [0, 0]
       Points:
@@ -222,7 +222,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [608, 538]
+      Position: [670.500061, 729.5]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -241,7 +241,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [608, 474]
+      Position: [304, 422]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -260,7 +260,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [608, 602]
+      Position: [304, 422]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -317,7 +317,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [608, 730]
+      Position: [608, 729]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -336,7 +336,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [672, 730]
+      Position: [672, 920]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -350,7 +350,7 @@ Entities:
       Size: [64, 64]
   - Entity: Tile
     Transform:
-      Position: [736, 730]
+      Position: [672, 856]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -364,21 +364,7 @@ Entities:
       Size: [64, 64]
   - Entity: Tile
     Transform:
-      Position: [800, 730]
-      Scale: [1, 1]
-      Angle: 0
-    Animation:
-      Texture: ground
-      Speed: 0
-      Frames: 1
-      Repeatable: true
-      Layer: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [64, 64]
-  - Entity: Tile
-    Transform:
-      Position: [864, 730]
+      Position: [487.75, 469.25]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -420,7 +406,7 @@ Entities:
       Size: [64, 64]
   - Entity: Tile
     Transform:
-      Position: [1088, 602]
+      Position: [1088, 309]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -461,7 +447,7 @@ Entities:
       Size: [64, 64]
   - Entity: Player
     Transform:
-      Position: [734, 341.5]
+      Position: [798, 432.5]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -475,3 +461,77 @@ Entities:
       Size: [60, 73]
     Gravity:
       Gravity: 1.29999995
+  - Entity: Tile
+    Transform:
+      Position: [734.500061, 730.500061]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: ground
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0
+    AABB:
+      Offset: [0, 0]
+      Size: [64, 64]
+    PolygonCollider:
+      Offset: [0, 0]
+      Points:
+        Size: 0
+        Elements: []
+    Gravity:
+      Gravity: 0
+  - Entity: Tile
+    Transform:
+      Position: [800.5, 730.500061]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: ground
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0
+    AABB:
+      Offset: [0, 0]
+      Size: [64, 64]
+    PolygonCollider:
+      Offset: [0, 0]
+      Points:
+        Size: 0
+        Elements: []
+    Gravity:
+      Gravity: 0
+  - Entity: Tile
+    Transform:
+      Position: [864, 729]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: ground
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0
+    AABB:
+      Offset: [0, 0]
+      Size: [64, 64]
+    PolygonCollider:
+      Offset: [0, 0]
+      Points:
+        Size: 0
+        Elements: []
+    Gravity:
+      Gravity: 0
+  - Entity: Tile
+    Transform:
+      Position: [1184, 693]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: block
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0

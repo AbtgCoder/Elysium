@@ -1,3 +1,7 @@
 [submodule "Elysium/vendor/yaml-cpp"]
 	path = Elysium/vendor/yaml-cpp
 	url = https://github.com/AbtgCoder/yaml-cpp
+[submodule "Elysium/vendor/imgui"]
+	path = Elysium/vendor/imgui
+	url = https://github.com/AbtgCoder/imgui.git
+	branch = docking
