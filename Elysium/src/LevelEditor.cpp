@@ -62,6 +62,8 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
 	registerAction(sf::Keyboard::T, "PLAY_LEVEL");
+	registerAction(sf::Keyboard::LAlt, "ALT");
+
 
 	// Set ImGui Styles
 	setImGuiStyle();
@@ -70,8 +72,13 @@ void LevelEditor::init()
 	m_DirectoryIcon = m_game->assets().getTexture("DirectoryIcon");
 	m_FileIcon = m_game->assets().getTexture("FileIcon");
 
-	m_gameView.reset(sf::FloatRect(0, 0, 1262, 762));
-	m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
+
+	m_viewportSize.x = 1280;
+	m_viewportSize.y = 762;
+
+	m_levelView.setSize(1000.0f, 1000.0f);
+	m_levelViewCenter = m_levelView.getCenter();
+	//m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
 
 	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
 	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
@@ -88,12 +95,6 @@ void LevelEditor::init()
 	m_cursorDot.setFillColor(sf::Color::Red);
 	m_cursorDot.setRadius(8);
 	m_cursorDot.setOrigin(8, 8);
-
-	m_gameBG.setSize(sf::Vector2f(m_gameView.getSize().x, m_gameView.getSize().y-2));
-	m_gameBG.setFillColor(sf::Color(100, 100, 255));
-	m_gameBG.setOutlineThickness(1);
-	m_gameBG.setOutlineColor(sf::Color(45, 45, 45));
-	m_gameBG.setPosition(sf::Vector2f(1.f, 1.f));
 
 	std::string assetDir = "../../../Assets/textures/";
 	loadAssets(assetDir);
@@ -398,29 +399,34 @@ Vec2 LevelEditor::worldToGrid(std::shared_ptr<Entity> entity)
 Vec2 LevelEditor::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
 {
 	Vec2 animSize = entity->getComponent<CAnimation>().animation.getSize();
-	return Vec2(gridX * m_gridSize.x + (animSize.x / 2), m_game->window().getSize().y - (gridY * m_gridSize.y + (animSize.y / 2)));
+	return Vec2(gridX * m_gridSize.x + (animSize.x / 2), m_viewportSize.y - (gridY * m_gridSize.y + (animSize.y / 2)));
 }
 
 Vec2 LevelEditor::gridToMidPixel(float gridX, float gridY)
 {
-	return Vec2(gridX * m_gridSize.x + (m_gridSize.x / 2), m_game->window().getSize().y - (gridY * m_gridSize.y + (m_gridSize.y / 2)));
+	return Vec2(gridX * m_gridSize.x + (m_gridSize.x / 2), m_viewportSize.y - (gridY * m_gridSize.y + (m_gridSize.y / 2)));
 }
 
 void LevelEditor::snapToGrid(std::shared_ptr<Entity> entity)
 {
 	Vec2 ePos(entity->getComponent<CTransform>().pos.x - (entity->getComponent<CAnimation>().animation.getSize() / 2).x, entity->getComponent<CTransform>().pos.y + (entity->getComponent<CAnimation>().animation.getSize() / 2).y);
-	int gridX = std::round(ePos.x / m_gridSize.x), gridY = std::round((m_game->window().getSize().y - ePos.y) / m_gridSize.y);
+	int gridX = std::round(ePos.x / m_gridSize.x), gridY = std::round((m_viewportSize.y - ePos.y) / m_gridSize.y);
 	entity->getComponent<CTransform>().pos = gridToMidPixel(gridX, gridY, entity);
 }
 
 Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 {
-	auto view = m_game->window().getView();
+	/*auto view = m_game->window().getView();
 	float wx = view.getCenter().x - (m_game->window().getSize().x / 2);
-	float wy = view.getCenter().y - (m_game->window().getSize().y / 2);
-	return Vec2(windowPos.x + wx, windowPos.y + wy);
-}
+	float wy = view.getCenter().y - (m_game->window().getSize().y / 2);*/
+	//return Vec2(windowPos.x + wx, windowPos.y + wy);
 
+	auto viewportPos = windowPos - m_viewportBounds.first;
+	Vec2 viewportSize = m_viewportBounds.second - m_viewportBounds.first;
+	//viewportPos.y = viewportSize.y - viewportPos.y;
+	return viewportPos;
+}
+ 
 void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 {
 	auto e = m_entityManager.addEntity("Tile");
@@ -439,8 +445,9 @@ void LevelEditor::update()
 	{
 		sDrag();
 	}
-	sRender();
+	sDockingRender();
 	sGUI();
+	//sRender();
 }
 
 void LevelEditor::sDrag()
@@ -449,10 +456,82 @@ void LevelEditor::sDrag()
 	{
 		if (e->hasComponent<CDraggable>() && e->getComponent<CDraggable>().dragging)
 		{
-			Vec2 wPos = windowToWorld(m_mousePos);
+			Vec2 viewportPos = windowToWorld(m_mousePos);
+			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 			e->getComponent<CTransform>().pos = wPos;
 		}
 	}
+}
+
+void LevelEditor::sDockingRender()
+{
+	m_rt.create(m_viewportSize.x, m_viewportSize.y);
+	m_levelView.setSize(m_viewportSize.x, m_viewportSize.y);
+	m_levelView.zoom(m_levelViewZoom);
+	m_rt.setView(m_levelView);
+	m_rt.clear(sf::Color::Blue);
+
+	for (auto& e : m_entityManager.getEntities())
+	{
+		if (e->hasComponent<CAnimation>())
+		{
+			e->getComponent<CAnimation>().animation.getSprite().setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+			e->getComponent<CAnimation>().animation.getSprite().setScale(e->getComponent<CTransform>().scale.x, e->getComponent<CTransform>().scale.y);
+			e->getComponent<CAnimation>().animation.getSprite().setRotation(e->getComponent<CTransform>().angle);
+			m_rt.draw(e->getComponent<CAnimation>().animation.getSprite());
+		}
+		if (m_drawCollision || e == m_inspectedEntity)
+		{
+			if (e->hasComponent<CBoundingBox>())
+			{
+				Vec2 rectSize = e->getComponent<CBoundingBox>().size;
+				Vec2 offset = e->getComponent<CBoundingBox>().offset;
+				m_collisionRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
+				m_collisionRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
+				m_collisionRect.setPosition(e->getComponent<CTransform>().pos.x + offset.x, e->getComponent<CTransform>().pos.y + offset.y);
+				m_rt.draw(m_collisionRect);
+			}
+			if (e->hasComponent<CPolygonCollider>())
+			{
+				sf::ConvexShape polygon;
+				std::vector<Vec2> vertices = e->getComponent<CPolygonCollider>().colliderVertices;
+				Vec2 offset = e->getComponent<CPolygonCollider>().offset;
+				Vec2 ePos = e->getComponent<CTransform>().pos;
+				Vec2 eSize = e->getComponent<CAnimation>().animation.getSize();
+				polygon.setPointCount(vertices.size());
+				for (size_t i = 0; i < vertices.size(); i++)
+				{
+					polygon.setPoint(i, sf::Vector2f(ePos.x + offset.x - eSize.x / 2 + vertices[i].x, ePos.y + offset.y + eSize.y / 2 - vertices[i].y));
+				}
+				polygon.setFillColor(sf::Color::Transparent);
+				polygon.setOutlineColor(sf::Color::White);
+				polygon.setOutlineThickness(1);
+				m_rt.draw(polygon);
+			}
+		}
+	}
+	if (m_drawGrid)
+	{
+		for (int x = -50; x < 50; x++)
+		{
+			for (int y = -20; y < 20; y++)
+			{
+				Vec2 gridCellPos = gridToMidPixel(x, y);
+				m_gridRect.setPosition(gridCellPos.x, gridCellPos.y);
+				m_rt.draw(m_gridRect);
+				m_gridText.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
+				m_gridText.setPosition(gridCellPos.x - (m_gridSize.x / 2) + 5, gridCellPos.y - (m_gridSize.y / 2) + 5);
+				m_rt.draw(m_gridText);
+			}
+		}
+	}
+
+	Vec2 viewportPos = windowToWorld(m_mousePos);
+	//m_cursorDot.setPosition(worldPos.x, worldPos.y);
+	m_cursorDot.setPosition(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y)));
+	m_rt.draw(m_cursorDot);
+
+	
 }
 
 void LevelEditor::sAnimation()
@@ -666,108 +745,114 @@ static void DrawIntControl(const std::string& label, int& value, int vMin = 0, i
 
 void LevelEditor::entityInspectorGUI()
 {
-	auto& tag = m_inspectedEntity->getComponent<CTag>().tag;
-	char buffer[256];
-	memset(buffer, 0, sizeof(buffer));
-	strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
-	if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
+	ImGui::Begin("Entity Inspector");
+	if (m_inspectedEntity)
 	{
-		tag = std::string(buffer);
-	}
-
-	ImGui::SameLine();
-	ImGui::PushItemWidth(-1);
-
-	if (ImGui::Button("Add Component"))
-	{
-		ImGui::OpenPopup("AddComponent");
-	}
-
-	if (ImGui::BeginPopup("AddComponent"))
-	{
-		DisplayAddComponentEntry<CTransform>("Transform");
-		DisplayAddComponentEntry<CAnimation>("Animation");
-		DisplayAddComponentEntry<CGravity>("Gravity");
-		if (m_inspectedEntity->hasComponent<CAnimation>())
+		auto& tag = m_inspectedEntity->getComponent<CTag>().tag;
+		char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
+		if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
 		{
-			DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
-			DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
+			tag = std::string(buffer);
 		}
-		else
+
+		ImGui::SameLine();
+		ImGui::PushItemWidth(-1);
+
+		if (ImGui::Button("Add Component"))
 		{
-			DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
-			DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
+			ImGui::OpenPopup("AddComponent");
 		}
-		ImGui::EndPopup();
-	}
 
-	ImGui::PopItemWidth();
-
-
-	DrawComponentGUI<CTransform>("Transform", m_inspectedEntity, [](auto& component)
+		if (ImGui::BeginPopup("AddComponent"))
 		{
-			DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
-			DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
-			DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
-		});
-
-	DrawComponentGUI<CAnimation>("Animation", m_inspectedEntity, [](auto& component)
-		{
-			float imgSize = 80.0f;
-			ImGui::PushID("Sprite");
-			ImGui::Columns(2);
-			ImGui::SetColumnWidth(0, 80.0f);
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize / 2 - 7.0f);
-			ImGui::Text("Sprite");
-			ImGui::NextColumn();
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize) / 2);
-			float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
-			float imgHeight = imgSize * aspectRatio;
-			float diff = imgSize - imgHeight;
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
-			ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
-			ImGui::Columns(1);
-			ImGui::PopID();
-
-			int animSpeed = (int)component.animSpeed;
-			DrawIntControl("Speed", animSpeed, 0, 120);
-			component.animSpeed = animSpeed;
-
-			int frameCount = (int)component.frameCount;
-			DrawIntControl("Frames", frameCount, 1, 20);
-			component.frameCount = frameCount;
-
-			DrawIntControl("Layer", component.layer, -1, 10);
-
-			ImGui::Checkbox("Repeatable", &component.repeat);
-			//ImGui::Checkbox("Play Animation", &m_playAnimation);
-		});
-
-	DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_inspectedEntity, [](auto& component)
-		{
-			DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
-			DrawVec2Control("Size", component.size, 0.0f, 80.0f);
-			component.halfSize = component.size / 2;
-		});
-
-	DrawComponentGUI<CPolygonCollider>("Polygon Collider 2D", m_inspectedEntity, [](auto& component)
-		{
-			DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
-			if (ImGui::CollapsingHeader("Points"))
+			DisplayAddComponentEntry<CTransform>("Transform");
+			DisplayAddComponentEntry<CAnimation>("Animation");
+			DisplayAddComponentEntry<CGravity>("Gravity");
+			if (m_inspectedEntity->hasComponent<CAnimation>())
 			{
-				for (size_t i = 0; i < component.colliderVertices.size(); i++)
-				{
-					std::string label = "Point " + std::to_string(i);
-					DrawVec2Control(label, component.colliderVertices[i], 0.0f, 80.0f);
-				}
+				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_inspectedEntity->getComponent<CAnimation>().animation.getSize());
+				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
 			}
-		});
+			else
+			{
+				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
+				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
+			}
+			ImGui::EndPopup();
+		}
 
-	DrawComponentGUI<CGravity>("Gravity", m_inspectedEntity, [](auto& component)
-		{
-			DrawFloatControl("Gravity", component.gravity, 0.0f, 10.0f);
-		});
+		ImGui::PopItemWidth();
+
+
+		DrawComponentGUI<CTransform>("Transform", m_inspectedEntity, [](auto& component)
+			{
+				DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
+				DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
+				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
+			});
+
+		DrawComponentGUI<CAnimation>("Animation", m_inspectedEntity, [](auto& component)
+			{
+				float imgSize = 80.0f;
+				ImGui::PushID("Sprite");
+				ImGui::Columns(2);
+				ImGui::SetColumnWidth(0, 80.0f);
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize / 2 - 7.0f);
+				ImGui::Text("Sprite");
+				ImGui::NextColumn();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize) / 2);
+				float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
+				float imgHeight = imgSize * aspectRatio;
+				float diff = imgSize - imgHeight;
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
+				ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
+				ImGui::Columns(1);
+				ImGui::PopID();
+
+				int animSpeed = (int)component.animSpeed;
+				DrawIntControl("Speed", animSpeed, 0, 120);
+				component.animSpeed = animSpeed;
+
+				int frameCount = (int)component.frameCount;
+				DrawIntControl("Frames", frameCount, 1, 20);
+				component.frameCount = frameCount;
+
+				DrawIntControl("Layer", component.layer, -1, 10);
+
+				ImGui::Checkbox("Repeatable", &component.repeat);
+				//ImGui::Checkbox("Play Animation", &m_playAnimation);
+			});
+
+		DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_inspectedEntity, [](auto& component)
+			{
+				DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
+				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
+				component.halfSize = component.size / 2;
+			});
+
+		DrawComponentGUI<CPolygonCollider>("Polygon Collider 2D", m_inspectedEntity, [](auto& component)
+			{
+				DrawVec2Control("Offset", component.offset, 0.0f, 80.0f);
+				if (ImGui::CollapsingHeader("Points"))
+				{
+					for (size_t i = 0; i < component.colliderVertices.size(); i++)
+					{
+						std::string label = "Point " + std::to_string(i);
+						DrawVec2Control(label, component.colliderVertices[i], 0.0f, 80.0f);
+					}
+				}
+			});
+
+		DrawComponentGUI<CGravity>("Gravity", m_inspectedEntity, [](auto& component)
+			{
+				DrawFloatControl("Gravity", component.gravity, 0.0f, 10.0f);
+			});
+	}
+
+	ImGui::End();
 }
 
 template<typename T, typename... TArgs>
@@ -785,9 +870,10 @@ void LevelEditor::DisplayAddComponentEntry(const std::string& entryName, TArgs&&
 
 void LevelEditor::contentBrowserGUI()
 {
+	ImGui::Begin("Content Browser");
 	if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory))
 	{
-		if (ImGui::Button("<-"))
+		if (ImGui::Button("<-")) // TODO: this is still being displayed even if we go back to base directory
 		{
 			m_CurrentDirectory = m_CurrentDirectory.parent_path();
 		}
@@ -865,12 +951,15 @@ void LevelEditor::contentBrowserGUI()
 	}
 	ImGui::Columns(1);
 
-	/*ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
-	ImGui::SliderFloat("Padding", &padding, 0, 32);*/
+	//ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
+	//ImGui::SliderFloat("Padding", &padding, 0, 32);
+
+	ImGui::End();
 }
 
 void LevelEditor::entityManagerGUI()
 {
+	ImGui::Begin("Entity Manager");
 	for (auto& e : m_entityManager.getEntities())
 	{
 		drawEntityNode(e);
@@ -891,6 +980,7 @@ void LevelEditor::entityManagerGUI()
 		}
 		ImGui::EndPopup();
 	}
+	ImGui::End();
 }
 
 void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
@@ -939,80 +1029,98 @@ void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 
 void LevelEditor::sGUI()
 {
-	ImVec2 guiWinSize;
-	guiWinSize.x = 315.0f;
-	guiWinSize.y = m_game->window().getSize().y;
-	ImGui::SetNextWindowPos(ImVec2(1265.0f, 0.0f));
-	ImGui::SetNextWindowSize(guiWinSize);
+	//ImGui::DockSpaceOverViewport();
 
+	static bool dockspaceOpen = true;
+	static bool opt_fullsreen = true;
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-	ImGui::Begin("Level Editor", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-
-	if (ImGui::BeginChild("child1", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2)))
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	if (opt_fullsreen)
 	{
-		if (ImGui::BeginTabBar("tab bar"))
-		{
-#if 0
-			if (ImGui::BeginTabItem("File"))
-			{
-				if (ImGui::Button("Load Assets"))
-				{
-					//
-				}
-				if (ImGui::Button("Load Level"))
-				{
-					loadLevel();
-				}
-				if (ImGui::Button("Save Level"))
-				{
-					saveLevel();
-				}
-
-				ImGui::EndTabItem();
-			}
-#endif
-
-			if (ImGui::BeginTabItem("Assets"))
-			{
-				contentBrowserGUI();
-				ImGui::EndTabItem();
-			}
-			if (ImGui::BeginTabItem("Entity Manager"))
-			{
-				entityManagerGUI();
-				ImGui::EndTabItem();
-			}
-			ImGui::EndTabBar();
-		}
-		ImGui::EndChild();
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->Pos);
+		ImGui::SetNextWindowSize(viewport->Size);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 	}
-	if (m_inspectedEntity && !m_enableDragging)
+
+	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
 	{
-		ImGui::Separator();
-		if (ImGui::BeginChild("child2", ImGui::GetContentRegionAvail()))
-		{
-			if (ImGui::BeginTabBar("tab bar2"))
-			{
-				if (ImGui::BeginTabItem("Entity Inspector"))
-				{
-					entityInspectorGUI();
-					ImGui::EndTabItem();
-				}
-				ImGui::EndTabBar();
-			}
-			ImGui::EndChild();
-		}
+		window_flags |= ImGuiWindowFlags_NoBackground;
 	}
+
+	ImGui::Begin("Dockspace demo", &dockspaceOpen, window_flags);
+
+	if (opt_fullsreen)
+	{
+		ImGui::PopStyleVar(2);
+	}
+
+	// DockSpace
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	{
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+	}
+
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open Level", "Ctrl+O"))
+			{
+				std::cout << "wow load level!\n";
+				//loadLevel();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("New Level", "Ctrl+N"))
+			{
+				std::cout << "wow new level!\n";
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
+
+	entityManagerGUI();
+	contentBrowserGUI();
+	entityInspectorGUI();
+
+	ImGui::Begin("Viewport");
+	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+	auto viewportOffset = ImGui::GetWindowPos();
+	m_viewportBounds.first = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+	m_viewportBounds.second = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+	ImGui::Image(m_rt);
 	ImGui::End();
+
+	//ImGui::Begin("Settings");
+	//DrawVec2Control("View Center", m_levelViewCenter, 0.0f, 100.0f);
+	//DrawFloatControl("Zoom", m_levelViewZoom, -2.0f, 2.0f, 100.0f);
+	//ImGui::End();
+
+
+	ImGui::End(); // end "Dockspace demo" 
+
 	ImGui::SFML::Render(m_game->window());
+
 }
 
 void LevelEditor::sRender()
 {
 	sf::RenderWindow& window = m_game->window();
-	window.setView(m_gameView);
+	//window.setView(m_gameView);
 	window.clear();
-	window.draw(m_gameBG);
+	//window.draw(m_gameBG);
 
 	for (auto& e : m_entityManager.getEntities())
 	{
@@ -1073,7 +1181,7 @@ void LevelEditor::sRender()
 	//m_cursorDot.setPosition(worldPos.x, worldPos.y);
 	m_cursorDot.setPosition(window.mapPixelToCoords(sf::Vector2i(m_mousePos.x, m_mousePos.y)));
 	window.draw(m_cursorDot);
-	window.setView(window.getDefaultView());
+	//window.setView(window.getDefaultView());
 
 }
 
@@ -1096,6 +1204,29 @@ void LevelEditor::sDoAction(const Action& action)
 	if (action.name() == "MOUSE_MOVE")
 	{
 		m_mousePos = action.pos();
+
+		if (m_levelViewMoving)
+		{
+			Vec2 viewportPos = windowToWorld(m_mousePos);
+			Vec2 deltaPos = m_lastLevelViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+			m_levelView.setCenter(m_levelView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
+		}
+	}
+
+	if (action.name() == "MOUSE_WHEEL_SCROLL")
+	{
+		if (!m_levelViewMoving && m_altPressed)
+		{
+			float delta = action.pos().x;
+			if (delta <= -1)
+			{
+				m_levelViewZoom = std::min(2.0f, m_levelViewZoom + 0.1f);
+			}
+			else if (delta >= 1)
+			{
+				m_levelViewZoom = std::max(0.5f, m_levelViewZoom - 0.1f);
+			}
+		}
 	}
 
 	if (action.type() == "START")
@@ -1107,6 +1238,11 @@ void LevelEditor::sDoAction(const Action& action)
 		else if (action.name() == "TOGGLE_COLLISION")
 		{
 			m_drawCollision = !m_drawCollision;
+		}
+		else if (action.name() == "ALT")
+		{
+			m_altPressed = true;
+			m_enableDragging = false;
 		}
 		else if (action.name() == "DELETE")
 		{
@@ -1128,33 +1264,42 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 		else if (action.name() == "LEFT_CLICK")
 		{
-			Vec2 wPos = windowToWorld(m_mousePos);
-			// detect the picking up of entities
-			for (auto e : m_entityManager.getEntities())
+			Vec2 viewportPos = windowToWorld(m_mousePos);
+			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+			//std::cout << wPos << "\n";
+			if (m_enableDragging)
 			{
-				if (IsInside(wPos, e))
+				// detect the picking up of entities
+				for (auto e : m_entityManager.getEntities())
 				{
-					m_inspectedEntity = e;
-					if (!e->hasComponent<CDraggable>()) { continue; }
+					if (IsInside(wPos, e))
+					{
+						m_inspectedEntity = e;
+						if (!e->hasComponent<CDraggable>()) { continue; }
 
-					auto& dragging = e->getComponent<CDraggable>().dragging;
+						auto& dragging = e->getComponent<CDraggable>().dragging;
 					
-					if (!dragging)
-					{
-						dragging = true;
+						if (!dragging)
+						{
+							dragging = true;
+						}
+						else
+						{
+							dragging = false;
+							//snapToGrid(e);
+						}
+						break;
 					}
-					else
-					{
-						dragging = false;
-						snapToGrid(e);
-					}
-					break;
 				}
 			}
-		}
-		else if (action.name() == "RIGHT_CLICK")
-		{
-			m_enableDragging = !m_enableDragging;
+			else
+			{
+				if (m_altPressed)
+				{
+					m_levelViewMoving = true;
+					m_lastLevelViewPos = wPos;
+				}
+			}
 		}
 		else if (action.name() == "QUIT")
 		{
@@ -1171,6 +1316,21 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 	}
 	
+	if (action.type() == "END")
+	{
+		if (action.name() == "ALT")
+		{
+			m_altPressed = false;
+			m_enableDragging = true;
+		}
+		if (action.name() == "LEFT_CLICK")
+		{
+			if (m_altPressed)
+			{
+				m_levelViewMoving = false;
+			}
+		}
+	}
 }
 
 

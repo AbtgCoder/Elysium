@@ -13,9 +13,21 @@ public:
 	void sCollision();
 	void sRender();
 	void sDrag();
+
+	void sDockingRender();
 protected:
-	sf::View m_gameView;
+	sf::View m_levelView;
+	Vec2 m_levelViewCenter;
+	float m_levelViewZoom = 1.0f;
+	bool m_altPressed = false;
+	Vec2 m_lastLevelViewPos;
+	bool m_levelViewMoving = false;
+
 	sf::RectangleShape m_gameBG;
+
+	sf::RenderTexture m_rt{};
+	Vec2 m_viewportSize;
+	std::pair<Vec2, Vec2> m_viewportBounds;
 
 	std::map<std::string, sf::Texture> m_assets;
 	
@@ -30,7 +42,7 @@ protected:
 	Vec2 m_mousePos;
 	std::shared_ptr<Entity> m_inspectedEntity = nullptr;
 	sf::CircleShape m_cursorDot;
-	bool m_enableDragging = false;
+	bool m_enableDragging = true;
 
 	bool m_playAnimation = false;
 
