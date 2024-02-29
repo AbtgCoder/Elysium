@@ -14,7 +14,7 @@ Elysium is a comprehensive tool designed to empower game developers with a user-
 - [X] Entity Inspector and Attach Components to Entities. 
 - [X] Save and load Entity component data. 
 - [X] Make a Play Test Scene, where the created level and its systems(collision, animation, etc) can be tested.
-- [ ] World view/camera to make bigger levels
+- [X] World view/camera to make bigger levels
 - [ ] Audio components
 - [ ] Enemy Spawner components
   

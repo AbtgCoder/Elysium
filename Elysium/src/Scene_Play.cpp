@@ -481,6 +481,8 @@ void Scene_Play::sRender()
 		if (e->hasComponent<CAnimation>())
 		{
 			e->getComponent<CAnimation>().animation.getSprite().setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+			e->getComponent<CAnimation>().animation.getSprite().setScale(e->getComponent<CTransform>().scale.x, e->getComponent<CTransform>().scale.y);
+			e->getComponent<CAnimation>().animation.getSprite().setRotation(e->getComponent<CTransform>().angle);
 			if (m_drawTextures) 
 			{
 				window.draw(e->getComponent<CAnimation>().animation.getSprite());
@@ -510,7 +512,7 @@ void Scene_Play::sRender()
 			{
 				sf::RectangleShape rect(sf::Vector2f(m_gridSize.x, m_gridSize.y));
 				rect.setOrigin(m_gridSize.x/2, m_gridSize.y/2);
-				Vec2 gridCellPos = gridToMidPixel(x, y);
+				Vec2 gridCellPos = gridToMidPixel((float)x, (float)y);
 				rect.setPosition(gridCellPos.x, gridCellPos.y);
 				rect.setFillColor(sf::Color::Transparent);
 				rect.setOutlineColor(sf::Color::White);

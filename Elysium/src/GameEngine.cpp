@@ -20,12 +20,15 @@ void GameEngine::init(const std::string& path)
 	m_assets.addTexture("FileIcon", "../../../resources/icons/FileIcon.png");
 
 	// create window
-	m_window.create(sf::VideoMode(1580, 762), "Elysium");
+	m_window.create(sf::VideoMode::getDesktopMode(), "Elysium", sf::Style::Fullscreen); // TODO: Custom title bar ??
 	m_window.setFramerateLimit(60);
 
 	// Initialize ImGui
 	ImGui::SFML::Init(m_window);
 	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // enable multi viewport, (only work on windows??)
 	ImFontConfig config;
 	config.MergeMode = true;
 	static const ImWchar icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
@@ -113,8 +116,8 @@ void GameEngine::sUserInput()
 	{
 		ImGui::SFML::ProcessEvent(event);
 
-		if (ImGui::GetIO().WantCaptureMouse)
-			continue;
+		/*if (ImGui::GetIO().WantCaptureMouse)
+			continue;*/
 
 		if (event.type == sf::Event::Closed)
 		{
@@ -136,7 +139,7 @@ void GameEngine::sUserInput()
 		}
 
 		auto mpos = sf::Mouse::getPosition(m_window);
-		Vec2 pos(mpos.x, mpos.y);
+		Vec2 pos((float)mpos.x, (float)mpos.y);
 		if (event.type == sf::Event::MouseButtonPressed)
 		{
 			switch (event.mouseButton.button)
@@ -159,7 +162,11 @@ void GameEngine::sUserInput()
 		}
 		if (event.type == sf::Event::MouseMoved)
 		{
-			currentScene()->sDoAction(Action("MOUSE_MOVE", Vec2(event.mouseMove.x, event.mouseMove.y)));
+			currentScene()->sDoAction(Action("MOUSE_MOVE", Vec2((float)event.mouseMove.x, (float)event.mouseMove.y)));
+		}
+		if (event.type == sf::Event::MouseWheelScrolled)
+		{
+			currentScene()->sDoAction(Action("MOUSE_WHEEL_SCROLL", Vec2(event.mouseWheelScroll.delta, event.mouseWheelScroll.delta)));
 		}
 	}
 }
