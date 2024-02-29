@@ -19,7 +19,6 @@ public:
 	void sAnimation();
 	void sCollision();
 	void sRender();
-	void sDrag();
 
 	void sDockingRender();
 protected:

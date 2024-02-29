@@ -69,8 +69,8 @@ void LevelEditor::init()
 
 	// Set ImGui Styles
 	setImGuiStyle();
-	m_BaseDirectory.assign("../../../Assets/");
-	m_CurrentDirectory.assign("../../../Assets/");
+	m_BaseDirectory.assign("D:/Game Development/Game_Engine_Programming/Elysium/Assets/");
+	m_CurrentDirectory.assign("D:/Game Development/Game_Engine_Programming/Elysium/Assets/");
 	m_DirectoryIcon = m_game->assets().getTexture("DirectoryIcon");
 	m_FileIcon = m_game->assets().getTexture("FileIcon");
 
@@ -434,8 +434,8 @@ void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 	auto e = m_entityManager.addEntity("Tile");
 	e->addComponent<CTag>("Tile");
 	e->addComponent<CAnimation>(Animation(name, tex), true, 0);
-	e->addComponent<CTransform>(m_mousePos);
-	e->addComponent<CDraggable>(true);
+	Vec2 viewportPos = windowToWorld(m_mousePos);
+	e->addComponent<CTransform>(Vec2(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y))));
 	m_inspectedEntity = e;
 }
 
@@ -443,23 +443,9 @@ void LevelEditor::update()
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_entityManager.update();
-	sDrag();
 	sDockingRender();
 	sGUI();
 	//sRender();
-}
-
-void LevelEditor::sDrag()
-{
-	for (auto& e : m_entityManager.getEntities())
-	{
-		if (e->hasComponent<CDraggable>() && e->getComponent<CDraggable>().dragging)
-		{
-			Vec2 viewportPos = windowToWorld(m_mousePos);
-			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-			e->getComponent<CTransform>().pos = wPos;
-		}
-	}
 }
 
 void LevelEditor::sDockingRender()
@@ -911,9 +897,11 @@ void LevelEditor::contentBrowserGUI()
 				float thumbnailHeight = thumbnailSize * aspectRatio;
 				float diff = thumbnailSize - thumbnailHeight;
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
-				if (ImGui::ImageButton(texture, { thumbnailSize, thumbnailHeight }))
+				ImGui::ImageButton(texture, { thumbnailSize, thumbnailHeight});
+				if (ImGui::BeginDragDropSource())
 				{
-					spawnEntity(directoryEntry.path().stem().string(), texture);
+					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM_TEXTURE", &directoryEntry.path().stem().string(), sizeof(std::string));
+					ImGui::EndDragDropSource();
 				}
 			}
 			else
@@ -1099,6 +1087,18 @@ void LevelEditor::sGUI()
 	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 	ImGui::Image(m_rt);
 
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM_TEXTURE"))
+		{
+			std::string textureName = *(std::string*)payload->Data;
+			//std::cout << textureName << "\n";
+			spawnEntity(textureName, m_assets[textureName]);
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	// Gizmos
 	if (m_inspectedEntity)
 	{
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -1107,10 +1107,10 @@ void LevelEditor::sGUI()
 		Vec2 ePos = m_inspectedEntity->getComponent<CTransform>().pos;
 		sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
 		ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
-		static const float lineLength = 90.0f;
-		static const float lineThickness = 6.0f;
-		static const float arrowSize = 12.0f;
-		static const float rectSize = 12.0f;
+		static const float lineLength = 80.0f;
+		static const float lineThickness = 4.0f;
+		static const float arrowSize = 6.0f;
+		static const float rectSize = 6.0f;
 		// X-translation gizmo
 
 		ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
@@ -1371,7 +1371,6 @@ void LevelEditor::sDoAction(const Action& action)
 		{
 			if (m_inspectedEntity)
 			{
-				//m_inspectedEntity->getComponent<CDraggable>().dragging = false;
 				snapToGrid(m_inspectedEntity);
 				auto e = m_entityManager.addEntity(m_inspectedEntity);
 				m_inspectedEntity = e;
@@ -1383,30 +1382,22 @@ void LevelEditor::sDoAction(const Action& action)
 			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 			//std::cout << wPos << "\n";
 		
-	
+			bool isInsideSomeEntity = false;
 			for (auto e : m_entityManager.getEntities())
 			{
 				if (IsInside(wPos, e))
 				{
+					isInsideSomeEntity = true;
 					m_inspectedEntity = e;
-					if (!e->hasComponent<CDraggable>()) { continue; }
-
-					auto& dragging = e->getComponent<CDraggable>().dragging;
-					
-					if (!dragging)
-					{
-						dragging = true;
-					}
-					else
-					{
-						dragging = false;
-						e->removeComponent<CDraggable>();
-						//snapToGrid(e);
-					}
 					break;
 				}
 			}
-	
+			
+			if (!isInsideSomeEntity && !(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
+			{
+				m_inspectedEntity = nullptr;
+			}
+
 			if (m_altPressed)
 			{
 				m_levelViewMoving = true;
@@ -1433,6 +1424,7 @@ void LevelEditor::sDoAction(const Action& action)
 		if (action.name() == "ALT")
 		{
 			m_altPressed = false;
+			m_levelViewMoving = false;
 		}
 		if (action.name() == "LEFT_CLICK")
 		{

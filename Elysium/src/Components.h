@@ -151,16 +151,6 @@ public:
 		: score(other.score) {}
 };
 
-class CDraggable : public Component
-{
-public:
-	bool dragging = false;
-	CDraggable() {}
-	CDraggable(bool d)
-		: dragging(d) {}
-	CDraggable(CDraggable& other)
-		: dragging(true) {}
-};
 
 #if 0
 class CShape

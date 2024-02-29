@@ -97,7 +97,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [142, 488]
+      Position: [185, 466]
       Scale: [1.19999862, 1.00000596]
       Angle: 0
     Animation:
@@ -117,7 +117,7 @@ Entities:
   - Entity: Tile
     Transform:
       Position: [663, 602]
-      Scale: [2.09999919, 1]
+      Scale: [1.00000024, 1]
       Angle: 0
     Animation:
       Texture: block
@@ -211,7 +211,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [833.5, 790.000061]
+      Position: [781.5, 783.000061]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -332,6 +332,28 @@ Entities:
       Angle: 0
     Animation:
       Texture: ground
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0
+  - Entity: Tile
+    Transform:
+      Position: [-10.5, 639.500061]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: brick
+      Speed: 0
+      Frames: 1
+      Repeatable: true
+      Layer: 0
+  - Entity: Tile
+    Transform:
+      Position: [91.5000305, 727.5]
+      Scale: [1, 1]
+      Angle: 0
+    Animation:
+      Texture: brick
       Speed: 0
       Frames: 1
       Repeatable: true
