@@ -63,6 +63,8 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::D, "DUPLICATE");
 	registerAction(sf::Keyboard::T, "PLAY_LEVEL");
 	registerAction(sf::Keyboard::LAlt, "ALT");
+	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
+	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
 
 
 	// Set ImGui Styles
@@ -285,7 +287,7 @@ bool LevelEditor::loadLevel(const std::filesystem::path& filepath)
 				gc.gravity = gravityComponent["Gravity"].as<float>();
 			}
 
-			deserializedEntity->addComponent<CDraggable>();
+			//deserializedEntity->addComponent<CDraggable>();
 		}
 	}
 
@@ -410,7 +412,7 @@ Vec2 LevelEditor::gridToMidPixel(float gridX, float gridY)
 void LevelEditor::snapToGrid(std::shared_ptr<Entity> entity)
 {
 	Vec2 ePos(entity->getComponent<CTransform>().pos.x - (entity->getComponent<CAnimation>().animation.getSize() / 2).x, entity->getComponent<CTransform>().pos.y + (entity->getComponent<CAnimation>().animation.getSize() / 2).y);
-	int gridX = std::round(ePos.x / m_gridSize.x), gridY = std::round((m_viewportSize.y - ePos.y) / m_gridSize.y);
+	float gridX = std::round(ePos.x / m_gridSize.x), gridY = std::round((m_viewportSize.y - ePos.y) / m_gridSize.y);
 	entity->getComponent<CTransform>().pos = gridToMidPixel(gridX, gridY, entity);
 }
 
@@ -422,7 +424,7 @@ Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
 	//return Vec2(windowPos.x + wx, windowPos.y + wy);
 
 	auto viewportPos = windowPos - m_viewportBounds.first;
-	Vec2 viewportSize = m_viewportBounds.second - m_viewportBounds.first;
+	//Vec2 viewportSize = m_viewportBounds.second - m_viewportBounds.first;
 	//viewportPos.y = viewportSize.y - viewportPos.y;
 	return viewportPos;
 }
@@ -441,10 +443,7 @@ void LevelEditor::update()
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_entityManager.update();
-	if (m_enableDragging)
-	{
-		sDrag();
-	}
+	sDrag();
 	sDockingRender();
 	sGUI();
 	//sRender();
@@ -516,7 +515,7 @@ void LevelEditor::sDockingRender()
 		{
 			for (int y = -20; y < 20; y++)
 			{
-				Vec2 gridCellPos = gridToMidPixel(x, y);
+				Vec2 gridCellPos = gridToMidPixel((float)x, (float)y);
 				m_gridRect.setPosition(gridCellPos.x, gridCellPos.y);
 				m_rt.draw(m_gridRect);
 				m_gridText.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
@@ -526,10 +525,10 @@ void LevelEditor::sDockingRender()
 		}
 	}
 
-	Vec2 viewportPos = windowToWorld(m_mousePos);
-	//m_cursorDot.setPosition(worldPos.x, worldPos.y);
-	m_cursorDot.setPosition(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y)));
-	m_rt.draw(m_cursorDot);
+	// dont need this anymore ??
+	//Vec2 viewportPos = windowToWorld(m_mousePos);
+	//m_cursorDot.setPosition(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y)));
+	//m_rt.draw(m_cursorDot);
 
 	
 }
@@ -599,7 +598,7 @@ std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(std::shared_ptr<E
 					paddedBinaryImage.getPixel(x, y + 1) == sf::Color::Black ||
 					paddedBinaryImage.getPixel(x + 1, y + 1) == sf::Color::Black))
 			{
-				boundaryPoints.push_back(Vec2(x, imageSize.y - y));
+				boundaryPoints.push_back(Vec2((float)x, (float)imageSize.y - y));
 			}
 		}
 	}
@@ -1029,8 +1028,6 @@ void LevelEditor::drawEntityNode(std::shared_ptr<Entity> entity)
 
 void LevelEditor::sGUI()
 {
-	//ImGui::DockSpaceOverViewport();
-
 	static bool dockspaceOpen = true;
 	static bool opt_fullsreen = true;
 	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
@@ -1101,13 +1098,96 @@ void LevelEditor::sGUI()
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 	ImGui::Image(m_rt);
-	ImGui::End();
 
-	//ImGui::Begin("Settings");
-	//DrawVec2Control("View Center", m_levelViewCenter, 0.0f, 100.0f);
-	//DrawFloatControl("Zoom", m_levelViewZoom, -2.0f, 2.0f, 100.0f);
-	//ImGui::End();
+	if (m_inspectedEntity)
+	{
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
+		static const ImU32 selectionColor = 0xFF20AACC;
+		Vec2 ePos = m_inspectedEntity->getComponent<CTransform>().pos;
+		sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
+		ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
+		static const float lineLength = 90.0f;
+		static const float lineThickness = 6.0f;
+		static const float arrowSize = 12.0f;
+		static const float rectSize = 12.0f;
+		// X-translation gizmo
 
+		ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
+		// line
+		ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
+		drawList->AddLine(origin, endPointX, colorX, lineThickness);
+		// Y-translation gizmo
+		ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
+		// line
+		ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
+		drawList->AddLine(origin, endPointY, colorY, lineThickness);
+		if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+		{
+			// X-arrow
+			ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
+			float d = sqrtf(ImLengthSqr(dir));
+			dir.x = dir.x / d * arrowSize;
+			dir.y = dir.y / d * arrowSize;
+			ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
+			ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
+			drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
+			// Y-arrow
+			dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
+			d = sqrtf(ImLengthSqr(dir));
+			dir.x = dir.x / d * arrowSize;
+			dir.y = dir.y / d * arrowSize;
+			orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
+			a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
+			drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
+		}
+		else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+		{
+			// X-square
+			drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2*rectSize, endPointX.y + rectSize), colorX);
+			// Y-square	
+			drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2*rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
+		}
+		
+		if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
+		{
+			m_gizmoHoverX = true;
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			{
+				m_gizmoSelectX = true;
+				m_lastGizmoPosX = windowToWorld(m_mousePos);
+			}
+			if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+			{
+				m_gizmoSelectX = false;
+			}
+		}
+		else
+		{
+			m_gizmoHoverX = false;
+		}
+
+		if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
+		{
+			m_gizmoHoverY = true;
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			{
+				m_gizmoSelectY = true;
+				m_lastGizmoPosY = windowToWorld(m_mousePos);
+			}
+			if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+			{
+				m_gizmoSelectY = false;
+			}
+		}
+		else
+		{
+			m_gizmoHoverY = false;
+		}
+
+	}
+
+	ImGui::End(); // end "Viewport"
 
 	ImGui::End(); // end "Dockspace demo" 
 
@@ -1167,7 +1247,7 @@ void LevelEditor::sRender()
 		{
 			for (int y = -20; y < 20; y++)
 			{
-				Vec2 gridCellPos = gridToMidPixel(x, y);
+				Vec2 gridCellPos = gridToMidPixel((float)x, (float)y);
 				m_gridRect.setPosition(gridCellPos.x, gridCellPos.y);
 				window.draw(m_gridRect);
 				/*m_gridText.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
@@ -1204,12 +1284,40 @@ void LevelEditor::sDoAction(const Action& action)
 	if (action.name() == "MOUSE_MOVE")
 	{
 		m_mousePos = action.pos();
+		Vec2 viewportPos = windowToWorld(m_mousePos);
+		Vec2 deltaPos = m_lastLevelViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 
 		if (m_levelViewMoving)
 		{
-			Vec2 viewportPos = windowToWorld(m_mousePos);
-			Vec2 deltaPos = m_lastLevelViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 			m_levelView.setCenter(m_levelView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
+		}
+
+		// Gizmo System
+		if (m_gizmoSelectX && m_inspectedEntity)
+		{
+			deltaPos = viewportPos - m_lastGizmoPosX;
+			m_lastGizmoPosX = viewportPos;
+			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+			{
+				m_inspectedEntity->getComponent<CTransform>().pos.x += deltaPos.x;
+			}
+			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+			{
+				m_inspectedEntity->getComponent<CTransform>().scale.x += m_scalingFactor * deltaPos.x;
+			}
+		}
+		else if (m_gizmoSelectY && m_inspectedEntity)
+		{
+			deltaPos = viewportPos - m_lastGizmoPosY;
+			m_lastGizmoPosY = viewportPos;
+			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+			{
+				m_inspectedEntity->getComponent<CTransform>().pos.y += deltaPos.y;
+			}
+			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+			{
+				m_inspectedEntity->getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
+			}
 		}
 	}
 
@@ -1242,7 +1350,14 @@ void LevelEditor::sDoAction(const Action& action)
 		else if (action.name() == "ALT")
 		{
 			m_altPressed = true;
-			m_enableDragging = false;
+		}
+		else if (action.name() == "TRANSLATE_GIZMO")
+		{
+			m_gizmoType = GIZMO_OPERATION::TRANSLATE;
+		}
+		else if (action.name() == "SCALE_GIZMO")
+		{
+			m_gizmoType = GIZMO_OPERATION::SCALE;
 		}
 		else if (action.name() == "DELETE")
 		{
@@ -1267,38 +1382,35 @@ void LevelEditor::sDoAction(const Action& action)
 			Vec2 viewportPos = windowToWorld(m_mousePos);
 			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 			//std::cout << wPos << "\n";
-			if (m_enableDragging)
+		
+	
+			for (auto e : m_entityManager.getEntities())
 			{
-				// detect the picking up of entities
-				for (auto e : m_entityManager.getEntities())
+				if (IsInside(wPos, e))
 				{
-					if (IsInside(wPos, e))
-					{
-						m_inspectedEntity = e;
-						if (!e->hasComponent<CDraggable>()) { continue; }
+					m_inspectedEntity = e;
+					if (!e->hasComponent<CDraggable>()) { continue; }
 
-						auto& dragging = e->getComponent<CDraggable>().dragging;
+					auto& dragging = e->getComponent<CDraggable>().dragging;
 					
-						if (!dragging)
-						{
-							dragging = true;
-						}
-						else
-						{
-							dragging = false;
-							//snapToGrid(e);
-						}
-						break;
+					if (!dragging)
+					{
+						dragging = true;
 					}
+					else
+					{
+						dragging = false;
+						e->removeComponent<CDraggable>();
+						//snapToGrid(e);
+					}
+					break;
 				}
 			}
-			else
+	
+			if (m_altPressed)
 			{
-				if (m_altPressed)
-				{
-					m_levelViewMoving = true;
-					m_lastLevelViewPos = wPos;
-				}
+				m_levelViewMoving = true;
+				m_lastLevelViewPos = wPos;
 			}
 		}
 		else if (action.name() == "QUIT")
@@ -1321,7 +1433,6 @@ void LevelEditor::sDoAction(const Action& action)
 		if (action.name() == "ALT")
 		{
 			m_altPressed = false;
-			m_enableDragging = true;
 		}
 		if (action.name() == "LEFT_CLICK")
 		{
@@ -1329,10 +1440,17 @@ void LevelEditor::sDoAction(const Action& action)
 			{
 				m_levelViewMoving = false;
 			}
+			if (m_gizmoSelectX)
+			{
+				m_gizmoSelectX = false;
+			}
+			if (m_gizmoSelectY)
+			{
+				m_gizmoSelectY = false;
+			}
 		}
 	}
 }
-
 
 void LevelEditor::onEnd()
 {

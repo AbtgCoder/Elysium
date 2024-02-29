@@ -139,7 +139,7 @@ void GameEngine::sUserInput()
 		}
 
 		auto mpos = sf::Mouse::getPosition(m_window);
-		Vec2 pos(mpos.x, mpos.y);
+		Vec2 pos((float)mpos.x, (float)mpos.y);
 		if (event.type == sf::Event::MouseButtonPressed)
 		{
 			switch (event.mouseButton.button)
@@ -162,7 +162,7 @@ void GameEngine::sUserInput()
 		}
 		if (event.type == sf::Event::MouseMoved)
 		{
-			currentScene()->sDoAction(Action("MOUSE_MOVE", Vec2(event.mouseMove.x, event.mouseMove.y)));
+			currentScene()->sDoAction(Action("MOUSE_MOVE", Vec2((float)event.mouseMove.x, (float)event.mouseMove.y)));
 		}
 		if (event.type == sf::Event::MouseWheelScrolled)
 		{
