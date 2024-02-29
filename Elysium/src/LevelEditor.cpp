@@ -519,23 +519,6 @@ void LevelEditor::sDockingRender()
 	
 }
 
-void LevelEditor::sAnimation()
-{
-	m_inspectedEntity->getComponent<CAnimation>().animation.update();
-}
-
-void LevelEditor::sCollision()
-{
-	for (auto& e : m_entityManager.getEntities())
-	{
-		Vec2 overlap = Physics::GetOverlap(m_inspectedEntity, e);
-
-		if (overlap.x > 0 && overlap.y > 0)
-		{
-		}
-	}
-}
-
 std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(std::shared_ptr<Entity> entity)
 {
 	sf::Texture tex = m_assets[entity->getComponent<CAnimation>().animation.getName()];
@@ -1092,7 +1075,6 @@ void LevelEditor::sGUI()
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM_TEXTURE"))
 		{
 			std::string textureName = *(std::string*)payload->Data;
-			//std::cout << textureName << "\n";
 			spawnEntity(textureName, m_assets[textureName]);
 		}
 		ImGui::EndDragDropTarget();
@@ -1111,8 +1093,8 @@ void LevelEditor::sGUI()
 		static const float lineThickness = 4.0f;
 		static const float arrowSize = 6.0f;
 		static const float rectSize = 6.0f;
-		// X-translation gizmo
 
+		// X-translation gizmo
 		ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
 		// line
 		ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
@@ -1380,22 +1362,24 @@ void LevelEditor::sDoAction(const Action& action)
 		{
 			Vec2 viewportPos = windowToWorld(m_mousePos);
 			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-			//std::cout << wPos << "\n";
-		
-			bool isInsideSomeEntity = false;
-			for (auto e : m_entityManager.getEntities())
+
+			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
 			{
-				if (IsInside(wPos, e))
+				bool isInsideSomeEntity = false;
+				for (auto e : m_entityManager.getEntities())
 				{
-					isInsideSomeEntity = true;
-					m_inspectedEntity = e;
-					break;
+					if (IsInside(wPos, e))
+					{
+						isInsideSomeEntity = true;
+						m_inspectedEntity = e;
+						break;
+					}
 				}
-			}
 			
-			if (!isInsideSomeEntity && !(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
-			{
-				m_inspectedEntity = nullptr;
+				if (!isInsideSomeEntity && !(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
+				{
+					m_inspectedEntity = nullptr;
+				}
 			}
 
 			if (m_altPressed)
@@ -1403,6 +1387,7 @@ void LevelEditor::sDoAction(const Action& action)
 				m_levelViewMoving = true;
 				m_lastLevelViewPos = wPos;
 			}
+
 		}
 		else if (action.name() == "QUIT")
 		{

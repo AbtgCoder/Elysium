@@ -59,25 +59,6 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [480, 666]
-      Scale: [1, 1]
-      Angle: 0
-    Animation:
-      Texture: block
-      Speed: 0
-      Frames: 1
-      Repeatable: true
-      Layer: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
       Position: [480, 602]
       Scale: [1, 1]
       Angle: 0
@@ -99,25 +80,6 @@ Entities:
     Transform:
       Position: [185, 466]
       Scale: [1.19999862, 1.00000596]
-      Angle: 0
-    Animation:
-      Texture: block
-      Speed: 0
-      Frames: 1
-      Repeatable: true
-      Layer: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [663, 602]
-      Scale: [1.00000024, 1]
       Angle: 0
     Animation:
       Texture: block
@@ -211,7 +173,7 @@ Entities:
         Elements: []
   - Entity: Tile
     Transform:
-      Position: [781.5, 783.000061]
+      Position: [672, 775]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -269,7 +231,7 @@ Entities:
       Size: [64, 64]
   - Entity: Player
     Transform:
-      Position: [798, 432.5]
+      Position: [641, 476.5]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -285,7 +247,7 @@ Entities:
       Gravity: 1.29999995
   - Entity: Tile
     Transform:
-      Position: [-117.512817, 720.5]
+      Position: [-35.5128174, 720.5]
       Scale: [1, 1]
       Angle: 0
     Animation:
@@ -338,23 +300,22 @@ Entities:
       Layer: 0
   - Entity: Tile
     Transform:
-      Position: [-10.5, 639.500061]
+      Position: [736, 775]
       Scale: [1, 1]
       Angle: 0
     Animation:
-      Texture: brick
+      Texture: ground
       Speed: 0
       Frames: 1
       Repeatable: true
       Layer: 0
-  - Entity: Tile
-    Transform:
-      Position: [91.5000305, 727.5]
-      Scale: [1, 1]
-      Angle: 0
-    Animation:
-      Texture: brick
-      Speed: 0
-      Frames: 1
-      Repeatable: true
-      Layer: 0
+    AABB:
+      Offset: [0, 0]
+      Size: [64, 64]
+    PolygonCollider:
+      Offset: [0, 0]
+      Points:
+        Size: 0
+        Elements: []
+    Gravity:
+      Gravity: 0
