@@ -16,7 +16,8 @@ typedef std::tuple<
 	CAnimation,
 	CGravity,
 	CState,
-	CScore
+	CScore,
+	CSpriteRenderer
 > ComponentTuple;
 
 class Entity

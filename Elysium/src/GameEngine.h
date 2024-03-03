@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Scene.h"
-#include "Assets.h"
 #include <memory>
 
-typedef std::map < std::string, std::shared_ptr<Scene>> SceneMap;
+typedef std::map<std::string, std::shared_ptr<Scene>> SceneMap;
 
 class GameEngine
 {
@@ -19,13 +18,13 @@ public:
 
 	sf::RenderWindow& window();
 	sf::Clock m_deltaClock;
-	const Assets& assets() const;
+	//const Assets& assets() const;
 	bool isRunning();
 	const SceneMap& scenes() const;
 	 
 protected:
 	sf::RenderWindow m_window;
-	Assets m_assets;
+	//Assets m_assets;
 
 	std::string m_currentScene;
 	SceneMap m_sceneMap;

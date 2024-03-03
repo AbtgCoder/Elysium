@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Vec2.h"
+#include "Math/Vec2.h"
+
 #include <SFML/Graphics.hpp>
 
 class Animation

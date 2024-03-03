@@ -3,7 +3,6 @@
 
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "IconsFontAwesome6.h"
 
 GameEngine::GameEngine(const std::string& path)
 {
@@ -12,13 +11,6 @@ GameEngine::GameEngine(const std::string& path)
 
 void GameEngine::init(const std::string& path)
 {
-
-	m_assets.addFont("Tech", path);
-
-	// content browser icons
-	m_assets.addTexture("DirectoryIcon", "../../../resources/icons/DirectoryIcon.png");
-	m_assets.addTexture("FileIcon", "../../../resources/icons/FileIcon.png");
-
 	// create window
 	m_window.create(sf::VideoMode::getDesktopMode(), "Elysium", sf::Style::Fullscreen); // TODO: Custom title bar ??
 	m_window.setFramerateLimit(60);
@@ -29,12 +21,16 @@ void GameEngine::init(const std::string& path)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // enable multi viewport, (only work on windows??)
+
+	// Using Custom icon font with ImGui
+#if 0
 	ImFontConfig config;
 	config.MergeMode = true;
 	static const ImWchar icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
 	ImFont* font = io.Fonts->AddFontFromFileTTF("../../../Assets/fonts/fa-regular.ttf", 8.0f, &config, icon_ranges);
 	//io.Fonts->Build();
 	ImGui::SFML::UpdateFontTexture();
+#endif
 
 	// Initialize Level Editor Scene
 	std::shared_ptr<Scene> levelEditor = std::make_shared<LevelEditor>(this);
@@ -47,8 +43,6 @@ void GameEngine::update()
 	currentScene()->update();
 }
 
-
-
 std::shared_ptr<Scene> GameEngine::currentScene()
 {
 	return m_sceneMap[m_currentScene];
@@ -57,11 +51,6 @@ std::shared_ptr<Scene> GameEngine::currentScene()
 sf::RenderWindow& GameEngine::window()
 {
 	return m_window;
-}
-
-const Assets& GameEngine::assets() const
-{
-	return m_assets;
 }
 
 bool GameEngine::isRunning()

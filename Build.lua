@@ -39,6 +39,7 @@ project "Elysium"
 
    includedirs
    {
+       "%{prj.name}/src/",
        "%{prj.name}/imgui/",
        "%{IncludeDir.yaml_cpp}",
    }

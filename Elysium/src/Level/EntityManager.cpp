@@ -21,11 +21,11 @@ void EntityManager::update()
 		removeDeadEntities(entityVec);
 	}
 
-	/*if (m_entitiesToAdd.size() > 0) // TODO: do this for optimization, but then it needs to be called whenever you change rendering layer via entity inspector
+	/*if (m_entitiesToAdd.size() > 0) // TODO: do this while rendering?? for optimization, but then it needs to be called whenever you change rendering layer via entity inspector
 	{*/
-		std::sort(m_entities.begin(), m_entities.end(), [](const std::shared_ptr<Entity>& a, const std::shared_ptr<Entity>& b) {
+		/*std::sort(m_entities.begin(), m_entities.end(), [](const std::shared_ptr<Entity>& a, const std::shared_ptr<Entity>& b) {
 			return a->getComponent<CAnimation>().layer < b->getComponent<CAnimation>().layer;
-			});
+			});*/
 	//}
 
 	// clearing m_entitiesToAdd 

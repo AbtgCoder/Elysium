@@ -1,10 +1,8 @@
 #include "Scene_Play.h"
-#include "Scene_Menu.h"
 #include "LevelEditor.h"
-#include "Physics.h"
-#include "Assets.h"
+#include "Physics/Physics.h"
 #include "GameEngine.h"
-#include "Components.h"
+#include "Level/Components.h"
 #include "Action.h"
 
 #include "imgui.h"
@@ -63,7 +61,7 @@ void Scene_Play::init(const std::string& levelPath)
 	m_gameView = m_game->window().getDefaultView();
 
 	m_gridText.setCharacterSize(20);
-	m_gridText.setFont(m_game->assets().getFont("Tech"));
+//	m_gridText.setFont(m_game->assets().getFont("Tech"));
 	m_gridText.setPosition(sf::Vector2f(5, 5));
 
 	std::string assetDir = "../../../Assets/textures/";
@@ -212,7 +210,6 @@ void Scene_Play::update()
 {
 	m_currentFrame++;
 	m_entityManager.update();
-	//sEnemySpawner();
 	sMovement();
 	sCollision();
 	sAnimation();
@@ -328,21 +325,6 @@ void Scene_Play::sMovement()
 
 }
 
-void Scene_Play::sEnemySpawner()
-{
-	if (m_currentFrame - m_lastEnemySpawnTime >= m_enemySpawnInterval && m_numEnemiesSpawned < m_numEnemiesAllowed)
-	{
-		auto enemy = m_entityManager.addEntity("enemy");
-		enemy->addComponent<CAnimation>(m_game->assets().getAnimation("enemy"), true);
-		enemy->addComponent<CTransform>(gridToMidPixel(15, 6), Vec2(-4.0f, 0.0f), Vec2(1.0f, 1.0f), 0.0f);
-		enemy->addComponent<CBoundingBox>(enemy->getComponent<CAnimation>().animation.getSize());
-		enemy->addComponent<CGravity>(m_playerConfig.GRAVITY);
-		enemy->addComponent<CScore>(20);
-		m_lastEnemySpawnTime = m_currentFrame;
-		m_numEnemiesSpawned++;
-	}
-}
-
 void Scene_Play::sCollision()
 {
 	for (auto& e : m_entityManager.getEntities("Tile"))
@@ -405,11 +387,6 @@ void Scene_Play::sCollision()
 							else if (e->getComponent<CAnimation>().animation.getName() == "question")
 							{
 								e->destroy();
-								auto coin = m_entityManager.addEntity("tile");
-								coin->addComponent<CAnimation>(m_game->assets().getAnimation("coin"), true);
-								coin->addComponent<CTransform>(e->getComponent<CTransform>().pos - Vec2(0, m_gridSize.y));
-								coin->addComponent<CBoundingBox>(coin->getComponent<CAnimation>().animation.getSize());
-								coin->addComponent<CScore>(10);
 							}
 						}
 					
@@ -503,33 +480,6 @@ void Scene_Play::sRender()
 			}
 		}
 	}
-
-	if (m_drawGrid)
-	{
-		for (int x=0; x < 50; x++)
-		{
-			for (int y = 0; y < 12; y++)
-			{
-				sf::RectangleShape rect(sf::Vector2f(m_gridSize.x, m_gridSize.y));
-				rect.setOrigin(m_gridSize.x/2, m_gridSize.y/2);
-				Vec2 gridCellPos = gridToMidPixel((float)x, (float)y);
-				rect.setPosition(gridCellPos.x, gridCellPos.y);
-				rect.setFillColor(sf::Color::Transparent);
-				rect.setOutlineColor(sf::Color::White);
-				rect.setOutlineThickness(1);
-				window.draw(rect);
-				sf::Text text;
-				text.setFont(m_game->assets().getFont("Tech"));
-				text.setString("(" + std::to_string(x) + "," + std::to_string(y) + ")");
-				text.setCharacterSize(12);
-				text.setPosition(gridCellPos.x - (m_gridSize.x/2) + 5, gridCellPos.y - (m_gridSize.y / 2) + 5);
-				window.draw(text);
-			}
-		}
-	}
-	m_gridText.setString("Score: " + std::to_string(m_score));
-	m_gridText.setPosition(m_gameView.getCenter() - 0.5f*m_gameView.getSize() + sf::Vector2f(5, 5));
-	window.draw(m_gridText);
 	//window.display();
 }
 

@@ -1,0 +1,13 @@
+AssetRegistry:
+  - Handle: 1290859156789939854
+    FilePath: levels/level_test.elysium
+    Type: AssetType::Level
+  - Handle: 8456894967352546499
+    FilePath: textures/air.png
+    Type: AssetType::Texture
+  - Handle: 9785990741684801335
+    FilePath: textures/pipesmall.png
+    Type: AssetType::Texture
+  - Handle: 12063736264547966939
+    FilePath: textures/block.png
+    Type: AssetType::Texture

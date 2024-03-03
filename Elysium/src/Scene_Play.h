@@ -20,7 +20,6 @@ public:
 	// Systems
 	void sAnimation();
 	void sMovement();
-	void sEnemySpawner();
 	void sCollision();
 	void sCamera();
 	void sRender();

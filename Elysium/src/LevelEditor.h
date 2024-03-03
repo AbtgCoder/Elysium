@@ -2,6 +2,9 @@
 
 #include "Scene.h"
 
+#include "LevelHierarchyPanel.h"
+#include "ContentBrowserPanel.h"
+
 #include <filesystem>
 
 enum GIZMO_OPERATION
@@ -18,8 +21,23 @@ public:
 	void sGUI();
 	void sRender();
 
-	void sDockingRender();
 protected:
+
+	std::filesystem::path m_EditorProjectPath;
+	std::filesystem::path m_EditorLevelPath;
+	std::shared_ptr<Level> m_ActiveLevel;
+	void NewProject();
+	bool OpenProject();
+	void OpenProject(const std::filesystem::path& path);
+	void SaveProject();
+
+	void NewLevel();
+	void OpenLevel();
+	void OpenLevel(AssetHandle handle);
+	void SaveLevel();
+	void SerializeLevel(std::shared_ptr<Level> level, const std::filesystem::path& path);
+	// TODO: implement save level as
+
 	// Level Editor Camera and Camera Controller stuff
 	sf::View m_levelView;
 	Vec2 m_levelViewCenter;
@@ -43,8 +61,6 @@ protected:
 	float m_scalingFactor = 0.05f;
 	int m_gizmoType = GIZMO_OPERATION::TRANSLATE;
 
-	// Assets : Only Textures for now!
-	std::map<std::string, sf::Texture> m_assets;
 	
 	// Debug stuff
 	bool m_drawCollision = false;
@@ -56,7 +72,6 @@ protected:
 
 	Vec2 m_mousePos;
 	std::shared_ptr<Entity> m_inspectedEntity = nullptr;
-	sf::CircleShape m_cursorDot;
 
 	// ImGui
 	void setImGuiStyle();
@@ -65,14 +80,10 @@ protected:
 	std::filesystem::path m_CurrentDirectory;
 	sf::Texture m_DirectoryIcon;
 	sf::Texture m_FileIcon;
-	void contentBrowserGUI();
-	// ImGui - Entity Manager and Entity Inspector Panels
-	void drawEntityNode(std::shared_ptr<Entity> entity);
-	void entityManagerGUI();
-	void entityInspectorGUI();
-	template<typename T, typename... TArgs>
-	void DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs);
 
+	// Panels
+	LevelHierarchyPanel m_LevelHierarchyPanel;
+	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 
 	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
@@ -82,15 +93,11 @@ protected:
 
 	std::vector<Vec2> generatePolygonColliderVertices(std::shared_ptr<Entity> entity);
 
-	bool loadLevel(const std::filesystem::path& filepath);
-	void loadAssets(const std::string& assetDir);
-	void saveLevel();
-
-
 	void spawnEntity(const std::string& name, const sf::Texture& tex);
 
 	void init();
 	void update();
 	void onEnd();
 	void sDoAction(const Action& action);
+
 };

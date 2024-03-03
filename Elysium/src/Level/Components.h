@@ -1,7 +1,10 @@
 #pragma once
 
 #include "Animation.h"
-#include "Assets.h"
+
+#include "Asset/Asset.h"
+
+#include "Math/Vec2.h"
 
 class Component
 {
@@ -99,6 +102,17 @@ public:
 		: colliderVertices(vertices) {}
 	CPolygonCollider(CPolygonCollider& other)
 		: colliderVertices(other.colliderVertices), offset(other.offset) {}
+};
+
+class CSpriteRenderer : public Component
+{
+public:
+	AssetHandle texture = 0;
+	int layer = 0;
+	CSpriteRenderer() = default;
+	CSpriteRenderer(const CSpriteRenderer& other) = default;
+	//CSpriteRenderer(int l)
+		//: layer(l) {}
 };
 
 class CAnimation : public Component

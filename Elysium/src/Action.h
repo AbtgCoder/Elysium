@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "Vec2.h"
+#include "Math/Vec2.h"
 
 
 class Action
