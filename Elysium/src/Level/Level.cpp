@@ -11,6 +11,10 @@ Level::Level()
 Level::Level(const std::string& name)
 	: m_Name(name)
 {
+	if (!m_Shader.loadFromFile("D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/Shaders/shader.glsl", sf::Shader::Fragment))
+	{
+		std::cout << "couldnt load shader!\n";
+	}
 }
 
 Level::~Level()
@@ -29,13 +33,6 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture)
 
 	for (auto& e : m_entityManager.getEntities())
 	{
-		/*if (e->hasComponent<CAnimation>())
-		{
-			e->getComponent<CAnimation>().animation.getSprite().setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
-			e->getComponent<CAnimation>().animation.getSprite().setScale(e->getComponent<CTransform>().scale.x, e->getComponent<CTransform>().scale.y);
-			e->getComponent<CAnimation>().animation.getSprite().setRotation(e->getComponent<CTransform>().angle);
-			renderTexture.draw(e->getComponent<CAnimation>().animation.getSprite());
-		}*/
 		if (e->hasComponent<CSpriteRenderer>())
 		{
 			if (e->getComponent<CSpriteRenderer>().texture != 0)
@@ -45,9 +42,10 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture)
 				sf::Sprite sprite = sf::Sprite(tex);
 				sprite.setOrigin(tex.getSize().x/2, tex.getSize().y/2);
 				sprite.setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
-				renderTexture.draw(sprite);
+				renderTexture.draw(sprite, &m_Shader);
 			}
 		}
 	}
+
 
 }

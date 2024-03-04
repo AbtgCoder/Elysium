@@ -25,7 +25,10 @@ private:
 	bool m_IsRunning = false;
 	bool m_IsPaued = false;
 
-	std::string m_Name; // Move to Asset Metadata once we have it...
+	std::string m_Name; // TODO: Move to Asset Metadata ??
+
+	// shader test
+	sf::Shader m_Shader;
 
 	friend class LevelSerializer;
 	friend class LevelHierarchyPanel;

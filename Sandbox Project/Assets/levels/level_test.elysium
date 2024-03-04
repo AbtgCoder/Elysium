@@ -156,6 +156,9 @@ Entities:
       Position: [641, 476.5]
       Scale: [1, 1]
       Angle: 0
+    SpriteRenderer:
+      TextureHandle: 6392853097170261536
+      Layer: 0
     AABB:
       Offset: [0, 0]
       Size: [60, 73]
@@ -176,26 +179,6 @@ Entities:
         Elements: []
     Gravity:
       Gravity: 0
-  - Entity: Tile
-    Transform:
-      Position: [57.2891541, 2049.5]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [64, 64]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-    Gravity:
-      Gravity: 0
-  - Entity: Tile
-    Transform:
-      Position: [208.500061, -318.5]
-      Scale: [1, 1]
-      Angle: 0
   - Entity: Tile
     Transform:
       Position: [39.5, 572.5]
