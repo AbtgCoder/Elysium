@@ -117,11 +117,14 @@ Entities:
       Points:
         Size: 0
         Elements: []
-  - Entity: Tile
+  - Entity: Big Pipe
     Transform:
-      Position: [672, 775]
+      Position: [1039, 463]
       Scale: [1, 1]
       Angle: 0
+    SpriteRenderer:
+      TextureHandle: 12438653369529251365
+      Layer: 0
     AABB:
       Offset: [0, 0]
       Size: [64, 64]
@@ -153,7 +156,7 @@ Entities:
       Size: [64, 64]
   - Entity: Player
     Transform:
-      Position: [641, 476.5]
+      Position: [668, 657.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -166,22 +169,15 @@ Entities:
       Gravity: 1.29999995
   - Entity: Tile
     Transform:
-      Position: [-35.5128174, 720.5]
+      Position: [-43.5128174, 729.5]
       Scale: [1, 1]
       Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [64, 64]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-    Gravity:
-      Gravity: 0
+    SpriteRenderer:
+      TextureHandle: 12063736264547966939
+      Layer: 0
   - Entity: Tile
     Transform:
-      Position: [39.5, 572.5]
+      Position: [192.5, 664.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:

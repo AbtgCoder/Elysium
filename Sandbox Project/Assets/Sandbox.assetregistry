@@ -14,3 +14,6 @@ AssetRegistry:
   - Handle: 12063736264547966939
     FilePath: textures/block.png
     Type: AssetType::Texture
+  - Handle: 12438653369529251365
+    FilePath: textures/pipetall.png
+    Type: AssetType::Texture

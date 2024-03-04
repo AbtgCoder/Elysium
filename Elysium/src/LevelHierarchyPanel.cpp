@@ -304,6 +304,8 @@ void LevelHierarchyPanel::OnImGuiRender()
 					}
 					ImGui::EndDragDropTarget();
 				}
+
+				DrawIntControl("Layer", component.layer, -1, 10);
 			});
 
 		DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_InspectedEntity, [](auto& component)

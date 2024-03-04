@@ -213,7 +213,7 @@ void LevelEditor::sRender()
 
 	if (m_ActiveLevel)
 		m_ActiveLevel->OnUpdateEditor(m_rt);
-
+	//m_game->window().draw(sf::Sprite(m_rt.getTexture()));
 	if (m_drawGrid)
 	{
 		for (int x = -50; x < 50; x++)
@@ -690,9 +690,9 @@ void LevelEditor::sDoAction(const Action& action)
 		else if (action.name() == "PLAY_LEVEL")
 		{
 			//saveLevel();
-			std::string levelPath = "../../../Assets/levels/level_test.elysium";
+			/*std::string levelPath = "../../../Assets/levels/level_test.elysium";
  			std::shared_ptr<Scene> scenePlay = std::make_shared<Scene_Play>(m_game, levelPath);
-			m_game->changeScene("Play", scenePlay, true);
+			m_game->changeScene("Play", scenePlay, true);*/
 		}
 	}
 	
