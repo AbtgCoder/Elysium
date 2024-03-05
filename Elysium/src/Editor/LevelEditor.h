@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Scene.h"
+#include "Core/Scene.h"
 
-#include "LevelHierarchyPanel.h"
-#include "ContentBrowserPanel.h"
+#include "Panels/LevelHierarchyPanel.h"
+#include "Panels/ContentBrowserPanel.h"
 
 #include <filesystem>
 
@@ -75,21 +75,12 @@ protected:
 
 	// ImGui
 	void setImGuiStyle();
-	// ImGui - Content Browser Panel
-	std::filesystem::path m_BaseDirectory;
-	std::filesystem::path m_CurrentDirectory;
-	sf::Texture m_DirectoryIcon;
-	sf::Texture m_FileIcon;
 
 	// Panels
 	LevelHierarchyPanel m_LevelHierarchyPanel;
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 
-	Vec2 worldToGrid(std::shared_ptr<Entity> entity);
-	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
-	Vec2 gridToMidPixel(float gridX, float gridY);
-	void snapToGrid(std::shared_ptr<Entity> entity);
-	Vec2 windowToWorld(const Vec2& windowPos) const;
+	Vec2 windowToViewport(const Vec2& windowPos) const;
 
 	std::vector<Vec2> generatePolygonColliderVertices(std::shared_ptr<Entity> entity);
 

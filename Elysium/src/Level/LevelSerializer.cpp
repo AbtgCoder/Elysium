@@ -1,6 +1,6 @@
 #include "LevelSerializer.h"
 
-#include "UUID.h"
+#include "Core/UUID.h"
 #include "Project/Project.h"
 
 #include <yaml-cpp/yaml.h>
@@ -89,20 +89,20 @@ static void SerializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
 
 		out << YAML::EndMap;
 	}
-	if (entity->hasComponent<CAnimation>())
-	{
-		out << YAML::Key << "Animation";
-		out << YAML::BeginMap;
+	//if (entity->hasComponent<CAnimation>())
+	//{
+	//	out << YAML::Key << "Animation";
+	//	out << YAML::BeginMap;
 
-		auto& ac = entity->getComponent<CAnimation>();
-		out << YAML::Key << "Texture" << YAML::Value << ac.animation.getName();
-		out << YAML::Key << "Speed" << YAML::Value << ac.animSpeed;
-		out << YAML::Key << "Frames" << YAML::Value << ac.frameCount;
-		out << YAML::Key << "Repeatable" << YAML::Value << ac.repeat;
-		out << YAML::Key << "Layer" << YAML::Value << ac.layer;
+	//	auto& ac = entity->getComponent<CAnimation>();
+	//	out << YAML::Key << "Texture" << YAML::Value << ac.animation.getName();
+	//	out << YAML::Key << "Speed" << YAML::Value << ac.animSpeed;
+	//	out << YAML::Key << "Frames" << YAML::Value << ac.frameCount;
+	//	out << YAML::Key << "Repeatable" << YAML::Value << ac.repeat;
+	//	out << YAML::Key << "Layer" << YAML::Value << ac.layer;
 
-		out << YAML::EndMap;
-	}
+	//	out << YAML::EndMap;
+	//}
 	if (entity->hasComponent<CBoundingBox>())
 	{
 		out << YAML::Key << "AABB";
@@ -215,7 +215,6 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 				}
 				src.layer = spriteRendererComponent["Layer"].as<int>();
 			}
-
 
 			auto animationComponent = entity["Animation"];
 			/*if (animationComponent)

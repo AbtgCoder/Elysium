@@ -1,18 +1,18 @@
 #include "GameEngine.h"
-#include "LevelEditor.h"
+#include "Editor/LevelEditor.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
 
-GameEngine::GameEngine(const std::string& path)
+GameEngine::GameEngine(const std::string& name)
 {
-	init(path);
+	init(name);
 }
 
-void GameEngine::init(const std::string& path)
+void GameEngine::init(const std::string& name)
 {
 	// create window
-	m_window.create(sf::VideoMode::getDesktopMode(), "Elysium", sf::Style::Fullscreen); // TODO: Custom title bar ??
+	m_window.create(sf::VideoMode::getDesktopMode(), name, sf::Style::Fullscreen); // TODO: Custom title bar ??
 	m_window.setFramerateLimit(60);
 
 	// Initialize ImGui

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "UUID.h"
+#include "Core/UUID.h"
 
 using AssetHandle = Elysium::UUID;
 
 enum class AssetType : uint16_t
 {
 	None = 0,
+	Texture,
 	Level,
-	Texture
 };
 
 std::string_view AssetTypeToString(AssetType type);

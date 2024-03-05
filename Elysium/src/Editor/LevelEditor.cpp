@@ -1,7 +1,7 @@
-#include "GameEngine.h"
 #include "LevelEditor.h"
+
+#include "Core/GameEngine.h"
 #include "Physics/graham_scan.h"
-#include "Scene_Play.h"
 
 #include "Asset/AssetManager.h"
 #include "Asset/LevelImporter.h"
@@ -35,35 +35,19 @@ void LevelEditor::init()
 
 	// Set ImGui Styles
 	setImGuiStyle();
-	m_BaseDirectory.assign("D:/Game Development/Game_Engine_Programming/Elysium/Assets/");
-	m_CurrentDirectory.assign("D:/Game Development/Game_Engine_Programming/Elysium/Assets/");
-	//m_DirectoryIcon = m_game->assets().getTexture("DirectoryIcon");
-	//m_FileIcon = m_game->assets().getTexture("FileIcon");
 
-
-	m_viewportSize.x = 1280;
-	m_viewportSize.y = 762;
-
-	m_levelView.setSize(1000.0f, 1000.0f);
-	m_levelViewCenter = m_levelView.getCenter();
-	//m_gameView.setViewport(sf::FloatRect(0, 0, 0.8, 1));
-
+	// Debug drawing stuff
 	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
 	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
 	m_gridRect.setFillColor(sf::Color::Transparent);
 	m_gridRect.setOutlineColor(sf::Color::White);
 	m_gridRect.setOutlineThickness(1);
-
 	m_collisionRect.setFillColor(sf::Color::Transparent);
 	m_collisionRect.setOutlineColor(sf::Color::White);
 	m_collisionRect.setOutlineThickness(1);
 
 	m_EditorProjectPath = "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox.eproject";
 	OpenProject(m_EditorProjectPath);
-	/*m_ActiveLevel = std::make_shared<Level>("sheesh");
-	LevelSerializer serializer(m_ActiveLevel);
-	serializer.Deserialize("../../../Assets/levels/level_test.elysium");
-	m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);*/
 }
 
 void LevelEditor::setImGuiStyle()
@@ -147,34 +131,7 @@ void LevelEditor::setImGuiStyle()
 
 }
 
-Vec2 LevelEditor::worldToGrid(std::shared_ptr<Entity> entity)
-{
-	Vec2 animSize = entity->getComponent<CAnimation>().animation.getSize();
-	Vec2 ePos = entity->getComponent<CTransform>().pos;
-	float gridX = (ePos.x - (animSize.x / 2)) / m_gridSize.x;
-	float gridY = (m_game->window().getSize().y - ePos.y - (animSize.y / 2)) / m_gridSize.y;
-	return Vec2(gridX, gridY);
-}
-
-Vec2 LevelEditor::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
-{
-	Vec2 animSize = entity->getComponent<CAnimation>().animation.getSize();
-	return Vec2(gridX * m_gridSize.x + (animSize.x / 2), m_viewportSize.y - (gridY * m_gridSize.y + (animSize.y / 2)));
-}
-
-Vec2 LevelEditor::gridToMidPixel(float gridX, float gridY)
-{
-	return Vec2(gridX * m_gridSize.x + (m_gridSize.x / 2), m_viewportSize.y - (gridY * m_gridSize.y + (m_gridSize.y / 2)));
-}
-
-void LevelEditor::snapToGrid(std::shared_ptr<Entity> entity)
-{
-	Vec2 ePos(entity->getComponent<CTransform>().pos.x - (entity->getComponent<CAnimation>().animation.getSize() / 2).x, entity->getComponent<CTransform>().pos.y + (entity->getComponent<CAnimation>().animation.getSize() / 2).y);
-	float gridX = std::round(ePos.x / m_gridSize.x), gridY = std::round((m_viewportSize.y - ePos.y) / m_gridSize.y);
-	entity->getComponent<CTransform>().pos = gridToMidPixel(gridX, gridY, entity);
-}
-
-Vec2 LevelEditor::windowToWorld(const Vec2& windowPos) const
+Vec2 LevelEditor::windowToViewport(const Vec2& windowPos) const
 {
 	/*auto view = m_game->window().getView();
 	float wx = view.getCenter().x - (m_game->window().getSize().x / 2);
@@ -191,8 +148,7 @@ void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
 {
 	auto e = m_entityManager.addEntity("Tile");
 	e->addComponent<CTag>("Tile");
-	e->addComponent<CAnimation>(Animation(name, tex), true, 0);
-	Vec2 viewportPos = windowToWorld(m_mousePos);
+	Vec2 viewportPos = windowToViewport(m_mousePos);
 	e->addComponent<CTransform>(Vec2(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y))));
 	m_inspectedEntity = e;
 }
@@ -213,19 +169,7 @@ void LevelEditor::sRender()
 
 	if (m_ActiveLevel)
 		m_ActiveLevel->OnUpdateEditor(m_rt);
-	//m_game->window().draw(sf::Sprite(m_rt.getTexture()));
-	if (m_drawGrid)
-	{
-		for (int x = -50; x < 50; x++)
-		{
-			for (int y = -20; y < 20; y++)
-			{
-				Vec2 gridCellPos = gridToMidPixel((float)x, (float)y);
-				m_gridRect.setPosition(gridCellPos.x, gridCellPos.y);
-				m_rt.draw(m_gridRect);
-			}
-		}
-	}
+
 }
 
 void LevelEditor::NewProject()
@@ -395,7 +339,6 @@ void LevelEditor::sGUI()
 			if (ImGui::MenuItem("Open Level", "Ctrl+O"))
 			{
 				std::cout << "wow load level!\n";
-				//loadLevel();
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("New Level", "Ctrl+N"))
@@ -432,6 +375,10 @@ void LevelEditor::sGUI()
 			else if (AssetManager::GetAssetType(handle) == AssetType::Texture)
 			{
 				// spawn entity with sprite renderer component
+				Vec2 viewportPos = windowToViewport(m_mousePos);
+				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+				std::shared_ptr<Entity> newEntity = m_ActiveLevel->AddEntityWithSprite(worldPos, handle);
+				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 			else
 			{
@@ -499,7 +446,7 @@ void LevelEditor::sGUI()
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
 				m_gizmoSelectX = true;
-				m_lastGizmoPosX = windowToWorld(m_mousePos);
+				m_lastGizmoPosX = windowToViewport(m_mousePos);
 			}
 			if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
 			{
@@ -517,7 +464,7 @@ void LevelEditor::sGUI()
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
 				m_gizmoSelectY = true;
-				m_lastGizmoPosY = windowToWorld(m_mousePos);
+				m_lastGizmoPosY = windowToViewport(m_mousePos);
 			}
 			if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
 			{
@@ -539,26 +486,13 @@ void LevelEditor::sGUI()
 
 }
 
-bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
-{
-	Vec2 s = e->getComponent<CAnimation>().animation.getSize();
-	Vec2 ePos = e->getComponent<CTransform>().pos;
-	if (pos.x > ePos.x - s.x / 2 &&
-		pos.x < ePos.x + s.x / 2 &&
-		pos.y > ePos.y - s.y / 2 &&
-		pos.y < ePos.y + s.y / 2)
-	{
-		return true;
-	}
-	return false;
-}
 
 void LevelEditor::sDoAction(const Action& action)
 {
 	if (action.name() == "MOUSE_MOVE")
 	{
 		m_mousePos = action.pos();
-		Vec2 viewportPos = windowToWorld(m_mousePos);
+		Vec2 viewportPos = windowToViewport(m_mousePos);
 		Vec2 deltaPos = m_lastLevelViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 
 		if (m_levelViewMoving)
@@ -635,49 +569,48 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 		else if (action.name() == "DELETE")
 		{
-			if (m_inspectedEntity)
+			std::shared_ptr<Entity> inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			if (inspectedEntity)
 			{
-				m_inspectedEntity->destroy();
-				m_inspectedEntity = nullptr;
+				m_LevelHierarchyPanel.SetInspectedEntity(nullptr);
+				m_ActiveLevel->DestroyEntity(inspectedEntity);
 			}
 		}
 		else if (action.name() == "DUPLICATE")
 		{
-			if (m_inspectedEntity)
+			std::shared_ptr<Entity> inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			if (inspectedEntity)
 			{
-				snapToGrid(m_inspectedEntity);
-				auto e = m_entityManager.addEntity(m_inspectedEntity);
-				m_inspectedEntity = e;
+				std::shared_ptr<Entity> newEntity = m_ActiveLevel->AddEntity(inspectedEntity);
+				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 		}
 		else if (action.name() == "LEFT_CLICK")
 		{
-			Vec2 viewportPos = windowToWorld(m_mousePos);
-			Vec2 wPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+			Vec2 viewportPos = windowToViewport(m_mousePos);
+			Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 
 			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
 			{
-				bool isInsideSomeEntity = false;
-				for (auto e : m_entityManager.getEntities())
+				std::shared_ptr<Entity> entity = m_ActiveLevel->GetEntityIfClicked(worldPos);
+				if (entity)
 				{
-					if (IsInside(wPos, e))
-					{
-						isInsideSomeEntity = true;
-						m_inspectedEntity = e;
-						break;
-					}
+					m_LevelHierarchyPanel.SetInspectedEntity(entity);
 				}
-			
-				if (!isInsideSomeEntity && !(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
+				else
 				{
-					m_inspectedEntity = nullptr;
+					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
+					{
+						m_LevelHierarchyPanel.SetInspectedEntity(nullptr);
+
+					}
 				}
 			}
 
 			if (m_altPressed)
 			{
 				m_levelViewMoving = true;
-				m_lastLevelViewPos = wPos;
+				m_lastLevelViewPos = worldPos;
 			}
 
 		}
@@ -689,10 +622,7 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 		else if (action.name() == "PLAY_LEVEL")
 		{
-			//saveLevel();
-			/*std::string levelPath = "../../../Assets/levels/level_test.elysium";
- 			std::shared_ptr<Scene> scenePlay = std::make_shared<Scene_Play>(m_game, levelPath);
-			m_game->changeScene("Play", scenePlay, true);*/
+			// Level state, level play
 		}
 	}
 	

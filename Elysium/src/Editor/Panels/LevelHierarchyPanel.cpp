@@ -205,11 +205,10 @@ void LevelHierarchyPanel::OnImGuiRender()
 		if (ImGui::BeginPopup("AddComponent"))
 		{
 			DisplayAddComponentEntry<CTransform>("Transform");
-			DisplayAddComponentEntry<CAnimation>("Animation");
 			DisplayAddComponentEntry<CGravity>("Gravity");
-			if (m_InspectedEntity->hasComponent<CAnimation>())
+			if (m_InspectedEntity->hasComponent<CSpriteRenderer>())
 			{
-				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity->getComponent<CAnimation>().animation.getSize());
+				//DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity->getComponent<CAnimation>().animation.getSize());
 				//DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
 			}
 			else
@@ -231,38 +230,6 @@ void LevelHierarchyPanel::OnImGuiRender()
 				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
 			});
 
-		DrawComponentGUI<CAnimation>("Animation", m_InspectedEntity, [](auto& component)
-			{
-				float imgSize = 80.0f;
-				ImGui::PushID("Sprite");
-				ImGui::Columns(2);
-				ImGui::SetColumnWidth(0, 80.0f);
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + imgSize / 2 - 7.0f);
-				ImGui::Text("Sprite");
-				ImGui::NextColumn();
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() - imgSize) / 2);
-				float aspectRatio = (float)(component.animation.getSize().y) / (float)(component.animation.getSize().x);
-				float imgHeight = imgSize * aspectRatio;
-				float diff = imgSize - imgHeight;
-				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
-				ImGui::Image(component.animation.getSprite(), sf::Vector2f(imgSize, imgHeight));
-				ImGui::Columns(1);
-				ImGui::PopID();
-
-				int animSpeed = (int)component.animSpeed;
-				DrawIntControl("Speed", animSpeed, 0, 120);
-				component.animSpeed = animSpeed;
-
-				int frameCount = (int)component.frameCount;
-				DrawIntControl("Frames", frameCount, 1, 20);
-				component.frameCount = frameCount;
-
-				DrawIntControl("Layer", component.layer, -1, 10);
-
-				ImGui::Checkbox("Repeatable", &component.repeat);
-				//ImGui::Checkbox("Play Animation", &m_playAnimation);
-			});
 
 		DrawComponentGUI<CSpriteRenderer>("Sprite Renderer", m_InspectedEntity, [](auto& component)
 			{

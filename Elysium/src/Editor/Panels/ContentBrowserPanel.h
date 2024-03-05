@@ -1,9 +1,7 @@
 #pragma once
 
 #include "Project/Project.h"
-
-//#include <SFML/Graphics.hpp>
-#include "Texture.h"
+#include "Core/Texture.h"
 
 #include <filesystem>
 #include <map>

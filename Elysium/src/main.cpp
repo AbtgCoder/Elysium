@@ -1,8 +1,9 @@
-#include "GameEngine.h"
+#include "Core/GameEngine.h"
+
 
 int main()
 {
-	GameEngine game("config.txt");
+	GameEngine game("Elysium");
 	game.run();
 	
 

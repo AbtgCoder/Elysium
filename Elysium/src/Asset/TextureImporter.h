@@ -3,7 +3,7 @@
 #include "Asset.h"
 #include "AssetMetadata.h"
 
-#include "Texture.h"
+#include "Core/Texture.h"
 
 class TextureImporter
 {

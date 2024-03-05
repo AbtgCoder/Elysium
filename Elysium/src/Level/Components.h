@@ -1,9 +1,7 @@
 #pragma once
 
-#include "Animation.h"
 
 #include "Asset/Asset.h"
-
 #include "Math/Vec2.h"
 
 class Component
@@ -111,26 +109,8 @@ public:
 	int layer = 0;
 	CSpriteRenderer() = default;
 	CSpriteRenderer(const CSpriteRenderer& other) = default;
-	//CSpriteRenderer(int l)
-		//: layer(l) {}
 };
 
-class CAnimation : public Component
-{
-public:
-	Animation animation;
-	size_t animSpeed = 0;
-	size_t frameCount = 1;
-	bool repeat = false; // repetable animation or not ??
-	int layer = 0; // rendering layer
-	CAnimation() {}
-	CAnimation(const Animation& animation, bool r)
-		: animation(animation), repeat(r) {}
-	CAnimation(const Animation& animation, bool r, int l)
-		: animation(animation), repeat(r), layer(l) {}
-	CAnimation(CAnimation& other)
-		: animation(other.animation), repeat(other.repeat), layer(other.layer) {}
-};
 
 class CGravity : public Component
 {
@@ -167,6 +147,23 @@ public:
 
 
 #if 0
+class CAnimation : public Component
+{
+public:
+	Animation animation;
+	size_t animSpeed = 0;
+	size_t frameCount = 1;
+	bool repeat = false; // repetable animation or not ??
+	int layer = 0; // rendering layer
+	CAnimation() {}
+	CAnimation(const Animation& animation, bool r)
+		: animation(animation), repeat(r) {}
+	CAnimation(const Animation& animation, bool r, int l)
+		: animation(animation), repeat(r), layer(l) {}
+	CAnimation(CAnimation& other)
+		: animation(other.animation), repeat(other.repeat), layer(other.layer) {}
+};
+
 class CShape
 {
 public:

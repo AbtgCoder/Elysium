@@ -13,7 +13,6 @@ typedef std::tuple<
 	CInput,
 	CBoundingBox,
 	CPolygonCollider,
-	CAnimation,
 	CGravity,
 	CState,
 	CScore,

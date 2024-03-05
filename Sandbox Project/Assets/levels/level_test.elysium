@@ -1,125 +1,8 @@
 Level: Untitled
 Entities:
-  - Entity: Tile
-    Transform:
-      Position: [480, 730]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [237.500061, 676.5]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [416, 665]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [480, 602]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [185, 466]
-      Scale: [1.19999862, 1.00000596]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [18.7350769, -2438.5]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [544, 666]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [400.549988, 734.5]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
-  - Entity: Tile
-    Transform:
-      Position: [491.500031, 798.5]
-      Scale: [1, 1]
-      Angle: 0
-    AABB:
-      Offset: [0, 0]
-      Size: [0, 0]
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 0
-        Elements: []
   - Entity: Big Pipe
     Transform:
-      Position: [1039, 463]
+      Position: [896, 484]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -136,27 +19,20 @@ Entities:
     AABB:
       Offset: [0, 0]
       Size: [64, 64]
-  - Entity: Pipe
-    Transform:
-      Position: [1018.5, 351.5]
-      Scale: [0.99999994, 1.0000006]
-      Angle: 0
-    PolygonCollider:
-      Offset: [0, 0]
-      Points:
-        Size: 6
-        Elements: [[12, 1], [115, 1], [123, 136], [123, 188], [4, 188], [4, 136]]
   - Entity: Tile
     Transform:
-      Position: [-1117.50244, 728.5]
+      Position: [276.5, 602.5]
       Scale: [1, 1]
       Angle: 0
+    SpriteRenderer:
+      TextureHandle: 12063736264547966939
+      Layer: 0
     AABB:
       Offset: [0, 0]
       Size: [64, 64]
   - Entity: Player
     Transform:
-      Position: [668, 657.5]
+      Position: [599, 562.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -169,17 +45,27 @@ Entities:
       Gravity: 1.29999995
   - Entity: Tile
     Transform:
-      Position: [-43.5128174, 729.5]
+      Position: [113.5, 661.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0
+    AABB:
+      Offset: [0, 0]
+      Size: [64, 64]
+    PolygonCollider:
+      Offset: [0, 0]
+      Points:
+        Size: 0
+        Elements: []
+    Gravity:
+      Gravity: 0
   - Entity: Tile
     Transform:
-      Position: [192.5, 664.5]
+      Position: [368.999939, 773.499878]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
-      TextureHandle: 12063736264547966939
+      TextureHandle: 4518961158634738713
       Layer: 0
