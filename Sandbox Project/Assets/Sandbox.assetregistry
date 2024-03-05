@@ -1,0 +1,22 @@
+AssetRegistry:
+  - Handle: 1290859156789939854
+    FilePath: levels/level_test.elysium
+    Type: AssetType::Level
+  - Handle: 4518961158634738713
+    FilePath: textures/bushbig.png
+    Type: AssetType::Texture
+  - Handle: 6392853097170261536
+    FilePath: textures/player.png
+    Type: AssetType::Texture
+  - Handle: 8456894967352546499
+    FilePath: textures/air.png
+    Type: AssetType::Texture
+  - Handle: 9785990741684801335
+    FilePath: textures/pipesmall.png
+    Type: AssetType::Texture
+  - Handle: 12063736264547966939
+    FilePath: textures/block.png
+    Type: AssetType::Texture
+  - Handle: 12438653369529251365
+    FilePath: textures/pipetall.png
+    Type: AssetType::Texture
