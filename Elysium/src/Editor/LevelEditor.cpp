@@ -133,25 +133,10 @@ void LevelEditor::setImGuiStyle()
 
 Vec2 LevelEditor::windowToViewport(const Vec2& windowPos) const
 {
-	/*auto view = m_game->window().getView();
-	float wx = view.getCenter().x - (m_game->window().getSize().x / 2);
-	float wy = view.getCenter().y - (m_game->window().getSize().y / 2);*/
-	//return Vec2(windowPos.x + wx, windowPos.y + wy);
-
 	auto viewportPos = windowPos - m_viewportBounds.first;
-	//Vec2 viewportSize = m_viewportBounds.second - m_viewportBounds.first;
-	//viewportPos.y = viewportSize.y - viewportPos.y;
 	return viewportPos;
 }
  
-void LevelEditor::spawnEntity(const std::string& name, const sf::Texture& tex)
-{
-	auto e = m_entityManager.addEntity("Tile");
-	e->addComponent<CTag>("Tile");
-	Vec2 viewportPos = windowToViewport(m_mousePos);
-	e->addComponent<CTransform>(Vec2(m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y))));
-	m_inspectedEntity = e;
-}
 
 void LevelEditor::update()
 {
@@ -230,7 +215,7 @@ void LevelEditor::SerializeLevel(std::shared_ptr<Level> level, const std::filesy
 	LevelImporter::SaveLevel(level, path);
 }
 
-std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(std::shared_ptr<Entity> entity)
+std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(Entity entity)
 {
 	sf::Texture tex; // = m_assets[entity->getComponent<CAnimation>().animation.getName()];
 	sf::Image image = tex.copyToImage();
@@ -377,7 +362,7 @@ void LevelEditor::sGUI()
 				// spawn entity with sprite renderer component
 				Vec2 viewportPos = windowToViewport(m_mousePos);
 				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-				std::shared_ptr<Entity> newEntity = m_ActiveLevel->AddEntityWithSprite(worldPos, handle);
+				Entity newEntity = m_ActiveLevel->AddEntityWithSprite(worldPos, handle);
 				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 			else
@@ -395,7 +380,7 @@ void LevelEditor::sGUI()
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
 		static const ImU32 selectionColor = 0xFF20AACC;
-		Vec2 ePos = m_inspectedEntity->getComponent<CTransform>().pos;
+		Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().pos;
 		sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
 		ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
 		static const float lineLength = 80.0f;
@@ -507,11 +492,11 @@ void LevelEditor::sDoAction(const Action& action)
 			m_lastGizmoPosX = viewportPos;
 			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
 			{
-				m_inspectedEntity->getComponent<CTransform>().pos.x += deltaPos.x;
+				m_inspectedEntity.getComponent<CTransform>().pos.x += deltaPos.x;
 			}
 			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
 			{
-				m_inspectedEntity->getComponent<CTransform>().scale.x += m_scalingFactor * deltaPos.x;
+				m_inspectedEntity.getComponent<CTransform>().scale.x += m_scalingFactor * deltaPos.x;
 			}
 		}
 		else if (m_gizmoSelectY && m_inspectedEntity)
@@ -520,11 +505,11 @@ void LevelEditor::sDoAction(const Action& action)
 			m_lastGizmoPosY = viewportPos;
 			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
 			{
-				m_inspectedEntity->getComponent<CTransform>().pos.y += deltaPos.y;
+				m_inspectedEntity.getComponent<CTransform>().pos.y += deltaPos.y;
 			}
 			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
 			{
-				m_inspectedEntity->getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
+				m_inspectedEntity.getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
 			}
 		}
 	}
@@ -569,19 +554,19 @@ void LevelEditor::sDoAction(const Action& action)
 		}
 		else if (action.name() == "DELETE")
 		{
-			std::shared_ptr<Entity> inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			Entity inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
 			if (inspectedEntity)
 			{
-				m_LevelHierarchyPanel.SetInspectedEntity(nullptr);
+				m_LevelHierarchyPanel.SetInspectedEntity({});
 				m_ActiveLevel->DestroyEntity(inspectedEntity);
 			}
 		}
 		else if (action.name() == "DUPLICATE")
 		{
-			std::shared_ptr<Entity> inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			Entity inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
 			if (inspectedEntity)
 			{
-				std::shared_ptr<Entity> newEntity = m_ActiveLevel->AddEntity(inspectedEntity);
+				Entity newEntity = m_ActiveLevel->AddEntity(inspectedEntity);
 				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 		}
@@ -592,7 +577,7 @@ void LevelEditor::sDoAction(const Action& action)
 
 			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
 			{
-				std::shared_ptr<Entity> entity = m_ActiveLevel->GetEntityIfClicked(worldPos);
+				Entity entity = m_ActiveLevel->GetEntityIfClicked(worldPos);
 				if (entity)
 				{
 					m_LevelHierarchyPanel.SetInspectedEntity(entity);
@@ -601,7 +586,7 @@ void LevelEditor::sDoAction(const Action& action)
 				{
 					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
 					{
-						m_LevelHierarchyPanel.SetInspectedEntity(nullptr);
+						m_LevelHierarchyPanel.SetInspectedEntity({});
 
 					}
 				}

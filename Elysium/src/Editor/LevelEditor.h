@@ -71,7 +71,7 @@ protected:
 	sf::RectangleShape m_gridRect;
 
 	Vec2 m_mousePos;
-	std::shared_ptr<Entity> m_inspectedEntity = nullptr;
+	Entity m_inspectedEntity = {};
 
 	// ImGui
 	void setImGuiStyle();
@@ -82,9 +82,8 @@ protected:
 
 	Vec2 windowToViewport(const Vec2& windowPos) const;
 
-	std::vector<Vec2> generatePolygonColliderVertices(std::shared_ptr<Entity> entity);
+	std::vector<Vec2> generatePolygonColliderVertices(Entity entity);
 
-	void spawnEntity(const std::string& name, const sf::Texture& tex);
 
 	void init();
 	void update();

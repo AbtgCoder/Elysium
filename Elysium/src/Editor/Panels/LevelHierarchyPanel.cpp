@@ -14,7 +14,7 @@ LevelHierarchyPanel::LevelHierarchyPanel(const std::shared_ptr<Level>& level)
 void LevelHierarchyPanel::SetLevel(const std::shared_ptr<Level>& level)
 {
 	m_Level = level;
-	m_InspectedEntity = nullptr;
+	m_InspectedEntity = {};
 }
 
 
@@ -108,12 +108,12 @@ static void DrawIntControl(const std::string& label, int& value, int vMin = 0, i
 
 
 template<typename T, typename UIFunction>
-static void DrawComponentGUI(const std::string& name, std::shared_ptr<Entity> entity, UIFunction uiFunction)
+static void DrawComponentGUI(const std::string& name, Entity entity, UIFunction uiFunction)
 {
 	const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-	if (entity->hasComponent<T>())
+	if (entity.hasComponent<T>())
 	{
-		auto& component = entity->getComponent<T>();
+		auto& component = entity.getComponent<T>();
 		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
@@ -145,7 +145,7 @@ static void DrawComponentGUI(const std::string& name, std::shared_ptr<Entity> en
 
 		if (removeComponent)
 		{
-			entity->removeComponent<T>();
+			entity.removeComponent<T>();
 		}
 	}
 }
@@ -156,16 +156,16 @@ void LevelHierarchyPanel::OnImGuiRender()
 	if (m_Level)
 	{
 		m_Level->m_entityManager.update(); // separate update function ??
-
+		
 		ImGui::Begin("Entity Manager");
-		for (auto& e : m_Level->m_entityManager.getEntities())
+		for (auto e : m_Level->m_entityManager.GetEntities())
 		{
 			DrawEntityNode(e);
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 		{
-			m_InspectedEntity = nullptr;
+			m_InspectedEntity = {};
 		}
 
 		// Right click on blank space
@@ -173,8 +173,8 @@ void LevelHierarchyPanel::OnImGuiRender()
 		{
 			if (ImGui::MenuItem("Create Empty Entity"))
 			{
-				auto entity = m_Level->m_entityManager.addEntity("Empty Entity");
-				entity->addComponent<CTag>("Empty Entity");
+				auto entity = m_Level->m_entityManager.addEntity();
+				entity.addComponent<CTag>("Empty Entity");
 			}
 			ImGui::EndPopup();
 		}
@@ -185,7 +185,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 	ImGui::Begin("Entity Inspector");
 	if (m_InspectedEntity)
 	{
-		auto& tag = m_InspectedEntity->getComponent<CTag>().tag;
+		auto& tag = m_InspectedEntity.getComponent<CTag>().tag;
 		char buffer[256];
 		memset(buffer, 0, sizeof(buffer));
 		strncpy_s(buffer, sizeof(buffer), tag.c_str(), sizeof(buffer));
@@ -206,7 +206,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 		{
 			DisplayAddComponentEntry<CTransform>("Transform");
 			DisplayAddComponentEntry<CGravity>("Gravity");
-			if (m_InspectedEntity->hasComponent<CSpriteRenderer>())
+			if (m_InspectedEntity.hasComponent<CSpriteRenderer>())
 			{
 				//DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity->getComponent<CAnimation>().animation.getSize());
 				//DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
@@ -307,11 +307,11 @@ void LevelHierarchyPanel::OnImGuiRender()
 template<typename T, typename... TArgs>
 void LevelHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs)
 {
-	if (!m_InspectedEntity->hasComponent<T>())
+	if (!m_InspectedEntity.hasComponent<T>())
 	{
 		if (ImGui::MenuItem(entryName.c_str()))
 		{
-			m_InspectedEntity->addComponent<T>(std::forward<TArgs>(mArgs)...);
+			m_InspectedEntity.addComponent<T>(std::forward<TArgs>(mArgs)...);
 			ImGui::CloseCurrentPopup();
 		}
 	}
@@ -319,18 +319,18 @@ void LevelHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName,
 
 
 
-void LevelHierarchyPanel::SetInspectedEntity(std::shared_ptr<Entity> entity)
+void LevelHierarchyPanel::SetInspectedEntity(Entity entity)
 {
 	m_InspectedEntity = entity;
 }
 
-void LevelHierarchyPanel::DrawEntityNode(std::shared_ptr<Entity> entity)
+void LevelHierarchyPanel::DrawEntityNode(Entity entity)
 {
-	auto& tag = entity->getComponent<CTag>().tag;
+	auto& tag = entity.getComponent<CTag>().tag;
 
 	ImGuiTreeNodeFlags flags = ((m_InspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-	bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(entity->id()), flags, tag.c_str());
+	bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(entity.id()), flags, tag.c_str());
 	if (ImGui::IsItemClicked())
 	{
 		m_InspectedEntity = entity;
@@ -360,10 +360,11 @@ void LevelHierarchyPanel::DrawEntityNode(std::shared_ptr<Entity> entity)
 
 	if (entityDeleted)
 	{
-		entity->destroy();
+		entity.destroy();
 		if (m_InspectedEntity == entity)
 		{
-			m_InspectedEntity = nullptr;
+			m_InspectedEntity = {};
 		}
 	}
 }
+

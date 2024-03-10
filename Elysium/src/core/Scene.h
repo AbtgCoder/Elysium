@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Level/EntityManager.h"
 #include "Action.h"
 
 #include <memory>
@@ -32,7 +31,6 @@ public:
 
 protected:
 	GameEngine* m_game=nullptr;
-	EntityManager m_entityManager;
 	ActionMap m_actionMap;
 	bool m_paused = false;
 	bool m_hasEnded = false;

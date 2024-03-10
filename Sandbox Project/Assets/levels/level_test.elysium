@@ -2,7 +2,7 @@ Level: Untitled
 Entities:
   - Entity: Big Pipe
     Transform:
-      Position: [896, 484]
+      Position: [896, 488]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -21,7 +21,7 @@ Entities:
       Size: [64, 64]
   - Entity: Tile
     Transform:
-      Position: [276.5, 602.5]
+      Position: [258.5, 602.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -32,7 +32,7 @@ Entities:
       Size: [64, 64]
   - Entity: Player
     Transform:
-      Position: [599, 562.5]
+      Position: [542, 562.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -63,9 +63,11 @@ Entities:
       Gravity: 0
   - Entity: Tile
     Transform:
-      Position: [368.999939, 773.499878]
+      Position: [380.999939, 773.499878]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
       TextureHandle: 4518961158634738713
       Layer: 0
+    Gravity:
+      Gravity: 0

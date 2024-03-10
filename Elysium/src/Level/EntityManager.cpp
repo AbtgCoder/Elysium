@@ -1,89 +1,57 @@
 #include "EntityManager.h"
-#include <algorithm>
 
-EntityManager::EntityManager()
-{
-}
 
 void EntityManager::update()
-{	
+{
 	// adding entities
-	for (auto& e : m_entitiesToAdd)
+	for (auto e : m_EntitiesToAdd)
 	{
-		m_entities.push_back(e);
-		m_entityMap[e->tag()].push_back(e);
+		m_Entities.push_back(e);
 	}
 
 	// deleting entities
-	removeDeadEntities(m_entities);
-	for (auto& [tag, entityVec] : m_entityMap)
-	{
-		removeDeadEntities(entityVec);
-	}
+	removeDeadEntities(m_Entities);
 
-	/*if (m_entitiesToAdd.size() > 0) // TODO: do this while rendering?? for optimization, but then it needs to be called whenever you change rendering layer via entity inspector
-	{*/
-		/*std::sort(m_entities.begin(), m_entities.end(), [](const std::shared_ptr<Entity>& a, const std::shared_ptr<Entity>& b) {
-			return a->getComponent<CAnimation>().layer < b->getComponent<CAnimation>().layer;
-			});*/
-	//}
-
-	// clearing m_entitiesToAdd 
-	m_entitiesToAdd.clear();
-
+	m_EntitiesToAdd.clear();
 }
 
-std::shared_ptr<Entity> EntityManager::addEntity(const std::string& tag)
+Entity EntityManager::addEntity()
 {
-	//auto e = std::make_shared<Entity>(m_totalEntities++, tag);
-	auto e = std::shared_ptr<Entity>(new Entity(m_totalEntities++, tag));
-	m_entitiesToAdd.push_back(e);
+	Entity e = Entity(EntityMemoryPool::Instance().addEntity());
+	e.addComponent<CTag>("Empty Entity");
+	m_EntitiesToAdd.push_back(e);
 	return e;
 }
 
-std::shared_ptr<Entity> EntityManager::addEntity(const std::shared_ptr<Entity>& originalEntity)
+const std::vector<Entity>& EntityManager::GetEntities()
 {
-	auto newEntity = std::shared_ptr<Entity>(new Entity(m_totalEntities++, originalEntity->tag()));
-	duplicateComponents(originalEntity, newEntity);
-	m_entitiesToAdd.push_back(newEntity);
-	return newEntity;
+	return m_Entities;
 }
 
-const EntityVec& EntityManager::getEntities()
+void EntityManager::removeDeadEntities(std::vector<Entity>& entityVec)
 {
-	return m_entities;
-}
+//	std::vector<OptEntity> entitiesToRemove;
+//	for (auto& e : entityVec)
+//	{
+//		if (!e.isActive())
+//		{
+//			entitiesToRemove.push_back(e);
+//		}
+//	}
+//
+//	for (auto& e : entitiesToRemove)
+//	{
+//		// find index of entity
+//		auto it = std::find(entityVec.begin(), entityVec.end(), e);
+//		// if index found
+//		if (it != entityVec.end())
+//		{
+//			entityVec.erase(it);
+//		}
+//
+//	}
 
-const EntityVec& EntityManager::getEntities(const std::string& tag)
-{
-	return m_entityMap[tag];
-}
-
-const EntityMap& EntityManager::getEntityMap()
-{
-	return m_entityMap;
-}
-
-void EntityManager::removeDeadEntities(EntityVec& vec)
-{
-	EntityVec entitiesToRemove;
-	for (auto& e : vec)
-	{
-		if (!e->isActive())
-		{
-			entitiesToRemove.push_back(e);
-		}
-	}
-	
-	for (auto& e : entitiesToRemove)
-	{
-		// find index of entity
-		auto it = std::find(vec.begin(), vec.end(), e);
-		// if index found
-		if (it != vec.end())
-		{
-			vec.erase(it);
-		}
-
-	}
+	entityVec.erase(std::remove_if(entityVec.begin(), entityVec.end(), [](Entity& entity) {
+		return !entity.isActive();
+		}), entityVec.end());
 }

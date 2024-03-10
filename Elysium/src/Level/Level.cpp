@@ -18,28 +18,28 @@ Level::~Level()
 {
 }
 
-std::shared_ptr<Entity> Level::AddEntity(std::shared_ptr<Entity> entity)
+Entity Level::AddEntity(Entity entity)
 {
-	return m_entityManager.addEntity(entity);
+	return {};// m_entityManager.addEntity(entity);
 }
 
-std::shared_ptr<Entity> Level::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
+Entity Level::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 {
 	// asset, asset type as texture
-	auto entity = m_entityManager.addEntity("Tile");
-	entity->addComponent<CTag>("Tile");
-	entity->addComponent<CTransform>(pos);
-	entity->addComponent<CSpriteRenderer>();
-	entity->getComponent<CSpriteRenderer>().texture = textureHandle;
+	auto entity = m_entityManager.addEntity();
+	entity.addComponent<CTag>("Tile");
+	entity.addComponent<CTransform>(pos);
+	entity.addComponent<CSpriteRenderer>();
+	entity.getComponent<CSpriteRenderer>().texture = textureHandle;
 	return entity;
 }
 
-static bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
+static bool IsInside(Vec2 pos, Entity e)
 {
-	if (e->hasComponent<CSpriteRenderer>())
+	if (e.hasComponent<CSpriteRenderer>())
 	{
-		sf::Vector2u s =  AssetManager::GetAsset<Texture>(e->getComponent<CSpriteRenderer>().texture)->GetSFMLTexture().getSize();
-		Vec2 ePos = e->getComponent<CTransform>().pos;
+		sf::Vector2u s =  AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture().getSize();
+		Vec2 ePos = e.getComponent<CTransform>().pos;
 		if (pos.x > ePos.x - s.x / 2 &&
 			pos.x < ePos.x + s.x / 2 &&
 			pos.y > ePos.y - s.y / 2 &&
@@ -53,9 +53,9 @@ static bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
 	return false;
 }
 
-std::shared_ptr<Entity> Level::GetEntityIfClicked(Vec2 mousePos)
+Entity Level::GetEntityIfClicked(Vec2 mousePos)
 {
-	for (auto entity : m_entityManager.getEntities())
+	for (auto entity : m_entityManager.GetEntities())
 	{
 		if (IsInside(mousePos, entity))
 		{
@@ -63,12 +63,12 @@ std::shared_ptr<Entity> Level::GetEntityIfClicked(Vec2 mousePos)
 		}
 	}
 
-	return nullptr;
+	return {};
 }
 
-void Level::DestroyEntity(std::shared_ptr<Entity> entity)
+void Level::DestroyEntity(Entity entity)
 {
-	entity->destroy();
+	entity.destroy();
 }
 
 void Level::OnUpdateEditor(sf::RenderTexture& renderTexture)
@@ -81,17 +81,17 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture)
 {
 	renderTexture.clear(sf::Color::Blue);
 
-	for (auto& e : m_entityManager.getEntities())
+	for (auto e : m_entityManager.GetEntities())
 	{
-		if (e->hasComponent<CSpriteRenderer>())
+		if (e.hasComponent<CSpriteRenderer>())
 		{
-			if (e->getComponent<CSpriteRenderer>().texture != 0)
+			if (e.getComponent<CSpriteRenderer>().texture != 0)
 			{
 				// highly inefficient drawing
-				sf::Texture tex = AssetManager::GetAsset<Texture>(e->getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+				sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 				sf::Sprite sprite = sf::Sprite(tex);
-				sprite.setOrigin(tex.getSize().x/2, tex.getSize().y/2);
-				sprite.setPosition(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+				sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
+				sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				//renderTexture.draw(sprite, &m_Shader);
 				renderTexture.draw(sprite);
 			}

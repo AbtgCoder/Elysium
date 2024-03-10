@@ -1,85 +1,57 @@
 #pragma once
 
-#include "Components.h"
-#include <memory>
-#include <string>
-#include <tuple>
-#include <utility>
+//#include <string>
+//#include <vector>
 
-typedef std::tuple<
-	CTag,
-	CTransform,
-	CLifespan,
-	CInput,
-	CBoundingBox,
-	CPolygonCollider,
-	CGravity,
-	CState,
-	CScore,
-	CSpriteRenderer
-> ComponentTuple;
+#include "EntityMemoryPool.h"
 
 class Entity
 {
-	friend class EntityManager;
 public:
+	Entity() = default;
 
-	
-	// private member access functions
-	bool isActive() const;
-	const std::string& tag() const;
-	const size_t id() const;
-	void destroy();
+	Entity(size_t index)
+		: m_Id(index), m_IsValidEntity(true) {}
+
+	size_t id() const { return m_Id; }
+
+	bool isActive()
+	{
+		return EntityMemoryPool::Instance().isActive(m_Id);
+	}
 
 	template<typename T>
 	T& getComponent()
 	{
-		return std::get<T>(m_components); // look for component in the tuple
+		return EntityMemoryPool::Instance().getComponent<T>(m_Id);
 	}
 
+	// has component
 	template<typename T>
-	const T& getComponent() const
+	bool hasComponent()
 	{
-		return std::get<T>(m_components);
+		return EntityMemoryPool::Instance().hasComponent<T>(m_Id);
 	}
-
-	template <typename T>
-	bool hasComponent() const
-	{
-		return getComponent<T>().has;
-	}
-
-	template <typename T>
-	T& addComponent(T& originalComponent)
-	{
-		auto& newComponent = getComponent<T>();
-		newComponent = T(originalComponent);
-		newComponent.has = true;
-		return newComponent;
-	}
-
+	// add component
 	template <typename T, typename... TArgs>
 	T& addComponent(TArgs&&... mArgs)
 	{
-		auto& component = getComponent<T>();
-		component = T(std::forward<TArgs>(mArgs)...);
-		component.has = true;
-		return component;
+		return EntityMemoryPool::Instance().addComponent<T>(m_Id, std::forward<TArgs>(mArgs)...);
 	}
-
-	template<typename T>
+	// remove component
+	template <typename T>
 	void removeComponent()
 	{
-		getComponent<T>() = T();
+		EntityMemoryPool::Instance().removeComponent<T>(m_Id);
 	}
 
-	
-private:
-	bool m_active = true;
-	size_t m_id = 0;
-	std::string m_tag = "default";
-	ComponentTuple m_components;
-	
-	Entity(const size_t id, const std::string& tag);
+	void destroy()
+	{
+		EntityMemoryPool::Instance().destroy(m_Id);
+	}
 
+	operator bool() const { return m_IsValidEntity; }
+private:
+	bool m_IsValidEntity = false;
+	size_t m_Id;
 };

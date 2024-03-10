@@ -12,14 +12,14 @@ public:
 
 	void OnImGuiRender();
 
-	std::shared_ptr<Entity> GetInspectedEntity() const { return m_InspectedEntity; }
-	void SetInspectedEntity(std::shared_ptr<Entity> entity);
+	Entity GetInspectedEntity() const { return m_InspectedEntity; }
+	void SetInspectedEntity(Entity entity);
 private:
 	template<typename T, typename... TArgs>
 	void DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs);
 
-	void DrawEntityNode(std::shared_ptr<Entity> entity);
+	void DrawEntityNode(Entity entity);
 private:
 	std::shared_ptr<Level> m_Level;
-	std::shared_ptr<Entity> m_InspectedEntity;
+	Entity m_InspectedEntity;
 };

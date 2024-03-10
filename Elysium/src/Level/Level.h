@@ -13,10 +13,10 @@ public:
 	Level(const std::string& name);
 	~Level();
 
-	std::shared_ptr<Entity> AddEntity(std::shared_ptr<Entity> entity);
-	std::shared_ptr<Entity> AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
-	std::shared_ptr<Entity> GetEntityIfClicked(Vec2 mousePos);
-	void DestroyEntity(std::shared_ptr<Entity> entity);
+	Entity AddEntity(Entity entity);
+	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
+	Entity GetEntityIfClicked(Vec2 mousePos);
+	void DestroyEntity(Entity entity);
 
 	virtual AssetType GetType() const { return AssetType::Level; }
 

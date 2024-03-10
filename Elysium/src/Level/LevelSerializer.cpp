@@ -62,28 +62,28 @@ LevelSerializer::LevelSerializer(const std::shared_ptr<Level>& level)
 {
 }
 
-static void SerializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
+static void SerializeEntity(YAML::Emitter& out, Entity entity)
 {
 	out << YAML::BeginMap; // Entity
-	out << YAML::Key << "Entity" << YAML::Value << entity->getComponent<CTag>().tag;
-	if (entity->hasComponent<CTransform>())
+	out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<CTag>().tag;
+	if (entity.hasComponent<CTransform>())
 	{
 		out << YAML::Key << "Transform";
 		out << YAML::BeginMap; // Transform Component
 
-		auto& tc = entity->getComponent<CTransform>();
+		auto& tc = entity.getComponent<CTransform>();
 		out << YAML::Key << "Position" << YAML::Value << tc.pos;
 		out << YAML::Key << "Scale" << YAML::Value << tc.scale;
 		out << YAML::Key << "Angle" << YAML::Value << tc.angle;
 
 		out << YAML::EndMap; // TransformComponent
 	}
-	if (entity->hasComponent<CSpriteRenderer>())
+	if (entity.hasComponent<CSpriteRenderer>())
 	{
 		out << YAML::Key << "SpriteRenderer";
 		out << YAML::BeginMap;
 		
-		auto& spriteRendererComponent = entity->getComponent<CSpriteRenderer>();
+		auto& spriteRendererComponent = entity.getComponent<CSpriteRenderer>();
 		out << YAML::Key << "TextureHandle" << YAML::Value << spriteRendererComponent.texture;
 		out << YAML::Key << "Layer" << YAML::Value << spriteRendererComponent.layer;
 
@@ -103,23 +103,23 @@ static void SerializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
 
 	//	out << YAML::EndMap;
 	//}
-	if (entity->hasComponent<CBoundingBox>())
+	if (entity.hasComponent<CBoundingBox>())
 	{
 		out << YAML::Key << "AABB";
 		out << YAML::BeginMap;
 
-		auto& bc2d = entity->getComponent<CBoundingBox>();
+		auto& bc2d = entity.getComponent<CBoundingBox>();
 		out << YAML::Key << "Offset" << YAML::Value << bc2d.offset;
 		out << YAML::Key << "Size" << YAML::Value << bc2d.size;
 
 		out << YAML::EndMap;
 	}
-	if (entity->hasComponent<CPolygonCollider>())
+	if (entity.hasComponent<CPolygonCollider>())
 	{
 		out << YAML::Key << "PolygonCollider";
 		out << YAML::BeginMap;
 
-		auto& pc2d = entity->getComponent<CPolygonCollider>();
+		auto& pc2d = entity.getComponent<CPolygonCollider>();
 		out << YAML::Key << "Offset" << YAML::Value << pc2d.offset;
 		out << YAML::Key << "Points" << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "Size" << YAML::Value << pc2d.colliderVertices.size();
@@ -133,12 +133,12 @@ static void SerializeEntity(YAML::Emitter& out, std::shared_ptr<Entity> entity)
 		out << YAML::EndMap;
 		out << YAML::EndMap;
 	}
-	if (entity->hasComponent<CGravity>())
+	if (entity.hasComponent<CGravity>())
 	{
 		out << YAML::Key << "Gravity";
 		out << YAML::BeginMap;
 
-		auto& gc = entity->getComponent<CGravity>();
+		auto& gc = entity.getComponent<CGravity>();
 		out << YAML::Key << "Gravity" << YAML::Value << gc.gravity;
 		out << YAML::EndMap;
 	}
@@ -151,9 +151,9 @@ void LevelSerializer::Serialize(const std::filesystem::path& filepath)
 	out << YAML::BeginMap;
 	out << YAML::Key << "Level" << YAML::Value << "Untitled";
 	out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-	for (auto entity : m_Level->m_entityManager.getEntities())
+	for (auto entity : m_Level->m_entityManager.GetEntities())
 	{
-		if (entity->isActive())
+		if (entity.isActive())
 		{
 			SerializeEntity(out, entity);
 		}
@@ -193,13 +193,13 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 		for (auto entity : entities)
 		{
 			auto tag = entity["Entity"].as<std::string>();
-			std::shared_ptr<Entity> deserializedEntity = m_Level->m_entityManager.addEntity(tag);
-			deserializedEntity->addComponent<CTag>(tag);
+			Entity deserializedEntity = m_Level->m_entityManager.addEntity();
+			deserializedEntity.addComponent<CTag>(tag);
 
 			auto transformComponent = entity["Transform"];
 			if (transformComponent)
 			{
-				auto& tc = deserializedEntity->addComponent<CTransform>();
+				auto& tc = deserializedEntity.addComponent<CTransform>();
 				tc.pos = transformComponent["Position"].as<Vec2>();
 				tc.scale = transformComponent["Scale"].as<Vec2>();
 				tc.angle = transformComponent["Angle"].as<float>();
@@ -208,7 +208,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto spriteRendererComponent = entity["SpriteRenderer"];
 			if (spriteRendererComponent)
 			{
-				auto& src = deserializedEntity->addComponent<CSpriteRenderer>();
+				auto& src = deserializedEntity.addComponent<CSpriteRenderer>();
 				if (spriteRendererComponent["TextureHandle"])
 				{
 					src.texture = spriteRendererComponent["TextureHandle"].as<AssetHandle>();
@@ -232,7 +232,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto boundingBoxComponent = entity["AABB"];
 			if (boundingBoxComponent)
 			{
-				auto& bc2d = deserializedEntity->addComponent<CBoundingBox>();
+				auto& bc2d = deserializedEntity.addComponent<CBoundingBox>();
 				bc2d.offset = boundingBoxComponent["Offset"].as<Vec2>();
 				bc2d.size = boundingBoxComponent["Size"].as<Vec2>();
 				bc2d.halfSize = bc2d.size / 2;
@@ -241,7 +241,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto polygonColliderComponent = entity["PolygonCollider"];
 			if (polygonColliderComponent)
 			{
-				auto& pc2d = deserializedEntity->addComponent<CPolygonCollider>();
+				auto& pc2d = deserializedEntity.addComponent<CPolygonCollider>();
 				pc2d.offset = polygonColliderComponent["Offset"].as<Vec2>();
 				auto verticesData = polygonColliderComponent["Points"];
 				auto elements = verticesData["Elements"];
@@ -254,7 +254,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto gravityComponent = entity["Gravity"];
 			if (gravityComponent)
 			{
-				auto& gc = deserializedEntity->addComponent<CGravity>();
+				auto& gc = deserializedEntity.addComponent<CGravity>();
 				gc.gravity = gravityComponent["Gravity"].as<float>();
 			}
 
