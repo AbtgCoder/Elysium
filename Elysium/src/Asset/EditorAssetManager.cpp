@@ -94,7 +94,7 @@ std::shared_ptr<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 		asset = AssetImporter::ImportAsset(handle, metadata);
 		if (!asset)
 		{
-			// log error , asset import failed
+			// log error: asset import failed
 		}
 		m_LoadedAssets[handle] = asset;
 	}

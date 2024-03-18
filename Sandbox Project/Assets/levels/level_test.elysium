@@ -21,7 +21,7 @@ Entities:
       Size: [64, 64]
   - Entity: Tile
     Transform:
-      Position: [258.5, 602.5]
+      Position: [193.5, 602.5]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:
@@ -63,7 +63,7 @@ Entities:
       Gravity: 0
   - Entity: Tile
     Transform:
-      Position: [380.999939, 773.499878]
+      Position: [346.999939, 773.499878]
       Scale: [1, 1]
       Angle: 0
     SpriteRenderer:

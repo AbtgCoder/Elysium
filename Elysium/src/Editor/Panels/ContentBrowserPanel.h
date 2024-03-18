@@ -13,7 +13,7 @@ public:
 	ContentBrowserPanel(std::shared_ptr<Project> project);
 
 	void OnImGuiRender();
-private:
+//private:
 	void RefreshAssetTree();
 private:
 	std::shared_ptr<Project> m_Project;

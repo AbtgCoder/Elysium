@@ -6,6 +6,8 @@
 #include "Asset/AssetManager.h"
 #include "Asset/LevelImporter.h"
 
+#include "Utils/FileUtils.h"
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui-SFML.h"
@@ -46,8 +48,7 @@ void LevelEditor::init()
 	m_collisionRect.setOutlineColor(sf::Color::White);
 	m_collisionRect.setOutlineThickness(1);
 
-	m_EditorProjectPath = "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox.eproject";
-	OpenProject(m_EditorProjectPath);
+	OpenProject();
 }
 
 void LevelEditor::setImGuiStyle()
@@ -163,7 +164,12 @@ void LevelEditor::NewProject()
 
 bool LevelEditor::OpenProject()
 {
-	return false;
+	std::string projectPath = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Project (*.eproject)\0*.eproject\0");
+	if (projectPath.empty())
+		return false;
+
+	OpenProject(projectPath);
+	return true;
 }
 
 void LevelEditor::OpenProject(const std::filesystem::path& path)
@@ -183,10 +189,46 @@ void LevelEditor::SaveProject()
 
 void LevelEditor::NewLevel()
 {
+	std::string path = WindowsFileUtils::SaveFile(m_game->window().getSystemHandle(), "Elysium Level (*.elysium)\0*.elysium\0");
+	if (!path.empty())
+	{
+		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
+		std::shared_ptr<Level> level = std::make_shared<Level>();
+		LevelImporter::SaveLevel(level, relativePath);
+		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+		// refresh content browser
+		m_ContentBrowserPanel->RefreshAssetTree();
+		const auto& assetRegistry = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
+		for (const auto& [handle, metadata] : assetRegistry)
+		{
+			if (metadata.FilePath == relativePath)
+			{
+				OpenLevel(handle);
+				break;
+			}
+		}
+	}
 }
 
 void LevelEditor::OpenLevel()
 {
+	std::string path = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Level (*.elysium)\0*.elysium\0");
+	if (!path.empty())
+	{
+		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
+		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+		// refresh content browser
+		m_ContentBrowserPanel->RefreshAssetTree();
+		const auto& assetRegistry = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
+		for (const auto& [handle, metadata] : assetRegistry)
+		{
+			if (metadata.FilePath == relativePath)
+			{
+				OpenLevel(handle);
+				break;
+			}
+		}
+	}
 }
 
 void LevelEditor::OpenLevel(AssetHandle handle)
@@ -323,12 +365,14 @@ void LevelEditor::sGUI()
 		{
 			if (ImGui::MenuItem("Open Level", "Ctrl+O"))
 			{
-				std::cout << "wow load level!\n";
+				SaveLevel(); // save active level
+				OpenLevel();
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("New Level", "Ctrl+N"))
 			{
 				std::cout << "wow new level!\n";
+				NewLevel();
 			}
 			ImGui::EndMenu();
 		}
