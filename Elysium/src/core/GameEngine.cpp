@@ -12,7 +12,7 @@ GameEngine::GameEngine(const std::string& name)
 void GameEngine::init(const std::string& name)
 {
 	// create window
-	m_window.create(sf::VideoMode::getDesktopMode(), name, sf::Style::Fullscreen); // TODO: Custom title bar ??
+	m_window.create(sf::VideoMode::getDesktopMode(), name);
 	m_window.setFramerateLimit(60);
 
 	// Initialize ImGui

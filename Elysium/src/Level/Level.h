@@ -18,17 +18,29 @@ public:
 	Entity GetEntityIfClicked(Vec2 mousePos);
 	void DestroyEntity(Entity entity);
 
+	std::vector<Entity>& GetAllPhysicsEntities();
+
 	virtual AssetType GetType() const { return AssetType::Level; }
 
 	std::string GetName() const { return m_Name; }
 
-	void OnUpdateEditor(sf::RenderTexture& renderTexture);
+	void OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+	void OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 private:
-	void RenderLevel(sf::RenderTexture& renderTexture);
+
+	Entity m_player = {};
+
+	// debug stuff
+	sf::RectangleShape m_PhysicsRect;
+	sf::ConvexShape m_PhysicsPoly;
+
+	void RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
 	bool m_IsPaued = false;
+
+
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 

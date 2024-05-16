@@ -1,6 +1,8 @@
 #include "LevelHierarchyPanel.h"
 
 #include "Asset/AssetManager.h"
+#include "core/Texture.h"
+#include "Physics/graham_scan.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -150,6 +152,74 @@ static void DrawComponentGUI(const std::string& name, Entity entity, UIFunction 
 	}
 }
 
+std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity e)
+{
+	sf::Texture tex = entityTex; 
+	sf::Image image = tex.copyToImage();
+	sf::Vector2u imageSize = image.getSize();
+
+	sf::Image paddedBinaryImage;
+	paddedBinaryImage.create(imageSize.x + 2, imageSize.y + 2);
+
+	for (int y = 0; y < imageSize.y + 2; ++y) {
+		for (int x = 0; x < imageSize.x + 2; ++x) {
+			if (y - 1 >= 0 && y - 1 < imageSize.y && x - 1 >= 0 && x - 1 < imageSize.x)
+			{
+				sf::Color pixelColor = image.getPixel(x - 1, y - 1);
+				int grayscaleColor = static_cast<int>((pixelColor.r + pixelColor.g + pixelColor.b) / 3);
+				if (grayscaleColor != 0)
+				{
+					paddedBinaryImage.setPixel(x, y, sf::Color::White);
+				}
+				else
+				{
+					paddedBinaryImage.setPixel(x, y, sf::Color::Black);
+				}
+			}
+			else
+			{
+				paddedBinaryImage.setPixel(x, y, sf::Color::Black);
+			}
+		}
+	}
+
+
+	// boundaryPoints = countourTracing(paddedBinaryImage) TODO: moore neighborhood contour tracing ??
+	std::vector<Vec2> boundaryPoints;
+	for (uint32_t y = 0; y < imageSize.y; ++y)
+	{
+		for (uint32_t x = 0; x < imageSize.x; ++x)
+		{
+			if (paddedBinaryImage.getPixel(x, y) == sf::Color::White &&
+				(paddedBinaryImage.getPixel(x - 1, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y - 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x - 1, y) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x - 1, y + 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x, y + 1) == sf::Color::Black ||
+					paddedBinaryImage.getPixel(x + 1, y + 1) == sf::Color::Black))
+			{
+				boundaryPoints.push_back(Vec2((float)x, (float)imageSize.y - y));
+			}
+		}
+	}
+
+	// TODO: reducing points ?? ramer-douglas-peucker algorithm
+
+	// TODO: more algs :  jarvis march, chan's algorithm etc
+	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
+
+	std::vector<Vec2> colliderVertices;
+	Vec2 ePos = e.getComponent<CTransform>().pos; 
+	Vec2 eSize(tex.getSize().x, tex.getSize().y);
+	for (auto p : convexHull)
+	{
+		colliderVertices.push_back(Vec2(ePos.x - eSize.x / 2 + p.x, ePos.y + eSize.y / 2 - p.y));
+	}
+	return colliderVertices;
+}
+
 void LevelHierarchyPanel::OnImGuiRender()
 {
 
@@ -208,8 +278,12 @@ void LevelHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CGravity>("Gravity");
 			if (m_InspectedEntity.hasComponent<CSpriteRenderer>())
 			{
-				//DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity->getComponent<CAnimation>().animation.getSize());
-				//DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_inspectedEntity));
+				if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
+				{
+					sf::Texture tex = AssetManager::GetAsset<Texture>(m_InspectedEntity.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+					DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", Vec2(tex.getSize().x, tex.getSize().y));
+					DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(tex, m_InspectedEntity));
+				}
 			}
 			else
 			{
@@ -226,6 +300,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 		DrawComponentGUI<CTransform>("Transform", m_InspectedEntity, [](auto& component)
 			{
 				DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
+				DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
 				DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
 				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
 			});

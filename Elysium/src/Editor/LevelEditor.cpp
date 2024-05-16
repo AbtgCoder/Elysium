@@ -29,7 +29,7 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::Escape, "QUIT");
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
-	registerAction(sf::Keyboard::T, "PLAY_LEVEL");
+	registerAction(sf::Keyboard::P, "PLAY_LEVEL");
 	registerAction(sf::Keyboard::LAlt, "ALT");
 	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
 	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
@@ -142,19 +142,34 @@ Vec2 LevelEditor::windowToViewport(const Vec2& windowPos) const
 void LevelEditor::update()
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
+	m_rt.create(m_viewportSize.x, m_viewportSize.y);
+	m_levelView.setSize(m_viewportSize.x, m_viewportSize.y);
+	m_levelView.zoom(m_levelViewZoom);
+	m_rt.setView(m_levelView);
+	
+	switch (m_LevelState)
+	{
+	case LevelState::Edit:
+	{
+		if (m_ActiveLevel)
+			m_ActiveLevel->OnUpdateEditor(m_rt, m_drawCollision);
+		break;
+	}
+	case LevelState::Play:
+	{
+		if (m_ActiveLevel)
+			m_ActiveLevel->OnUpdateRuntime(m_rt, m_drawCollision);
+		break;
+	}
+	}
+
+	
 	sRender();
 	sGUI();
 }
 
 void LevelEditor::sRender()
 {
-	m_rt.create(m_viewportSize.x, m_viewportSize.y);
-	m_levelView.setSize(m_viewportSize.x, m_viewportSize.y);
-	m_levelView.zoom(m_levelViewZoom);
-	m_rt.setView(m_levelView);
-
-	if (m_ActiveLevel)
-		m_ActiveLevel->OnUpdateEditor(m_rt);
 
 }
 
@@ -255,67 +270,6 @@ void LevelEditor::SaveLevel()
 void LevelEditor::SerializeLevel(std::shared_ptr<Level> level, const std::filesystem::path& path)
 {
 	LevelImporter::SaveLevel(level, path);
-}
-
-std::vector<Vec2> LevelEditor::generatePolygonColliderVertices(Entity entity)
-{
-	sf::Texture tex; // = m_assets[entity->getComponent<CAnimation>().animation.getName()];
-	sf::Image image = tex.copyToImage();
-	sf::Vector2u imageSize = image.getSize();
-
-	sf::Image paddedBinaryImage;
-	paddedBinaryImage.create(imageSize.x + 2, imageSize.y + 2);
-
-	for (int y = 0; y < imageSize.y + 2; ++y) {
-		for (int x = 0; x < imageSize.x + 2; ++x) {
-			if (y - 1 >= 0 && y - 1 < imageSize.y && x - 1 >= 0 && x - 1 < imageSize.x)
-			{
-				sf::Color pixelColor = image.getPixel(x - 1, y - 1);
-				int grayscaleColor = static_cast<int>((pixelColor.r + pixelColor.g + pixelColor.b) / 3);
-				if (grayscaleColor != 0)
-				{
-					paddedBinaryImage.setPixel(x, y, sf::Color::White);
-				}
-				else
-				{
-					paddedBinaryImage.setPixel(x, y, sf::Color::Black);
-				}
-			}
-			else
-			{
-				paddedBinaryImage.setPixel(x, y, sf::Color::Black);
-			}
-		}
-	}
-
-
-	// boundaryPoints = countourTracing(paddedBinaryImage) TODO: moore neighborhood contour tracing ??
-	std::vector<Vec2> boundaryPoints;
-	for (uint32_t y = 0; y < imageSize.y; ++y)
-	{
-		for (uint32_t x = 0; x < imageSize.x; ++x)
-		{
-			if (paddedBinaryImage.getPixel(x, y) == sf::Color::White &&
-				(paddedBinaryImage.getPixel(x - 1, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x - 1, y) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x - 1, y + 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x, y + 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y + 1) == sf::Color::Black))
-			{
-				boundaryPoints.push_back(Vec2((float)x, (float)imageSize.y - y));
-			}
-		}
-	}
-
-	// TODO: reducing points ?? ramer-douglas-peucker algorithm
-
-	// TODO: more algs :  jarvis march, chan's algorithm etc
-	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
-
-	return convexHull;
 }
 
 
@@ -649,10 +603,7 @@ void LevelEditor::sDoAction(const Action& action)
 			m_hasEnded = true;
 			onEnd();
 		}
-		else if (action.name() == "PLAY_LEVEL")
-		{
-			// Level state, level play
-		}
+		
 	}
 	
 	if (action.type() == "END")
@@ -676,6 +627,16 @@ void LevelEditor::sDoAction(const Action& action)
 			{
 				m_gizmoSelectY = false;
 			}
+		}
+		else if (action.name() == "PLAY_LEVEL")
+		{
+			// Level state, level play
+			if (m_LevelState == LevelState::Edit)
+			{
+				m_LevelState = LevelState::Play;
+			}
+			else if (m_LevelState == LevelState::Play)
+				m_LevelState = LevelState::Edit;
 		}
 	}
 }

@@ -258,6 +258,11 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 				gc.gravity = gravityComponent["Gravity"].as<float>();
 			}
 
+			if (tag == "player")
+			{
+				m_Level->m_player = deserializedEntity;
+			}
+
 		}
 	}
 

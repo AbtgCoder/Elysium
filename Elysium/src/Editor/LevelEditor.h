@@ -73,6 +73,12 @@ protected:
 	Vec2 m_mousePos;
 	Entity m_inspectedEntity = {};
 
+	enum class LevelState
+	{
+		Edit = 0, Play = 1
+	};
+	LevelState m_LevelState = LevelState::Edit;
+
 	// ImGui
 	void setImGuiStyle();
 
@@ -81,8 +87,6 @@ protected:
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 
 	Vec2 windowToViewport(const Vec2& windowPos) const;
-
-	std::vector<Vec2> generatePolygonColliderVertices(Entity entity);
 
 
 	void init();
