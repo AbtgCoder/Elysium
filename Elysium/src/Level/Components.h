@@ -95,11 +95,14 @@ class CPolygonCollider : public Component
 public:
 	std::vector<Vec2> colliderVertices;
 	Vec2 offset = {0.0f, 0.0f};
+	Vec2 size;
 	CPolygonCollider() {}
 	CPolygonCollider(const std::vector<Vec2>& vertices)
 		: colliderVertices(vertices) {}
+	CPolygonCollider(const Vec2& s, const std::vector<Vec2>& vertices)
+		: size(s), colliderVertices(vertices) {}
 	CPolygonCollider(CPolygonCollider& other)
-		: colliderVertices(other.colliderVertices), offset(other.offset) {}
+		: size(other.size), colliderVertices(other.colliderVertices), offset(other.offset) {}
 };
 
 class CSpriteRenderer : public Component

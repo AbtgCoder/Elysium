@@ -85,6 +85,13 @@ protected:
 	// Panels
 	LevelHierarchyPanel m_LevelHierarchyPanel;
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
+	
+	std::shared_ptr<Texture> m_IconPlay;
+	std::shared_ptr<Texture> m_IconPause;
+	std::shared_ptr<Texture> m_IconStep;
+	std::shared_ptr<Texture> m_IconStop;
+
+	void UI_Toolbar();
 
 	Vec2 windowToViewport(const Vec2& windowPos) const;
 

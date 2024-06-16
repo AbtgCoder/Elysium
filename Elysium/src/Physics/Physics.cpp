@@ -33,8 +33,22 @@ Vec2 Physics::GetPreviousOverlap(Entity a, Entity b)
 
 bool Physics::SAT(Entity a, Entity b)
 {
-	std::vector<Vec2> colliderVerticesA = a.getComponent<CPolygonCollider>().colliderVertices;
-	std::vector<Vec2> colliderVerticesB = b.getComponent<CPolygonCollider>().colliderVertices;
+	std::vector<Vec2> colliderVerticesA;
+	Vec2 aPos = a.getComponent<CTransform>().pos;
+	Vec2 aSize = a.getComponent<CPolygonCollider>().size;
+	std::vector<Vec2> convexHullA = a.getComponent<CPolygonCollider>().colliderVertices;
+	for (auto p : convexHullA)
+	{
+		colliderVerticesA.push_back(Vec2(aPos.x - aSize.x / 2 + p.x, aPos.y + aSize.y / 2 - p.y));
+	}
+	std::vector<Vec2> colliderVerticesB;
+	Vec2 bPos = b.getComponent<CTransform>().pos;
+	Vec2 bSize = b.getComponent<CPolygonCollider>().size;
+	std::vector<Vec2> convexHullB = b.getComponent<CPolygonCollider>().colliderVertices;
+	for (auto p : convexHullB)
+	{
+		colliderVerticesB.push_back(Vec2(bPos.x - bSize.x / 2 + p.x, bPos.y + bSize.y / 2 - p.y));
+	}
 
 	if ((colliderVerticesA.size() == 0 || colliderVerticesB.size() == 0))
 	{
@@ -44,6 +58,7 @@ bool Physics::SAT(Entity a, Entity b)
 	{
 		return false;
 	}
+	//std::cout << colliderVerticesA.size() << " " << colliderVerticesB.size() << "\n";
 
 	std::vector<Vec2> axes;
 
@@ -106,6 +121,6 @@ bool Physics::SAT(Entity a, Entity b)
 	}
 
 
-	std::cout << "yes!! collision\n";
+	//std::cout << "yes!! collision\n";
 	return true;
 }

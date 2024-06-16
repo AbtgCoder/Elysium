@@ -5,6 +5,7 @@
 
 #include "Asset/AssetManager.h"
 #include "Asset/LevelImporter.h"
+#include "Asset/TextureImporter.h"
 
 #include "Utils/FileUtils.h"
 
@@ -33,6 +34,13 @@ void LevelEditor::init()
 	registerAction(sf::Keyboard::LAlt, "ALT");
 	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
 	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
+
+
+	m_IconPlay = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
+	m_IconPause = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
+	m_IconStep = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
+	m_IconStop = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
+
 
 
 	// Set ImGui Styles
@@ -463,12 +471,69 @@ void LevelEditor::sGUI()
 
 	ImGui::End(); // end "Viewport"
 
+	UI_Toolbar(); // Pause/Play Toolbar
+
 	ImGui::End(); // end "Dockspace demo" 
 
 	ImGui::SFML::Render(m_game->window());
 
 }
 
+void LevelEditor::UI_Toolbar()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+	auto* colors = ImGui::GetStyle().Colors;
+	const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+	const auto& buttonActive = colors[ImGuiCol_ButtonActive];
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+
+	ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+	bool toolbarEnabled = (bool)m_ActiveLevel;
+
+	ImVec4 tintColor = ImVec4(1, 1, 1, 1);
+	if (!toolbarEnabled)
+		tintColor.w = 0.5f;
+
+	float size = ImGui::GetWindowHeight() - 4.0f;
+	ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+
+	bool hasPlayButton = true; // either edit or play...
+	bool hasPauseButton = m_LevelState == LevelState::Play;
+
+	if (hasPlayButton)
+	{
+		std::shared_ptr<Texture> icon = m_LevelState == LevelState::Edit ? m_IconPlay : m_IconStop;
+		if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+		{
+			if (m_LevelState == LevelState::Edit)
+				m_LevelState = LevelState::Play;
+			else if (m_LevelState == LevelState::Play)
+				m_LevelState = LevelState::Edit;
+		}
+	}
+
+	if (hasPauseButton)
+	{
+		bool isPaused = m_ActiveLevel->IsPaused();
+		ImGui::SameLine();
+		{
+			std::shared_ptr<Texture> icon = m_IconPause;
+			if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+			{
+				m_ActiveLevel->SetPaused(!isPaused);
+			}
+		}
+	}
+
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(3);
+	ImGui::End();
+
+}
 
 void LevelEditor::sDoAction(const Action& action)
 {

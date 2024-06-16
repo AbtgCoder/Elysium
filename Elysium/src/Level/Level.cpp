@@ -93,20 +93,35 @@ std::vector<Entity>& Level::GetAllPhysicsEntities()
 
 void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
 {
-	// Physics
-	for (auto e_i : m_entityManager.GetEntities())
+	if (!m_IsPaused)
 	{
-		e_i.getComponent<CTransform>().prevPos = e_i.getComponent<CTransform>().pos;
-		e_i.getComponent<CTransform>().pos += e_i.getComponent<CTransform>().velocity;
-
-		for (auto e_j : m_entityManager.GetEntities())
+		// Physics
+		for (auto e_i : m_entityManager.GetEntities())
 		{
-			if (e_i.hasComponent<CPolygonCollider>(), e_j.hasComponent<CPolygonCollider>())
+			e_i.getComponent<CTransform>().prevPos = e_i.getComponent<CTransform>().pos;
+			if (e_i.getComponent<CTransform>().pos.y > 750 || e_i.getComponent<CTransform>().pos.y < 0)
 			{
-				Physics::SAT(e_i, e_j);
+				e_i.getComponent<CTransform>().velocity.y *= -1;
+			}
+			if (e_i.getComponent<CTransform>().pos.x > 1000 || e_i.getComponent<CTransform>().pos.x < -250)
+			{
+				e_i.getComponent<CTransform>().velocity.x *= -1;
+			}
+			e_i.getComponent<CTransform>().pos += e_i.getComponent<CTransform>().velocity;
+
+			for (auto e_j : m_entityManager.GetEntities())
+			{
+				if (e_i.hasComponent<CPolygonCollider>(), e_j.hasComponent<CPolygonCollider>())
+				{
+					if (Physics::SAT(e_i, e_j))
+					{
+						std::cout << e_i.getComponent<CTag>().tag << " collided with " << e_j.getComponent<CTag>().tag << "\n";
+					}
+				}
 			}
 		}
 	}
+
 
 	// Rendering
 	RenderLevel(renderTexture, drawPhysicsColliders);
@@ -121,22 +136,21 @@ void Level::OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsCol
 void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
 {
 	renderTexture.clear(sf::Color::Blue);
-
 	for (auto e : m_entityManager.GetEntities())
 	{
-		if (e.hasComponent<CSpriteRenderer>())
-		{
-			if (e.getComponent<CSpriteRenderer>().texture != 0)
-			{
-				// highly inefficient drawing
-				sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-				sf::Sprite sprite = sf::Sprite(tex);
-				sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
-				sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-				//renderTexture.draw(sprite, &m_Shader);
-				renderTexture.draw(sprite);
-			}
-		}
+		//if (e.hasComponent<CSpriteRenderer>())
+		//{
+		//	if (e.getComponent<CSpriteRenderer>().texture != 0)
+		//	{
+		//		// highly inefficient drawing
+		//		sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+		//		sf::Sprite sprite = sf::Sprite(tex);
+		//		sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
+		//		sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+		//		//renderTexture.draw(sprite, &m_Shader);
+		//		renderTexture.draw(sprite);
+		//	}
+		//}
 		if (drawPhysicsColliders)
 		{
 			if (e.hasComponent<CBoundingBox>())
@@ -151,11 +165,30 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsCollid
 			{
 				std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
 				m_PhysicsPoly.setPointCount(vertices.size());
+				Vec2 ePos = e.getComponent<CTransform>().pos;
+				sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+				Vec2 eSize(tex.getSize().x, tex.getSize().y);
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
-					m_PhysicsPoly.setPoint(i, sf::Vector2f(vertices[i].x, vertices[i].y));
+					m_PhysicsPoly.setPoint(i, sf::Vector2f(ePos.x - eSize.x/2 + vertices[i].x, ePos.y + eSize.y/2 - vertices[i].y));
 				}
 				renderTexture.draw(m_PhysicsPoly);
+			}
+		}
+		else
+		{
+			if (e.hasComponent<CSpriteRenderer>())
+			{
+				if (e.getComponent<CSpriteRenderer>().texture != 0)
+				{
+					// highly inefficient drawing
+					sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+					sf::Sprite sprite = sf::Sprite(tex);
+					sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
+					sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					//renderTexture.draw(sprite, &m_Shader);
+					renderTexture.draw(sprite);
+				}
 			}
 		}
 

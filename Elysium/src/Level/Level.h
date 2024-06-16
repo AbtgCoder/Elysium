@@ -26,6 +26,11 @@ public:
 
 	void OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 	void OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+
+	bool IsRunning() const { return m_IsRunning; }
+	bool IsPaused() const { return m_IsPaused; }
+
+	void SetPaused(bool paused) { m_IsPaused = paused; }
 private:
 
 	Entity m_player = {};
@@ -38,7 +43,7 @@ private:
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
-	bool m_IsPaued = false;
+	bool m_IsPaused = false;
 
 
 

@@ -75,6 +75,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Position" << YAML::Value << tc.pos;
 		out << YAML::Key << "Scale" << YAML::Value << tc.scale;
 		out << YAML::Key << "Angle" << YAML::Value << tc.angle;
+		out << YAML::Key << "Velocity" << YAML::Value << tc.velocity;
 
 		out << YAML::EndMap; // TransformComponent
 	}
@@ -121,6 +122,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		auto& pc2d = entity.getComponent<CPolygonCollider>();
 		out << YAML::Key << "Offset" << YAML::Value << pc2d.offset;
+		out << YAML::Key << "TexSize" << YAML::Value << pc2d.size;
 		out << YAML::Key << "Points" << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "Size" << YAML::Value << pc2d.colliderVertices.size();
 		out << YAML::Key << "Elements" << YAML::Value << YAML::Flow;
@@ -203,6 +205,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 				tc.pos = transformComponent["Position"].as<Vec2>();
 				tc.scale = transformComponent["Scale"].as<Vec2>();
 				tc.angle = transformComponent["Angle"].as<float>();
+				tc.velocity = transformComponent["Velocity"].as<Vec2>();
 			}
 
 			auto spriteRendererComponent = entity["SpriteRenderer"];
@@ -243,6 +246,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& pc2d = deserializedEntity.addComponent<CPolygonCollider>();
 				pc2d.offset = polygonColliderComponent["Offset"].as<Vec2>();
+				pc2d.size = polygonColliderComponent["TexSize"].as<Vec2>();
 				auto verticesData = polygonColliderComponent["Points"];
 				auto elements = verticesData["Elements"];
 				for (auto element : elements)

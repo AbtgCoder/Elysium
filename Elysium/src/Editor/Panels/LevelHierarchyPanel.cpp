@@ -210,14 +210,15 @@ std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity 
 	// TODO: more algs :  jarvis march, chan's algorithm etc
 	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
 
-	std::vector<Vec2> colliderVertices;
-	Vec2 ePos = e.getComponent<CTransform>().pos; 
-	Vec2 eSize(tex.getSize().x, tex.getSize().y);
-	for (auto p : convexHull)
-	{
-		colliderVertices.push_back(Vec2(ePos.x - eSize.x / 2 + p.x, ePos.y + eSize.y / 2 - p.y));
-	}
-	return colliderVertices;
+	//std::vector<Vec2> colliderVertices;
+	//Vec2 ePos = e.getComponent<CTransform>().pos; 
+	//Vec2 eSize(tex.getSize().x, tex.getSize().y);
+	//for (auto p : convexHull)
+	//{
+	//	colliderVertices.push_back(Vec2(ePos.x - eSize.x / 2 + p.x, ePos.y + eSize.y / 2 - p.y));
+	//}
+	//return colliderVertices;
+	return convexHull;
 }
 
 void LevelHierarchyPanel::OnImGuiRender()
@@ -282,7 +283,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 				{
 					sf::Texture tex = AssetManager::GetAsset<Texture>(m_InspectedEntity.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 					DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", Vec2(tex.getSize().x, tex.getSize().y));
-					DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(tex, m_InspectedEntity));
+					DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", Vec2(tex.getSize().x, tex.getSize().y), generatePolygonColliderVertices(tex, m_InspectedEntity));
 				}
 			}
 			else
