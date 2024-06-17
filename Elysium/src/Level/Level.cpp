@@ -135,6 +135,11 @@ void Level::OnRuntimeStart()
 		{
 			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
 		}
+
+		if (e.hasComponent<CPhysicsMaterial>())
+		{
+			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
+		}
 	}
 }
 

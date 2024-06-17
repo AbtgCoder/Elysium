@@ -120,6 +120,14 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Radius" << YAML::Value << cc2d.radius;
 		out << YAML::EndMap;
 	}
+	if (entity.hasComponent<CPhysicsMaterial>())
+	{
+		out << YAML::Key << "PhysicsMaterial";
+		out << YAML::BeginMap;
+		auto& pm = entity.getComponent<CPhysicsMaterial>();
+		out << YAML::Key << "Mass" << YAML::Value << pm.mass;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CBoundingBox>())
 	{
 		out << YAML::Key << "AABB";
@@ -258,6 +266,12 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& cc2d = deserializedEntity.addComponent<CCircleCollider>();
 				cc2d.radius = circleColliderComponent["Radius"].as<float>();
+			}
+			auto physicsMaterialComponent = entity["PhysicsMaterial"];
+			if (physicsMaterialComponent)
+			{
+				auto& pm = deserializedEntity.addComponent<CPhysicsMaterial>();
+				pm.mass = physicsMaterialComponent["Mass"].as<float>();
 			}
 			auto boundingBoxComponent = entity["AABB"];
 			if (boundingBoxComponent)

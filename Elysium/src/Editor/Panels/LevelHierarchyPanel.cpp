@@ -306,6 +306,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
 			}
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
+			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			ImGui::EndPopup();
 		}
 
@@ -328,6 +329,11 @@ void LevelHierarchyPanel::OnImGuiRender()
 		DrawComponentGUI<CCircleCollider>("Circle Collider 2D", m_InspectedEntity, [](auto& component)
 			{
 				DrawFloatControl("Radius", component.radius, 0.0f, 200.0f);
+			});
+
+		DrawComponentGUI<CPhysicsMaterial>("Physics Material", m_InspectedEntity, [](auto& component)
+			{
+				DrawFloatControl("Mass", component.mass, 1.0f, 100.0f);
 			});
 
 		DrawComponentGUI<CSpriteRenderer>("Sprite Renderer", m_InspectedEntity, [](auto& component)

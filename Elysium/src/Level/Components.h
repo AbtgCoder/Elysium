@@ -127,6 +127,17 @@ public:
 		: size(other.size), colliderVertices(other.colliderVertices), offset(other.offset) {}
 };
 
+class CPhysicsMaterial : public Component
+{
+public:
+	float mass = 1.0f; // in Kgs
+	CPhysicsMaterial() {}
+	CPhysicsMaterial(float m)
+		: mass(m) {}
+	CPhysicsMaterial(CPhysicsMaterial& other)
+		: mass(other.mass) {}
+};
+
 class CSpriteRenderer : public Component
 {
 public:

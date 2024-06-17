@@ -16,7 +16,8 @@ typedef std::tuple <
 	std::vector<CScore>,
 	std::vector<CSpriteRenderer>,
 	std::vector<CCircle>,
-	std::vector<CCircleCollider>
+	std::vector<CCircleCollider>,
+	std::vector<CPhysicsMaterial>
 > EntityComponentVectorTuple;
 
 static size_t MAX_ENTITIES = 100000;
@@ -96,5 +97,5 @@ private:
 	EntityComponentVectorTuple m_pool;
 	std::vector<bool> m_active;
 	EntityMemoryPool(size_t maxEntities)
-		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
+		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
 };

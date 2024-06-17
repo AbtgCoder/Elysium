@@ -10,6 +10,8 @@ Entities:
       Radius: 50
     CircleCollider:
       Radius: 50
+    PhysicsMaterial:
+      Mass: 5
   - Entity: Circle
     Transform:
       Position: [9, 661]
@@ -20,6 +22,8 @@ Entities:
       Radius: 25
     CircleCollider:
       Radius: 25
+    PhysicsMaterial:
+      Mass: 1
   - Entity: Circle
     Transform:
       Position: [711, 640]
@@ -30,6 +34,8 @@ Entities:
       Radius: 100
     CircleCollider:
       Radius: 100
+    PhysicsMaterial:
+      Mass: 6
   - Entity: Circle
     Transform:
       Position: [548, 322]
@@ -40,6 +46,8 @@ Entities:
       Radius: 75
     CircleCollider:
       Radius: 75
+    PhysicsMaterial:
+      Mass: 15
   - Entity: Circle
     Transform:
       Position: [-38, 408]
@@ -50,6 +58,8 @@ Entities:
       Radius: 60
     CircleCollider:
       Radius: 60
+    PhysicsMaterial:
+      Mass: 10
   - Entity: Circle
     Transform:
       Position: [564, 943]
@@ -68,3 +78,5 @@ Entities:
       Radius: 90
     CircleCollider:
       Radius: 90
+    PhysicsMaterial:
+      Mass: 25
