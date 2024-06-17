@@ -15,7 +15,7 @@ ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)
 
 	RefreshAssetTree();
 
-	m_Mode = Mode::FileSystem;
+	m_Mode = Mode::Asset;
 }
 
 void ContentBrowserPanel::OnImGuiRender()

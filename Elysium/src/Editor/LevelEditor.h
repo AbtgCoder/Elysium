@@ -97,7 +97,7 @@ protected:
 
 
 	void init();
-	void update();
+	void update(float dt);
 	void onEnd();
 	void sDoAction(const Action& action);
 

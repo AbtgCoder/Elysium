@@ -14,6 +14,8 @@ struct ProjectConfig
 
 	std::filesystem::path AssetDirectory; // relative to ProjectDirectory
 	std::filesystem::path AssetRegistryPath; // relative to AssetDirectory
+
+	AssetHandle lastOpenedLevel; // for editor only (maybe find a better way to do this)
 };
 
 class Project
@@ -38,6 +40,8 @@ public:
 		// assert s_ActiveProject
 		return s_ActiveProject->GetAssetRegistryPath();
 	}
+
+	static void SetLastOpenedLevel(AssetHandle handle) { s_ActiveProject->m_Config.lastOpenedLevel = handle; }
 
 	ProjectConfig& GetConfig() { return m_Config; }
 

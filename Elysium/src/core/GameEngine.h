@@ -33,7 +33,7 @@ protected:
 
 	// init-> load all assets
 	void init(const std::string& path);
-	void update();
+	void update(float dt);
 
 	void sUserInput();
 

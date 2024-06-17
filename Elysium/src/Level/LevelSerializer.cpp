@@ -79,6 +79,14 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		out << YAML::EndMap; // TransformComponent
 	}
+	if (entity.hasComponent<CCircle>())
+	{
+		out << YAML::Key << "CircleShape";
+		out << YAML::BeginMap;
+		auto& cc = entity.getComponent<CCircle>();
+		out << YAML::Key << "Radius" << YAML::Value << cc.radius;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CSpriteRenderer>())
 	{
 		out << YAML::Key << "SpriteRenderer";
@@ -104,6 +112,14 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 
 	//	out << YAML::EndMap;
 	//}
+	if (entity.hasComponent<CCircleCollider>())
+	{
+		out << YAML::Key << "CircleCollider";
+		out << YAML::BeginMap;
+		auto& cc2d = entity.getComponent<CCircleCollider>();
+		out << YAML::Key << "Radius" << YAML::Value << cc2d.radius;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CBoundingBox>())
 	{
 		out << YAML::Key << "AABB";
@@ -219,8 +235,14 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 				src.layer = spriteRendererComponent["Layer"].as<int>();
 			}
 
-			auto animationComponent = entity["Animation"];
-			/*if (animationComponent)
+			auto circleComponent = entity["CircleShape"];
+			if (circleComponent)
+			{
+				auto& cc = deserializedEntity.addComponent<CCircle>();
+				cc.radius = circleComponent["Radius"].as<float>();
+			}
+			/*auto animationComponent = entity["Animation"];
+			if (animationComponent)
 			{
 				std::string textureName = animationComponent["Texture"].as<std::string>();
 				size_t animationSpeed = animationComponent["Speed"].as<size_t>();
@@ -231,7 +253,12 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 				ac.frameCount = frameCount;
 				ac.layer = animationComponent["Layer"].as<int>();
 			}*/
-
+			auto circleColliderComponent = entity["CircleCollider"];
+			if (circleColliderComponent)
+			{
+				auto& cc2d = deserializedEntity.addComponent<CCircleCollider>();
+				cc2d.radius = circleColliderComponent["Radius"].as<float>();
+			}
 			auto boundingBoxComponent = entity["AABB"];
 			if (boundingBoxComponent)
 			{

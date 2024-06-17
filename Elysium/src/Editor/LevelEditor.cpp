@@ -147,7 +147,7 @@ Vec2 LevelEditor::windowToViewport(const Vec2& windowPos) const
 }
  
 
-void LevelEditor::update()
+void LevelEditor::update(float dt)
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_rt.create(m_viewportSize.x, m_viewportSize.y);
@@ -166,7 +166,7 @@ void LevelEditor::update()
 	case LevelState::Play:
 	{
 		if (m_ActiveLevel)
-			m_ActiveLevel->OnUpdateRuntime(m_rt, m_drawCollision);
+			m_ActiveLevel->OnUpdateRuntime(m_rt, m_drawCollision, dt);
 		break;
 	}
 	}
@@ -199,8 +199,12 @@ void LevelEditor::OpenProject(const std::filesystem::path& path)
 {
 	if (Project::Load(path))
 	{
+		m_EditorProjectPath = path;
+		AssetHandle lastOpenedLevel = Project::GetActive()->GetConfig().lastOpenedLevel;
 		AssetHandle startLevel = Project::GetActive()->GetConfig().StartLevel;
-		if (startLevel)
+		if (lastOpenedLevel)
+			OpenLevel(lastOpenedLevel);
+		else if (startLevel)
 			OpenLevel(startLevel);
 		m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>(Project::GetActive());
 	}
@@ -208,6 +212,7 @@ void LevelEditor::OpenProject(const std::filesystem::path& path)
 
 void LevelEditor::SaveProject()
 {
+	Project::SaveActive(m_EditorProjectPath);
 }
 
 void LevelEditor::NewLevel()
@@ -263,6 +268,7 @@ void LevelEditor::OpenLevel(AssetHandle handle)
 	{
 		return;
 	}
+	Project::SetLastOpenedLevel(handle);
 	m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
 	m_EditorLevelPath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(handle);
 }
@@ -510,9 +516,15 @@ void LevelEditor::UI_Toolbar()
 		if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 		{
 			if (m_LevelState == LevelState::Edit)
+			{
+				m_ActiveLevel->OnRuntimeStart();
 				m_LevelState = LevelState::Play;
+			}
 			else if (m_LevelState == LevelState::Play)
+			{
+				m_ActiveLevel->OnRuntimeStop();
 				m_LevelState = LevelState::Edit;
+			}
 		}
 	}
 
@@ -665,6 +677,7 @@ void LevelEditor::sDoAction(const Action& action)
 		else if (action.name() == "QUIT")
 		{
 			SaveLevel();
+			SaveProject();
 			m_hasEnded = true;
 			onEnd();
 		}

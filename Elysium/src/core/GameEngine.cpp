@@ -38,9 +38,9 @@ void GameEngine::init(const std::string& name)
 
 }
 
-void GameEngine::update()
+void GameEngine::update(float dt)
 {
-	currentScene()->update();
+	currentScene()->update(dt);
 }
 
 std::shared_ptr<Scene> GameEngine::currentScene()
@@ -85,10 +85,12 @@ void GameEngine::quit()
 void GameEngine::run()
 {
 	// main game loop
+	sf::Clock deltaClock;
 	while (m_running && m_window.isOpen())
 	{
 		sUserInput();
-		update();
+		float dt = deltaClock.restart().asSeconds();
+		update(dt);
 		m_window.display();
 	}
 

@@ -1,0 +1,70 @@
+Level: Untitled
+Entities:
+  - Entity: Circle
+    Transform:
+      Position: [309, 619]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [3, 5]
+    CircleShape:
+      Radius: 50
+    CircleCollider:
+      Radius: 50
+  - Entity: Circle
+    Transform:
+      Position: [9, 661]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 25
+    CircleCollider:
+      Radius: 25
+  - Entity: Circle
+    Transform:
+      Position: [711, 640]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 100
+    CircleCollider:
+      Radius: 100
+  - Entity: Circle
+    Transform:
+      Position: [548, 322]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 75
+    CircleCollider:
+      Radius: 75
+  - Entity: Circle
+    Transform:
+      Position: [-38, 408]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 60
+    CircleCollider:
+      Radius: 60
+  - Entity: Circle
+    Transform:
+      Position: [564, 943]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 30
+  - Entity: Circle
+    Transform:
+      Position: [453, 701]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 90
+    CircleCollider:
+      Radius: 90

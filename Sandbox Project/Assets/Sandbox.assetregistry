@@ -20,3 +20,6 @@ AssetRegistry:
   - Handle: 12438653369529251365
     FilePath: textures/pipetall.png
     Type: AssetType::Texture
+  - Handle: 14821175808918881695
+    FilePath: levels/physics_test_level.elysium
+    Type: AssetType::Level

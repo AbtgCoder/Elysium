@@ -41,6 +41,17 @@ public:
 		: pos(other.pos), prevPos(other.prevPos), velocity(other.velocity), scale(other.scale), angle(other.angle) {}
 };
 
+class CCircle : public Component
+{
+public:
+	float radius = 50.0f;
+	CCircle() {}
+	CCircle(float r)
+		: radius(r) {}
+	CCircle(CCircle& other)
+		: radius(other.radius) {}
+};
+
 class CLifespan : public Component
 {
 public:
@@ -88,6 +99,17 @@ public:
 		: size(s), halfSize(s.x / 2, s.y / 2), offset(o) {}
 	CBoundingBox(CBoundingBox& other)
 		: size(other.size), halfSize(other.halfSize), offset(other.offset) {}
+};
+
+class CCircleCollider : public Component
+{
+public:
+	float radius = 0.0f;
+	CCircleCollider() {}
+	CCircleCollider(float r)
+		: radius(r) {}
+	CCircleCollider(CCircleCollider& other)
+		: radius(other.radius) {}
 };
 
 class CPolygonCollider : public Component

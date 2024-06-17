@@ -10,4 +10,5 @@ public:
 	static Vec2 GetPreviousOverlap(Entity a, Entity b);
 
 	static bool SAT(Entity a, Entity b);
+	static bool CircleCircleCollision(Entity a, Entity b);
 };

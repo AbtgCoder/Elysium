@@ -22,6 +22,7 @@ bool ProjectSerializer::Serialize(const std::filesystem::path& filepath)
 			out << YAML::Key << "StartLevel" << YAML::Value << (uint64_t)config.StartLevel;
 			out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
 			out << YAML::Key << "AssetRegistryPath" << YAML::Value << config.AssetRegistryPath.string();
+			out << YAML::Key << "LastOpenedLevel" << YAML::Value << (uint64_t)config.lastOpenedLevel;
 			out << YAML::EndMap; // Project
 		}
 		out << YAML::EndMap; // Root
@@ -57,5 +58,7 @@ bool ProjectSerializer::Deserialize(const std::filesystem::path& filepath)
 	config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 	if (projectNode["AssetRegistryPath"])
 		config.AssetRegistryPath = projectNode["AssetRegistryPath"].as<std::string>();
+	if (projectNode["LastOpenedLevel"])
+		config.lastOpenedLevel = projectNode["LastOpenedLevel"].as<uint64_t>();
 	return true;
 }

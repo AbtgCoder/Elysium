@@ -24,7 +24,9 @@ public:
 
 	std::string GetName() const { return m_Name; }
 
-	void OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+	void OnRuntimeStart();
+	void OnRuntimeStop();
+	void OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt);
 	void OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 
 	bool IsRunning() const { return m_IsRunning; }
@@ -38,6 +40,9 @@ private:
 	// debug stuff
 	sf::RectangleShape m_PhysicsRect;
 	sf::ConvexShape m_PhysicsPoly;
+	
+	// drawing shapes
+	sf::CircleShape m_CircleShape;
 
 	void RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 private:

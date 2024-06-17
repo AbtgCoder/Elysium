@@ -31,6 +31,34 @@ Vec2 Physics::GetPreviousOverlap(Entity a, Entity b)
     return Vec2(ox, oy);
 }
 
+bool Physics::CircleCircleCollision(Entity a, Entity b)
+{
+	Vec2 c1 = a.getComponent<CTransform>().pos;
+	Vec2 c2 = b.getComponent<CTransform>().pos;
+	float r1 = a.getComponent<CCircleCollider>().radius;
+	float r2 = b.getComponent<CCircleCollider>().radius;
+	if (a.id() == b.id())
+	{
+		return false;
+	}
+
+	Vec2 c1_c2 = c1 - c2;
+	float len_c1_c2 = c1_c2.length();
+	if (len_c1_c2 <= r1 + r2)
+	{
+		// elastic collision with equal mass
+		Vec2 v1_v2 = a.getComponent<CTransform>().velocity - b.getComponent<CTransform>().velocity;
+		float v1_v2_dot_c1_c2 = v1_v2.x * c1_c2.x + v1_v2.y * c1_c2.y;
+		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - (c1 - c2) * ((v1_v2_dot_c1_c2) / (len_c1_c2*len_c1_c2));
+		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity - (c2 - c1) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2));
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 bool Physics::SAT(Entity a, Entity b)
 {
 	std::vector<Vec2> colliderVerticesA;
