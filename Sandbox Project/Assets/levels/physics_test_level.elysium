@@ -84,12 +84,31 @@ Entities:
       Radius: 90
     PhysicsMaterial:
       Mass: 10
-  - Entity: Rectangle
+  - Entity: Rectangle1
     Transform:
-      Position: [269, 374]
+      Position: [186, 518]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 0]
+      Velocity: [2, -3]
+    RectangleShape:
+      Size: [80, 50]
+      Angle: 0
+    PhysicsMaterial:
+      Mass: 5
+    AABB:
+      Offset: [0, 0]
+      Size: [80, 50]
+  - Entity: Rectangle2
+    Transform:
+      Position: [410, 526]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [-4, -3]
     RectangleShape:
       Size: [50, 50]
       Angle: 0
+    PhysicsMaterial:
+      Mass: 3
+    AABB:
+      Offset: [0, 0]
+      Size: [50, 50]

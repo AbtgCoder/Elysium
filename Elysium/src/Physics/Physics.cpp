@@ -69,6 +69,47 @@ Vec2 Physics::GetPreviousOverlap(Entity a, Entity b)
     return Vec2(ox, oy);
 }
 
+bool Physics::AABBElasticCollision(Entity a, Entity b)
+{
+	Vec2 overlap = GetOverlap(a, b);
+	if (overlap.x > 0 && overlap.y > 0)
+	{
+		// horizontal
+		float v1y = a.getComponent<CTransform>().velocity.y;
+		float v1x = a.getComponent<CTransform>().velocity.x;
+		float v2y = b.getComponent<CTransform>().velocity.y;
+		float v2x = b.getComponent<CTransform>().velocity.x;
+
+		// elastic collision
+		float m1 = 1.0f;
+		float m2 = 1.0f;
+		if (a.hasComponent<CPhysicsMaterial>())
+		{
+			m1 = a.getComponent<CPhysicsMaterial>().mass;
+		}
+		if (b.hasComponent<CPhysicsMaterial>())
+		{
+			m2 = b.getComponent<CPhysicsMaterial>().mass;
+		}
+
+		Vec2 prevOverlap = GetPreviousOverlap(a, b);
+		if (prevOverlap.y > 0)
+		{
+			// horizontal
+			a.getComponent<CTransform>().velocity.x = (v1x * (m1 - m2) + (2 * m2 * v2x)) / (m1 + m2);
+			b.getComponent<CTransform>().velocity.x = (v2x * (m2 - m1) + (2 * m1 * v1x)) / (m1 + m2);
+		}
+		if (prevOverlap.x > 0)
+		{
+			// vertical
+			a.getComponent<CTransform>().velocity.y = (v1y * (m1 - m2) + (2 * m2 * v2y)) / (m1 + m2);
+			b.getComponent<CTransform>().velocity.y = (v2y * (m2 - m1) + (2 * m1 * v1y)) / (m1 + m2);
+		}
+		return true;
+	}
+	return false;
+}
+
 bool Physics::CircleCircleCollision(Entity a, Entity b)
 {
 	Vec2 c1 = a.getComponent<CTransform>().pos;

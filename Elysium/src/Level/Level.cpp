@@ -225,6 +225,13 @@ void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
 						}
 					}
+					else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
+					{
+						if (Physics::AABBElasticCollision(runtimeEntities[i], runtimeEntities[j]))
+						{
+							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+						}
+					}
 				}
 			}
 		}
