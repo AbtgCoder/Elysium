@@ -14,6 +14,8 @@ public:
 	Level(const std::string& name);
 	~Level();
 
+	static std::shared_ptr<Level> Copy(std::shared_ptr<Level> other);
+
 	Entity AddEntity(Entity entity);
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
 	Entity GetEntityIfClicked(Vec2 mousePos);
@@ -34,6 +36,8 @@ public:
 	bool IsPaused() const { return m_IsPaused; }
 
 	void SetPaused(bool paused) { m_IsPaused = paused; }
+
+	void Step(int frames = 1);
 private:
 
 	Entity m_player = {};
@@ -50,12 +54,12 @@ private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
-	std::vector<Entity> m_runtimeEntities;
+	int m_StepFrames = 0;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
 	// shader test
-	sf::Shader m_Shader;
+	//sf::Shader m_Shader;
 
 	friend class LevelSerializer;
 	friend class LevelHierarchyPanel;

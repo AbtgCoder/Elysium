@@ -26,6 +26,8 @@ protected:
 	std::filesystem::path m_EditorProjectPath;
 	std::filesystem::path m_EditorLevelPath;
 	std::shared_ptr<Level> m_ActiveLevel;
+	std::shared_ptr<Level> m_EditorLevel;
+
 	void NewProject();
 	bool OpenProject();
 	void OpenProject(const std::filesystem::path& path);

@@ -270,6 +270,7 @@ void LevelEditor::OpenLevel(AssetHandle handle)
 	}
 	Project::SetLastOpenedLevel(handle);
 	m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
+	m_EditorLevel = m_ActiveLevel;
 	m_EditorLevelPath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(handle);
 }
 
@@ -517,13 +518,17 @@ void LevelEditor::UI_Toolbar()
 		{
 			if (m_LevelState == LevelState::Edit)
 			{
+				m_ActiveLevel = Level::Copy(m_EditorLevel);
 				m_ActiveLevel->OnRuntimeStart();
 				m_LevelState = LevelState::Play;
+				m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
 			}
 			else if (m_LevelState == LevelState::Play)
 			{
 				m_ActiveLevel->OnRuntimeStop();
 				m_LevelState = LevelState::Edit;
+				m_ActiveLevel = m_EditorLevel;
+				m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
 			}
 		}
 	}
@@ -537,6 +542,19 @@ void LevelEditor::UI_Toolbar()
 			if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 			{
 				m_ActiveLevel->SetPaused(!isPaused);
+			}
+		}
+
+		// step button
+		if (isPaused)
+		{
+			ImGui::SameLine();
+			{
+				std::shared_ptr<Texture> icon = m_IconStep;
+				if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+				{
+					m_ActiveLevel->Step();
+				}
 			}
 		}
 	}

@@ -29,6 +29,46 @@ Level::~Level()
 {
 }
 
+std::shared_ptr<Level> Level::Copy(std::shared_ptr<Level> other)
+{
+	std::shared_ptr<Level> level = std::make_shared<Level>();
+
+	// create entities in new level
+	for (auto e : other->m_entityManager.GetEntities())
+	{
+		auto runtimeEntity = level->m_entityManager.addEntity();
+		runtimeEntity.getComponent<CTag>().tag = "runtime_" + e.getComponent<CTag>().tag;
+		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
+		if (e.hasComponent<CSpriteRenderer>())
+		{
+			runtimeEntity.addComponent<CSpriteRenderer>(e.getComponent<CSpriteRenderer>());
+		}
+		else if (e.hasComponent<CCircle>())
+		{
+			runtimeEntity.addComponent<CCircle>(e.getComponent<CCircle>());
+		}
+
+		if (e.hasComponent<CCircleCollider>())
+		{
+			runtimeEntity.addComponent<CCircleCollider>(e.getComponent<CCircleCollider>());
+		}
+		else if (e.hasComponent<CBoundingBox>())
+		{
+			runtimeEntity.addComponent<CBoundingBox>(e.getComponent<CBoundingBox>());
+		}
+		else if (e.hasComponent<CPolygonCollider>())
+		{
+			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
+		}
+
+		if (e.hasComponent<CPhysicsMaterial>())
+		{
+			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
+		}
+	}
+	return level;
+}
+
 Entity Level::AddEntity(Entity entity)
 {
 	return {};// m_entityManager.addEntity(entity);
@@ -104,65 +144,26 @@ void Level::OnRuntimeStart()
 {
 	m_IsRunning = true;
 
-	// Physics start
-	// create duplicate entities and perform action on them
-	size_t numEntities = m_entityManager.GetEntities().size();
-	for (size_t i = 0; i < numEntities; i++)
-	{
-		auto e = m_entityManager.GetEntities()[i];
-		auto runtimeEntity = m_entityManager.addEntity();
-		runtimeEntity.getComponent<CTag>().tag = "runtime_" + e.getComponent<CTag>().tag;
-		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
-		if (e.hasComponent<CSpriteRenderer>())
-		{
-			runtimeEntity.addComponent<CSpriteRenderer>(e.getComponent<CSpriteRenderer>());
-		}
-		else if (e.hasComponent<CCircle>())
-		{
-			runtimeEntity.addComponent<CCircle>(e.getComponent<CCircle>());
-		}
-
-		if (e.hasComponent<CCircleCollider>())
-		{
-			runtimeEntity.addComponent<CCircleCollider>(e.getComponent<CCircleCollider>());
-		}
-		else if (e.hasComponent<CBoundingBox>())
-		{
-			runtimeEntity.addComponent<CBoundingBox>(e.getComponent<CBoundingBox>());
-		}
-		else if (e.hasComponent<CPolygonCollider>())
-		{
-			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
-		}
-
-		if (e.hasComponent<CPhysicsMaterial>())
-		{
-			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
-		}
-		m_runtimeEntities.push_back(runtimeEntity);
-	}
+	// Physics world initialization
 }
 
 void Level::OnRuntimeStop()
 {
 	m_IsRunning = false;
 
-	// Physics stop
-	for (auto e : m_runtimeEntities)
-	{
-		e.destroy();
-	}
-	m_runtimeEntities.clear();
+	// Physics world deletion
 }
 
 void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt)
 {
-	if (!m_IsPaused)
+	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
+		auto runtimeEntities = m_entityManager.GetEntities();
+
 		// Physics
 		{
 			// Movement
-			for (auto e : m_runtimeEntities)
+			for (auto e : runtimeEntities)
 			{
 				e.getComponent<CTransform>().prevPos = e.getComponent<CTransform>().pos;
 				if (e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200)
@@ -190,23 +191,23 @@ void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 
 			delete rootNode;
 #endif
-			
-			for (size_t i = 0; i < m_runtimeEntities.size(); i++)
+
+			for (size_t i = 0; i < runtimeEntities.size(); i++)
 			{
-				for (size_t j = i + 1; j < m_runtimeEntities.size(); j++)
+				for (size_t j = i + 1; j < runtimeEntities.size(); j++)
 				{
-					if (m_runtimeEntities[i].hasComponent<CPolygonCollider>() && m_runtimeEntities[j].hasComponent<CPolygonCollider>())
+					if (runtimeEntities[i].hasComponent<CPolygonCollider>() && runtimeEntities[j].hasComponent<CPolygonCollider>())
 					{
-						if (Physics::SAT(m_runtimeEntities[i], m_runtimeEntities[j]))
+						if (Physics::SAT(runtimeEntities[i], runtimeEntities[j]))
 						{
-							std::cout << m_runtimeEntities[i].getComponent<CTag>().tag << " collided with " << m_runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
 						}
 					}
-					else if (m_runtimeEntities[i].hasComponent<CCircleCollider>() && m_runtimeEntities[j].hasComponent<CCircleCollider>())
+					else if (runtimeEntities[i].hasComponent<CCircleCollider>() && runtimeEntities[j].hasComponent<CCircleCollider>())
 					{
-						if (Physics::CircleCircleCollision(m_runtimeEntities[i], m_runtimeEntities[j]))
+						if (Physics::CircleCircleCollision(runtimeEntities[i], runtimeEntities[j]))
 						{
-							std::cout << m_runtimeEntities[i].getComponent<CTag>().tag << " collided with " << m_runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
 						}
 					}
 				}
@@ -225,129 +226,65 @@ void Level::OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsCol
 	RenderLevel(renderTexture, drawPhysicsColliders);
 }
 
+void Level::Step(int frames)
+{
+	m_StepFrames = frames;
+}
+
 void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
 {
 	//renderTexture.clear(sf::Color::Blue);
 	renderTexture.clear();
 
-	if (m_IsRunning)
+	for (auto e : m_entityManager.GetEntities())
 	{
-		for (auto e :m_runtimeEntities)
+		if (drawPhysicsColliders)
 		{
-			if (drawPhysicsColliders)
+			if (e.hasComponent<CBoundingBox>())
 			{
-				if (e.hasComponent<CBoundingBox>())
-				{
-					Vec2 rectSize = e.getComponent<CBoundingBox>().size;
-					m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
-					m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-					m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					renderTexture.draw(m_PhysicsRect);
-				}
-				if (e.hasComponent<CPolygonCollider>())
-				{
-					std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
-					m_PhysicsPoly.setPointCount(vertices.size());
-					Vec2 ePos = e.getComponent<CTransform>().pos;
-					sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-					Vec2 eSize(tex.getSize().x, tex.getSize().y);
-					for (size_t i = 0; i < vertices.size(); i++)
-					{
-						m_PhysicsPoly.setPoint(i, sf::Vector2f(ePos.x - eSize.x / 2 + vertices[i].x, ePos.y + eSize.y / 2 - vertices[i].y));
-					}
-					renderTexture.draw(m_PhysicsPoly);
-				}
+				Vec2 rectSize = e.getComponent<CBoundingBox>().size;
+				m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
+				m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
+				m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				renderTexture.draw(m_PhysicsRect);
 			}
-			else
+			if (e.hasComponent<CPolygonCollider>())
 			{
-				if (e.hasComponent<CSpriteRenderer>())
+				std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
+				m_PhysicsPoly.setPointCount(vertices.size());
+				Vec2 ePos = e.getComponent<CTransform>().pos;
+				sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+				Vec2 eSize(tex.getSize().x, tex.getSize().y);
+				for (size_t i = 0; i < vertices.size(); i++)
 				{
-					if (e.getComponent<CSpriteRenderer>().texture != 0)
-					{
-						// highly inefficient drawing
-						sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-						sf::Sprite sprite = sf::Sprite(tex);
-						sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
-						sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-						renderTexture.draw(sprite);
-					}
+					m_PhysicsPoly.setPoint(i, sf::Vector2f(ePos.x - eSize.x/2 + vertices[i].x, ePos.y + eSize.y/2 - vertices[i].y));
 				}
-				else if (e.hasComponent<CCircle>())
-				{
-					m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
-					m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
-					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					renderTexture.draw(m_CircleShape);
-				}
+				renderTexture.draw(m_PhysicsPoly);
 			}
 		}
-	}
-	else
-	{
-		for (auto e : m_entityManager.GetEntities())
+		else
 		{
-			//if (e.hasComponent<CSpriteRenderer>())
-			//{
-			//	if (e.getComponent<CSpriteRenderer>().texture != 0)
-			//	{
-			//		// highly inefficient drawing
-			//		sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-			//		sf::Sprite sprite = sf::Sprite(tex);
-			//		sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
-			//		sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-			//		//renderTexture.draw(sprite, &m_Shader);
-			//		renderTexture.draw(sprite);
-			//	}
-			//}
-			if (drawPhysicsColliders)
+			if (e.hasComponent<CSpriteRenderer>())
 			{
-				if (e.hasComponent<CBoundingBox>())
+				if (e.getComponent<CSpriteRenderer>().texture != 0)
 				{
-					Vec2 rectSize = e.getComponent<CBoundingBox>().size;
-					m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
-					m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-					m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					renderTexture.draw(m_PhysicsRect);
-				}
-				if (e.hasComponent<CPolygonCollider>())
-				{
-					std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
-					m_PhysicsPoly.setPointCount(vertices.size());
-					Vec2 ePos = e.getComponent<CTransform>().pos;
+					// highly inefficient drawing
 					sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-					Vec2 eSize(tex.getSize().x, tex.getSize().y);
-					for (size_t i = 0; i < vertices.size(); i++)
-					{
-						m_PhysicsPoly.setPoint(i, sf::Vector2f(ePos.x - eSize.x/2 + vertices[i].x, ePos.y + eSize.y/2 - vertices[i].y));
-					}
-					renderTexture.draw(m_PhysicsPoly);
+					sf::Sprite sprite = sf::Sprite(tex);
+					sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
+					sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					renderTexture.draw(sprite);
 				}
 			}
-			else
+			else if (e.hasComponent<CCircle>())
 			{
-				if (e.hasComponent<CSpriteRenderer>())
-				{
-					if (e.getComponent<CSpriteRenderer>().texture != 0)
-					{
-						// highly inefficient drawing
-						sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-						sf::Sprite sprite = sf::Sprite(tex);
-						sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
-						sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-						//renderTexture.draw(sprite, &m_Shader);
-						renderTexture.draw(sprite);
-					}
-				}
-				else if (e.hasComponent<CCircle>())
-				{
-					m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
-					m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
-					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					renderTexture.draw(m_CircleShape);
-				}
+				m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
+				m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
+				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				renderTexture.draw(m_CircleShape);
 			}
+		}
 
-		}
 	}
 
 }
