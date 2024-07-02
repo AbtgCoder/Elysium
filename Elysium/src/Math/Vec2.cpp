@@ -21,6 +21,13 @@ Vec2::Vec2(sf::Vector2i v)
 {
 }
 
+float Vec2::operator[](size_t i) const
+{
+	if (i == 0) return x;
+	if (i == 1) return y;
+	// throw/log error : index out of range
+}
+
 
 Vec2 Vec2::operator+(const Vec2& v) const
 {

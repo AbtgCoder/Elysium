@@ -1,6 +1,6 @@
 Level: Untitled
 Entities:
-  - Entity: Circle
+  - Entity: Circle1
     Transform:
       Position: [309, 619]
       Scale: [1, 1]
@@ -12,7 +12,7 @@ Entities:
       Radius: 50
     PhysicsMaterial:
       Mass: 5
-  - Entity: Circle
+  - Entity: Circle2
     Transform:
       Position: [9, 661]
       Scale: [1, 1]
@@ -24,7 +24,7 @@ Entities:
       Radius: 25
     PhysicsMaterial:
       Mass: 1
-  - Entity: Circle
+  - Entity: Circle3
     Transform:
       Position: [711, 640]
       Scale: [1, 1]
@@ -36,9 +36,9 @@ Entities:
       Radius: 100
     PhysicsMaterial:
       Mass: 6
-  - Entity: Circle
+  - Entity: Circle4
     Transform:
-      Position: [548, 322]
+      Position: [551, 299]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -48,7 +48,7 @@ Entities:
       Radius: 75
     PhysicsMaterial:
       Mass: 15
-  - Entity: Circle
+  - Entity: Circle5
     Transform:
       Position: [-38, 408]
       Scale: [1, 1]
@@ -60,15 +60,19 @@ Entities:
       Radius: 60
     PhysicsMaterial:
       Mass: 10
-  - Entity: Circle
+  - Entity: Circle6
     Transform:
-      Position: [564, 943]
+      Position: [676, 363]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
     CircleShape:
       Radius: 30
-  - Entity: Circle
+    CircleCollider:
+      Radius: 30
+    PhysicsMaterial:
+      Mass: 1
+  - Entity: Circle7
     Transform:
       Position: [453, 701]
       Scale: [1, 1]
@@ -79,4 +83,4 @@ Entities:
     CircleCollider:
       Radius: 90
     PhysicsMaterial:
-      Mass: 25
+      Mass: 10

@@ -1,5 +1,7 @@
 #pragma once
-#include "Level/Entity.h"
+//#include "Level/Entity.h"
+
+#include "KDTree.h"
 
 class Physics
 {
@@ -11,4 +13,6 @@ public:
 
 	static bool SAT(Entity a, Entity b);
 	static bool CircleCircleCollision(Entity a, Entity b);
+
+	static void NarrowPhaseCollision(KDTreeNode* node);
 };

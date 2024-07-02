@@ -13,6 +13,7 @@ public:
 	Vec2(sf::Vector2f v);
 	Vec2(sf::Vector2i v);
 
+	float operator[](size_t i) const;
 	
 	bool operator == (const Vec2& v) const;
 	bool operator != (const Vec2& v) const;

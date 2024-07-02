@@ -1,41 +1,30 @@
-# Elysium: Level Editor for 2D Games
+# Elysium
 
-Elysium is a comprehensive tool designed to empower game developers with a user-friendly environment for crafting captivating 2D game levels. This project addresses the need for a streamlined alternative to complex game engines by providing an intuitive interface for loading assets, generating levels, and attaching essential components such as bounding boxes and animations to entities. The level editor offers a range of functionalities tailored to ease the game development process, allowing users to seamlessly bring their creative visions to life. With Elysium, developers can focus on crafting immersive gameplay experiences without the overhead of navigating through intricate game engine interfaces. Key features include asset management, level generation tools, and the ability to attach dynamic components to entities, enhancing the efficiency and flexibility of the game development workflow. By prioritizing simplicity and accessibility, Elysium aims to lower the barrier of entry for aspiring game creators while empowering experienced developers with a versatile toolset.
+Elysium is a personal passion project of mine. The long-term goal is to make a fully functional powerful 3D game engine, with support for physically-based 3d rendering, multiple rendering APIs(Vulkan, OpenGl, DirectX etc), 2D and 3D physics, AI, 2D and 3D Audio, Scripting behaviour and fully-featured editor. Current goal is to have complete 2D worflow setup.
 
 ## Getting Started
 1. Clone this repository
 2. Open the `Scripts/` directory and run the appropriate `Setup` script to generate projects files. You can edit the setup script to change the type of project that is generated - out of the box it is set to Visual Studio 2022 for Windows.
 
-## TODO: 
-### Must Do Features
+### Current Features
 - [X] Entity Drag and Drop
-- [X] Duplicating Entities
-- [X] Good UI
 - [X] Entity Inspector and Attach Components to Entities. 
 - [X] Save and load Entity component data. 
 - [X] Make a Play Test Scene, where the created level and its systems(collision, animation, etc) can be tested.
 - [X] World view/camera to make bigger levels
-- [ ] Audio components
-- [ ] Enemy Spawner components
-  
-### Recommended Features
-- [ ] Select and Manipulate multiple entities
 - [X] Polygon Collider
-- [ ] Circle collider
-- [ ] SAT for narrow phase detection
-- [ ] Broad Phase Collision detection 
+- [X] Circle collider
+- [X] SAT for narrow phase detection
+- [X] Broad Phase Collision detection (using KD trees) 
 - [X] Rendering layers (demonstrate using parallax)
+- [X] basic Asset Management system
   
-### Optional Features
-#### AI System 
-- [ ] BFS/DFS path finding
-- [ ] A* path finding
-- [ ] Influence maps
-- [ ] Steering Behaviors: Seek, Pursue, Flee
-#### Lighting System
-- [ ] Ray Casting
-- [ ] Generating Light Maps
-- [ ] Block vision component/settings for entities
-#### Shaders
-- [ ] Attach shaders to entities
+### Features currently in development
+- [ ] Select and Manipulate multiple entities
+- [ ] Basic 2D Rigidbody physics
+- [ ] Editor Improvements
+
+### Features to come
+- [ ] Complete 2D rendering using Vulkan and/or OpenGL (currently all graphics are being rendered using SFMl, plan is to get rid of that completely)
+- [ ] Scripting support
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Asset/Asset.h"
+#include "Physics/Physics.h"
 
 #include "EntityManager.h"
 
@@ -49,8 +50,7 @@ private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
-
-
+	std::vector<Entity> m_runtimeEntities;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 

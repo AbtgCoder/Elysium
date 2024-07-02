@@ -3,6 +3,44 @@
 
 #define INFINITE            0xFFFFFFFF
 
+void Physics::NarrowPhaseCollision(KDTreeNode* node)
+{
+	if (node->left || node->right)
+	{
+		NarrowPhaseCollision(node->left);
+		NarrowPhaseCollision(node->right);
+	}
+	else
+	{
+		// must be leaf node, right ? RIGHT ??
+		size_t numEntities = node->entities.size();
+		if (numEntities < 2)
+		{
+			return;
+		}
+		for (size_t i = 0; i < numEntities; i++)
+		{
+			for (size_t j = i + 1; j < numEntities; j++)
+			{
+				if (node->entities[i].hasComponent<CPolygonCollider>() && node->entities[j].hasComponent<CPolygonCollider>())
+				{
+					if (Physics::SAT(node->entities[i], node->entities[j]))
+					{
+						std::cout << node->entities[i].getComponent<CTag>().tag << " collided with " << node->entities[j].getComponent<CTag>().tag << "\n";
+					}
+				}
+				else if (node->entities[i].hasComponent<CCircleCollider>() && node->entities[j].hasComponent<CCircleCollider>())
+				{
+					if (Physics::CircleCircleCollision(node->entities[i], node->entities[j]))
+					{
+						std::cout << node->entities[i].getComponent<CTag>().tag << " collided with " << node->entities[j].getComponent<CTag>().tag << "\n";
+					}
+				}
+			}
+		}
+	}
+}
+
 Vec2 Physics::GetOverlap(Entity a, Entity b)
 {
     Vec2 halfSizeA = a.getComponent<CBoundingBox>().halfSize;
@@ -37,10 +75,6 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	Vec2 c2 = b.getComponent<CTransform>().pos;
 	float r1 = a.getComponent<CCircleCollider>().radius;
 	float r2 = b.getComponent<CCircleCollider>().radius;
-	if (a.id() == b.id())
-	{
-		return false;
-	}
 
 	Vec2 c1_c2 = c1 - c2;
 	float len_c1_c2 = c1_c2.length();
@@ -69,6 +103,8 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	}
 }
 
+
+
 bool Physics::SAT(Entity a, Entity b)
 {
 	std::vector<Vec2> colliderVerticesA;
@@ -92,11 +128,7 @@ bool Physics::SAT(Entity a, Entity b)
 	{
 		return false;
 	}
-	if (colliderVerticesA[0] == colliderVerticesB[0])
-	{
-		return false;
-	}
-	//std::cout << colliderVerticesA.size() << " " << colliderVerticesB.size() << "\n";
+	
 
 	std::vector<Vec2> axes;
 
