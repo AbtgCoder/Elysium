@@ -84,3 +84,12 @@ Entities:
       Radius: 90
     PhysicsMaterial:
       Mass: 10
+  - Entity: Rectangle
+    Transform:
+      Position: [269, 374]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    RectangleShape:
+      Size: [50, 50]
+      Angle: 0

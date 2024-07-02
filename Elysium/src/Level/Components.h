@@ -41,6 +41,25 @@ public:
 		: pos(other.pos), prevPos(other.prevPos), velocity(other.velocity), scale(other.scale), angle(other.angle) {}
 };
 
+class CRectangle : public Component
+{
+public:
+	Vec2 size = {50.0, 50.0};
+	float angle = 0;
+
+	CRectangle() {}
+	CRectangle(float s)
+		: size(s, s) {}
+	CRectangle(float s, float a)
+		: size(s, s), angle(a) {}
+	CRectangle(const Vec2& s)
+		: size(s) {}
+	CRectangle(const Vec2& s, float a)
+		: size(s), angle(a) {}
+	CRectangle(const CRectangle& other) = default;
+
+};
+
 class CCircle : public Component
 {
 public:

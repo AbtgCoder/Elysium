@@ -48,6 +48,7 @@ private:
 	
 	// drawing shapes
 	sf::CircleShape m_CircleShape;
+	sf::RectangleShape m_RectangleShape;
 
 	void RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 private:

@@ -255,6 +255,13 @@ void LevelHierarchyPanel::OnImGuiRender()
 				entity.addComponent<CTransform>();
 				entity.addComponent<CCircle>();
 			}
+			if (ImGui::MenuItem("Create Rectangle Entity"))
+			{
+				auto entity = m_Level->m_entityManager.addEntity();
+				entity.addComponent<CTag>("Rectangle");
+				entity.addComponent<CTransform>();
+				entity.addComponent<CRectangle>();
+			}
 			ImGui::EndPopup();
 		}
 		ImGui::End();
@@ -298,9 +305,14 @@ void LevelHierarchyPanel::OnImGuiRender()
 			{
 				DisplayAddComponentEntry<CCircleCollider>("Circle Collider 2D", m_InspectedEntity.getComponent<CCircle>().radius);
 			}
+			else if (m_InspectedEntity.hasComponent<CRectangle>())
+			{
+				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity.getComponent<CRectangle>().size);
+			}
 			else
 			{
 				DisplayAddComponentEntry<CCircle>("Circle Shape");
+				DisplayAddComponentEntry<CRectangle>("Rectangle Shape");
 				DisplayAddComponentEntry<CCircleCollider>("Circle Collider 2D");
 				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
 				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
@@ -324,6 +336,12 @@ void LevelHierarchyPanel::OnImGuiRender()
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 
 			{
 				DrawFloatControl("Radius", component.radius, 0.0f, 200.0f);
+			});
+
+		DrawComponentGUI<CRectangle>("Rectangle Shape", m_InspectedEntity, [](auto& component)
+			{
+				DrawVec2Control("Size", component.size, 0.0f, 200.0f);
+				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
 			});
 
 		DrawComponentGUI<CCircleCollider>("Circle Collider 2D", m_InspectedEntity, [](auto& component)

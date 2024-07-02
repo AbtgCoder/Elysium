@@ -23,6 +23,12 @@ Level::Level(const std::string& name)
 	m_CircleShape.setFillColor(sf::Color::Transparent);
 	m_CircleShape.setOutlineColor(sf::Color::White);
 	m_CircleShape.setOutlineThickness(1);
+	m_CircleShape.setPointCount(30);
+
+	m_RectangleShape.setFillColor(sf::Color::Transparent);
+	m_RectangleShape.setOutlineColor(sf::Color::White);
+	m_RectangleShape.setOutlineThickness(1);
+
 }
 
 Level::~Level()
@@ -46,6 +52,10 @@ std::shared_ptr<Level> Level::Copy(std::shared_ptr<Level> other)
 		else if (e.hasComponent<CCircle>())
 		{
 			runtimeEntity.addComponent<CCircle>(e.getComponent<CCircle>());
+		}
+		else if (e.hasComponent<CRectangle>())
+		{
+			runtimeEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
 		}
 
 		if (e.hasComponent<CCircleCollider>())
@@ -96,6 +106,11 @@ static bool IsInside(Vec2 pos, Entity e)
 	{
 		s.x = 2 * e.getComponent<CCircle>().radius;
 		s.y = 2 * e.getComponent<CCircle>().radius;
+	}
+	else if (e.hasComponent<CRectangle>())
+	{
+		s.x = e.getComponent<CRectangle>().size.x;
+		s.y = e.getComponent<CRectangle>().size.y;
 	}
 	Vec2 ePos = e.getComponent<CTransform>().pos;
 	if (pos.x > ePos.x - s.x / 2 &&
@@ -282,6 +297,14 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsCollid
 				m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				renderTexture.draw(m_CircleShape);
+			}
+			else if (e.hasComponent<CRectangle>())
+			{
+				m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
+				m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
+				m_RectangleShape.setRotation(e.getComponent<CRectangle>().angle);
+				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				renderTexture.draw(m_RectangleShape);
 			}
 		}
 

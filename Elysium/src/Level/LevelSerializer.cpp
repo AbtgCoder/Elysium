@@ -87,6 +87,15 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Radius" << YAML::Value << cc.radius;
 		out << YAML::EndMap;
 	}
+	if (entity.hasComponent<CRectangle>())
+	{
+		out << YAML::Key << "RectangleShape";
+		out << YAML::BeginMap;
+		auto& rc = entity.getComponent<CRectangle>();
+		out << YAML::Key << "Size" << YAML::Value << rc.size;
+		out << YAML::Key << "Angle" << YAML::Value << rc.angle;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CSpriteRenderer>())
 	{
 		out << YAML::Key << "SpriteRenderer";
@@ -248,6 +257,14 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& cc = deserializedEntity.addComponent<CCircle>();
 				cc.radius = circleComponent["Radius"].as<float>();
+			}
+
+			auto rectangleComponent = entity["RectangleShape"];
+			if (rectangleComponent)
+			{
+				auto& rc = deserializedEntity.addComponent<CRectangle>();
+				rc.size = rectangleComponent["Size"].as<Vec2>();
+				rc.angle = rectangleComponent["Angle"].as<float>();
 			}
 			/*auto animationComponent = entity["Animation"];
 			if (animationComponent)
