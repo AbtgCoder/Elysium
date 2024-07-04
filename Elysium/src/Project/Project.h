@@ -10,12 +10,12 @@ struct ProjectConfig
 {
 	std::string Name = "Untitled";
 
-	AssetHandle StartLevel;
+	AssetHandle StartScene;
 
 	std::filesystem::path AssetDirectory; // relative to ProjectDirectory
 	std::filesystem::path AssetRegistryPath; // relative to AssetDirectory
 
-	AssetHandle lastOpenedLevel; // for editor only (maybe find a better way to do this)
+	AssetHandle lastOpenedScene; // for editor only (maybe find a better way to do this)
 };
 
 class Project
@@ -41,7 +41,7 @@ public:
 		return s_ActiveProject->GetAssetRegistryPath();
 	}
 
-	static void SetLastOpenedLevel(AssetHandle handle) { s_ActiveProject->m_Config.lastOpenedLevel = handle; }
+	static void SetLastOpenedScene(AssetHandle handle) { s_ActiveProject->m_Config.lastOpenedScene = handle; }
 
 	ProjectConfig& GetConfig() { return m_Config; }
 

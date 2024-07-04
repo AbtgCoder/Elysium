@@ -1,4 +1,4 @@
-#include "LevelSerializer.h"
+#include "SceneSerializer.h"
 
 #include "Core/UUID.h"
 #include "Project/Project.h"
@@ -57,8 +57,8 @@ YAML::Emitter& operator<<(YAML::Emitter& out, const Vec2& v)
 	return out;
 }
 
-LevelSerializer::LevelSerializer(const std::shared_ptr<Level>& level)
-	: m_Level(level)
+SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
+	: m_Scene(Scene)
 {
 }
 
@@ -93,7 +93,6 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::BeginMap;
 		auto& rc = entity.getComponent<CRectangle>();
 		out << YAML::Key << "Size" << YAML::Value << rc.size;
-		out << YAML::Key << "Angle" << YAML::Value << rc.angle;
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CSpriteRenderer>())
@@ -180,13 +179,13 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	out << YAML::EndMap;
 }
 
-void LevelSerializer::Serialize(const std::filesystem::path& filepath)
+void SceneSerializer::Serialize(const std::filesystem::path& filepath)
 {
 	YAML::Emitter out;
 	out << YAML::BeginMap;
-	out << YAML::Key << "Level" << YAML::Value << "Untitled";
+	out << YAML::Key << "Scene" << YAML::Value << "Untitled";
 	out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-	for (auto entity : m_Level->m_entityManager.GetEntities())
+	for (auto entity : m_Scene->m_entityManager.GetEntities())
 	{
 		if (entity.isActive())
 		{
@@ -200,7 +199,7 @@ void LevelSerializer::Serialize(const std::filesystem::path& filepath)
 	fout << out.c_str();
 }
 
-bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
+bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 {
 	YAML::Node data;
 	try
@@ -214,13 +213,13 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 	}
 
 
-	if (!data["Level"])
+	if (!data["Scene"])
 	{
-		std::cout << "no level data\n";
+		std::cout << "no Scene data\n";
 		return false;
 	}
 
-	m_Level->m_Name = data["Level"].as<std::string>();
+	m_Scene->m_Name = data["Scene"].as<std::string>();
 
 	auto entities = data["Entities"];
 	if (entities)
@@ -228,7 +227,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 		for (auto entity : entities)
 		{
 			auto tag = entity["Entity"].as<std::string>();
-			Entity deserializedEntity = m_Level->m_entityManager.addEntity();
+			Entity deserializedEntity = m_Scene->m_entityManager.addEntity();
 			deserializedEntity.addComponent<CTag>(tag);
 
 			auto transformComponent = entity["Transform"];
@@ -264,7 +263,6 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& rc = deserializedEntity.addComponent<CRectangle>();
 				rc.size = rectangleComponent["Size"].as<Vec2>();
-				rc.angle = rectangleComponent["Angle"].as<float>();
 			}
 			/*auto animationComponent = entity["Animation"];
 			if (animationComponent)
@@ -322,7 +320,7 @@ bool LevelSerializer::Deserialize(const std::filesystem::path& filepath)
 
 			if (tag == "player")
 			{
-				m_Level->m_player = deserializedEntity;
+				m_Scene->m_player = deserializedEntity;
 			}
 
 		}

@@ -1,4 +1,4 @@
-#include "LevelHierarchyPanel.h"
+#include "SceneHierarchyPanel.h"
 
 #include "Asset/AssetManager.h"
 #include "core/Texture.h"
@@ -8,14 +8,14 @@
 #include "imgui_internal.h"
 #include "imgui-SFML.h"
 
-LevelHierarchyPanel::LevelHierarchyPanel(const std::shared_ptr<Level>& level)
+SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
 {
-	SetLevel(level);
+	SetScene(Scene);
 }
 
-void LevelHierarchyPanel::SetLevel(const std::shared_ptr<Level>& level)
+void SceneHierarchyPanel::SetScene(const std::shared_ptr<Scene>& Scene)
 {
-	m_Level = level;
+	m_Scene = Scene;
 	m_InspectedEntity = {};
 }
 
@@ -221,15 +221,15 @@ std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity 
 	return convexHull;
 }
 
-void LevelHierarchyPanel::OnImGuiRender()
+void SceneHierarchyPanel::OnImGuiRender()
 {
 
-	if (m_Level)
+	if (m_Scene)
 	{
-		m_Level->m_entityManager.update(); // separate update function ??
+		m_Scene->m_entityManager.update(); // separate update function ??
 		
 		ImGui::Begin("Entity Manager");
-		for (auto e : m_Level->m_entityManager.GetEntities())
+		for (auto e : m_Scene->m_entityManager.GetEntities())
 		{
 			DrawEntityNode(e);
 		}
@@ -244,20 +244,20 @@ void LevelHierarchyPanel::OnImGuiRender()
 		{
 			if (ImGui::MenuItem("Create Empty Entity"))
 			{
-				auto entity = m_Level->m_entityManager.addEntity();
+				auto entity = m_Scene->m_entityManager.addEntity();
 				entity.addComponent<CTag>("Empty Entity");
 				entity.addComponent<CTransform>();
 			}
 			if (ImGui::MenuItem("Create Circle Entity"))
 			{
-				auto entity = m_Level->m_entityManager.addEntity();
+				auto entity = m_Scene->m_entityManager.addEntity();
 				entity.addComponent<CTag>("Circle");
 				entity.addComponent<CTransform>();
 				entity.addComponent<CCircle>();
 			}
 			if (ImGui::MenuItem("Create Rectangle Entity"))
 			{
-				auto entity = m_Level->m_entityManager.addEntity();
+				auto entity = m_Scene->m_entityManager.addEntity();
 				entity.addComponent<CTag>("Rectangle");
 				entity.addComponent<CTransform>();
 				entity.addComponent<CRectangle>();
@@ -340,8 +340,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CRectangle>("Rectangle Shape", m_InspectedEntity, [](auto& component)
 			{
-				DrawVec2Control("Size", component.size, 0.0f, 200.0f);
-				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
+				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
 			});
 
 		DrawComponentGUI<CCircleCollider>("Circle Collider 2D", m_InspectedEntity, [](auto& component)
@@ -428,7 +427,7 @@ void LevelHierarchyPanel::OnImGuiRender()
 }
 
 template<typename T, typename... TArgs>
-void LevelHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs)
+void SceneHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName, TArgs&&... mArgs)
 {
 	if (!m_InspectedEntity.hasComponent<T>())
 	{
@@ -442,12 +441,12 @@ void LevelHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName,
 
 
 
-void LevelHierarchyPanel::SetInspectedEntity(Entity entity)
+void SceneHierarchyPanel::SetInspectedEntity(Entity entity)
 {
 	m_InspectedEntity = entity;
 }
 
-void LevelHierarchyPanel::DrawEntityNode(Entity entity)
+void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 {
 	auto& tag = entity.getComponent<CTag>().tag;
 

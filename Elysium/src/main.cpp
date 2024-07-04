@@ -1,11 +1,10 @@
-#include "Core/GameEngine.h"
+#include "Core/Application.h"
 
 
 int main()
 {
-	GameEngine game("Elysium");
-	game.run();
-	
+	Application app("Elysium");
+	app.run();
 
 	return 0;
 }

@@ -1,6 +1,6 @@
 #include "AssetImporter.h"
 
-#include "LevelImporter.h"
+#include "SceneImporter.h"
 #include "TextureImporter.h"
 
 #include <functional>
@@ -8,7 +8,7 @@
 
 using AssetImportFunction = std::function<std::shared_ptr<Asset>(AssetHandle, const AssetMetadata&)>;
 static std::map<AssetType, AssetImportFunction> s_AssetImportFunctions = {
-	{AssetType::Level, LevelImporter::ImportLevel}, 
+	{AssetType::Scene, SceneImporter::ImportScene}, 
 	{AssetType::Texture, TextureImporter::ImportTexture} // other asset imports
 };
 

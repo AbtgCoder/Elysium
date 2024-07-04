@@ -19,10 +19,10 @@ bool ProjectSerializer::Serialize(const std::filesystem::path& filepath)
 		{
 			out << YAML::BeginMap; // Project
 			out << YAML::Key << "Name" << YAML::Value << config.Name;
-			out << YAML::Key << "StartLevel" << YAML::Value << (uint64_t)config.StartLevel;
+			out << YAML::Key << "StartScene" << YAML::Value << (uint64_t)config.StartScene;
 			out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
 			out << YAML::Key << "AssetRegistryPath" << YAML::Value << config.AssetRegistryPath.string();
-			out << YAML::Key << "LastOpenedLevel" << YAML::Value << (uint64_t)config.lastOpenedLevel;
+			out << YAML::Key << "LastOpenedScene" << YAML::Value << (uint64_t)config.lastOpenedScene;
 			out << YAML::EndMap; // Project
 		}
 		out << YAML::EndMap; // Root
@@ -54,11 +54,11 @@ bool ProjectSerializer::Deserialize(const std::filesystem::path& filepath)
 		return false;
 
 	config.Name = projectNode["Name"].as<std::string>();
-	config.StartLevel = projectNode["StartLevel"].as<uint64_t>();
+	config.StartScene = projectNode["StartScene"].as<uint64_t>();
 	config.AssetDirectory = projectNode["AssetDirectory"].as<std::string>();
 	if (projectNode["AssetRegistryPath"])
 		config.AssetRegistryPath = projectNode["AssetRegistryPath"].as<std::string>();
-	if (projectNode["LastOpenedLevel"])
-		config.lastOpenedLevel = projectNode["LastOpenedLevel"].as<uint64_t>();
+	if (projectNode["LastOpenedScene"])
+		config.lastOpenedScene = projectNode["LastOpenedScene"].as<uint64_t>();
 	return true;
 }

@@ -7,14 +7,14 @@
 
 #include <string>
 
-class Level : public Asset
+class Scene : public Asset
 {
 public:
-	Level();
-	Level(const std::string& name);
-	~Level();
+	Scene();
+	Scene(const std::string& name);
+	~Scene();
 
-	static std::shared_ptr<Level> Copy(std::shared_ptr<Level> other);
+	static std::shared_ptr<Scene> Copy(std::shared_ptr<Scene> other);
 
 	Entity AddEntity(Entity entity);
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
@@ -23,7 +23,7 @@ public:
 
 	std::vector<Entity>& GetAllPhysicsEntities();
 
-	virtual AssetType GetType() const { return AssetType::Level; }
+	virtual AssetType GetType() const { return AssetType::Scene; }
 
 	std::string GetName() const { return m_Name; }
 
@@ -50,7 +50,7 @@ private:
 	sf::CircleShape m_CircleShape;
 	sf::RectangleShape m_RectangleShape;
 
-	void RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+	void RenderScene(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
@@ -62,6 +62,6 @@ private:
 	// shader test
 	//sf::Shader m_Shader;
 
-	friend class LevelSerializer;
-	friend class LevelHierarchyPanel;
+	friend class SceneSerializer;
+	friend class SceneHierarchyPanel;
 };

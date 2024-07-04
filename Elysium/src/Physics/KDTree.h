@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Level/Entity.h>
+#include <Scene/Entity.h>
 
 struct KDTreeNode
 {

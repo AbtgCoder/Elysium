@@ -1,15 +1,15 @@
-#include "Level.h"
+#include "Scene.h"
 
 #include "Asset/AssetManager.h"
 #include "Core/Texture.h"
 
 
-Level::Level()
-	: Level("Untitled")
+Scene::Scene()
+	: Scene("Untitled")
 {
 }
 
-Level::Level(const std::string& name)
+Scene::Scene(const std::string& name)
 	: m_Name(name)
 {
 	m_PhysicsRect.setFillColor(sf::Color::Transparent);
@@ -31,18 +31,18 @@ Level::Level(const std::string& name)
 
 }
 
-Level::~Level()
+Scene::~Scene()
 {
 }
 
-std::shared_ptr<Level> Level::Copy(std::shared_ptr<Level> other)
+std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 {
-	std::shared_ptr<Level> level = std::make_shared<Level>();
+	std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
-	// create entities in new level
+	// create entities in new Scene
 	for (auto e : other->m_entityManager.GetEntities())
 	{
-		auto runtimeEntity = level->m_entityManager.addEntity();
+		auto runtimeEntity = scene->m_entityManager.addEntity();
 		runtimeEntity.getComponent<CTag>().tag = "runtime_" + e.getComponent<CTag>().tag;
 		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
 		if (e.hasComponent<CSpriteRenderer>())
@@ -76,15 +76,15 @@ std::shared_ptr<Level> Level::Copy(std::shared_ptr<Level> other)
 			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
 		}
 	}
-	return level;
+	return scene;
 }
 
-Entity Level::AddEntity(Entity entity)
+Entity Scene::AddEntity(Entity entity)
 {
 	return {};// m_entityManager.addEntity(entity);
 }
 
-Entity Level::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
+Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 {
 	// asset, asset type as texture
 	auto entity = m_entityManager.addEntity();
@@ -124,7 +124,7 @@ static bool IsInside(Vec2 pos, Entity e)
 	return false;
 }
 
-Entity Level::GetEntityIfClicked(Vec2 mousePos)
+Entity Scene::GetEntityIfClicked(Vec2 mousePos)
 {
 	for (auto entity : m_entityManager.GetEntities())
 	{
@@ -137,12 +137,12 @@ Entity Level::GetEntityIfClicked(Vec2 mousePos)
 	return {};
 }
 
-void Level::DestroyEntity(Entity entity)
+void Scene::DestroyEntity(Entity entity)
 {
 	entity.destroy();
 }
 
-std::vector<Entity>& Level::GetAllPhysicsEntities()
+std::vector<Entity>& Scene::GetAllPhysicsEntities()
 {
 	std::vector<Entity> physicsEntities;
 	for (auto e : m_entityManager.GetEntities())
@@ -155,21 +155,21 @@ std::vector<Entity>& Level::GetAllPhysicsEntities()
 	return physicsEntities;
 }
 
-void Level::OnRuntimeStart()
+void Scene::OnRuntimeStart()
 {
 	m_IsRunning = true;
 
 	// Physics world initialization
 }
 
-void Level::OnRuntimeStop()
+void Scene::OnRuntimeStop()
 {
 	m_IsRunning = false;
 
 	// Physics world deletion
 }
 
-void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt)
+void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt)
 {
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
@@ -239,21 +239,21 @@ void Level::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 
 
 	// Rendering
-	RenderLevel(renderTexture, drawPhysicsColliders);
+	RenderScene(renderTexture, drawPhysicsColliders);
 }
 
-void Level::OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
+void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
 {
 	// stuff
-	RenderLevel(renderTexture, drawPhysicsColliders);
+	RenderScene(renderTexture, drawPhysicsColliders);
 }
 
-void Level::Step(int frames)
+void Scene::Step(int frames)
 {
 	m_StepFrames = frames;
 }
 
-void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
+void Scene::RenderScene(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
 {
 	//renderTexture.clear(sf::Color::Blue);
 	renderTexture.clear();
@@ -309,7 +309,7 @@ void Level::RenderLevel(sf::RenderTexture& renderTexture, bool drawPhysicsCollid
 			{
 				m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
 				m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
-				m_RectangleShape.setRotation(e.getComponent<CRectangle>().angle);
+				m_RectangleShape.setRotation(e.getComponent<CTransform>().angle);
 				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				renderTexture.draw(m_RectangleShape);
 			}

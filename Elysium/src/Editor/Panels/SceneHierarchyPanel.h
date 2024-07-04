@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Level/Level.h"
+#include "Scene/Scene.h"
 
-class LevelHierarchyPanel
+class SceneHierarchyPanel
 {
 public:
-	LevelHierarchyPanel() = default;
-	LevelHierarchyPanel(const std::shared_ptr<Level>& level);
+	SceneHierarchyPanel() = default;
+	SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene);
 
-	void SetLevel(const std::shared_ptr<Level>& level);
+	void SetScene(const std::shared_ptr<Scene>& Scene);
 
 	void OnImGuiRender();
 
@@ -20,6 +20,6 @@ private:
 
 	void DrawEntityNode(Entity entity);
 private:
-	std::shared_ptr<Level> m_Level;
+	std::shared_ptr<Scene> m_Scene;
 	Entity m_InspectedEntity;
 };

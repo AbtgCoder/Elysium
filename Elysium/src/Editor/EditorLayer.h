@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Scene.h"
+#include "Core/Layer.h"
 
-#include "Panels/LevelHierarchyPanel.h"
+#include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 
 #include <filesystem>
@@ -14,39 +14,39 @@ enum GIZMO_OPERATION
 	ROTATE, // TODO: add rotation gizmo!!
 };
 
-class LevelEditor : public Scene
+class EditorLayer : public Layer
 {
 public:
-	LevelEditor(GameEngine* gameEngine = nullptr);
+	EditorLayer(Application* Application = nullptr);
 	void sGUI();
 	void sRender();
 
 protected:
 
 	std::filesystem::path m_EditorProjectPath;
-	std::filesystem::path m_EditorLevelPath;
-	std::shared_ptr<Level> m_ActiveLevel;
-	std::shared_ptr<Level> m_EditorLevel;
+	std::filesystem::path m_EditorScenePath;
+	std::shared_ptr<Scene> m_ActiveScene;
+	std::shared_ptr<Scene> m_EditorScene;
 
 	void NewProject();
 	bool OpenProject();
 	void OpenProject(const std::filesystem::path& path);
 	void SaveProject();
 
-	void NewLevel();
-	void OpenLevel();
-	void OpenLevel(AssetHandle handle);
-	void SaveLevel();
-	void SerializeLevel(std::shared_ptr<Level> level, const std::filesystem::path& path);
-	// TODO: implement save level as
+	void NewScene();
+	void OpenScene();
+	void OpenScene(AssetHandle handle);
+	void SaveScene();
+	void SerializeScene(std::shared_ptr<Scene> Scene, const std::filesystem::path& path);
+	// TODO: implement save Scene as
 
-	// Level Editor Camera and Camera Controller stuff
-	sf::View m_levelView;
-	Vec2 m_levelViewCenter;
-	float m_levelViewZoom = 1.0f;
+	// Scene Editor Camera and Camera Controller stuff
+	sf::View m_SceneView;
+	Vec2 m_SceneViewCenter;
+	float m_SceneViewZoom = 1.0f;
 	bool m_altPressed = false;
-	Vec2 m_lastLevelViewPos;
-	bool m_levelViewMoving = false;
+	Vec2 m_lastSceneViewPos;
+	bool m_SceneViewMoving = false;
 
 	// Main Rendering Viewport
 	sf::RenderTexture m_rt{};
@@ -61,6 +61,10 @@ protected:
 	bool m_gizmoSelectY = false;
 	Vec2 m_lastGizmoPosY;
 	float m_scalingFactor = 0.05f;
+	bool m_gizmoRotateHover = false;
+	bool m_gizmoRotateSelect = false;
+	float m_rotationFactor = 0.05;
+	Vec2 m_lastGizmoRotatePos;
 	int m_gizmoType = GIZMO_OPERATION::TRANSLATE;
 
 	
@@ -75,17 +79,17 @@ protected:
 	Vec2 m_mousePos;
 	Entity m_inspectedEntity = {};
 
-	enum class LevelState
+	enum class SceneState
 	{
 		Edit = 0, Play = 1
 	};
-	LevelState m_LevelState = LevelState::Edit;
+	SceneState m_SceneState = SceneState::Edit;
 
 	// ImGui
 	void setImGuiStyle();
 
 	// Panels
-	LevelHierarchyPanel m_LevelHierarchyPanel;
+	SceneHierarchyPanel m_SceneHierarchyPanel;
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 	
 	std::shared_ptr<Texture> m_IconPlay;

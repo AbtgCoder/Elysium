@@ -1,10 +1,10 @@
-#include "LevelEditor.h"
+#include "EditorLayer.h"
 
-#include "Core/GameEngine.h"
+#include "Core/Application.h"
 #include "Physics/graham_scan.h"
 
 #include "Asset/AssetManager.h"
-#include "Asset/LevelImporter.h"
+#include "Asset/SceneImporter.h"
 #include "Asset/TextureImporter.h"
 
 #include "Utils/FileUtils.h"
@@ -17,23 +17,25 @@
 #include <cmath>
 #include <algorithm>
 
-LevelEditor::LevelEditor(GameEngine* gameEngine)
-	: Scene(gameEngine)
+EditorLayer::EditorLayer(Application* Application)
+	: Layer(Application)
 {
 	init();
 }
 
-void LevelEditor::init()
+void EditorLayer::init()
 {
 	registerAction(sf::Keyboard::G, "TOGGLE_GRID");
 	registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
 	registerAction(sf::Keyboard::Escape, "QUIT");
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
-	registerAction(sf::Keyboard::P, "PLAY_LEVEL");
+	registerAction(sf::Keyboard::P, "PLAY_Scene");
 	registerAction(sf::Keyboard::LAlt, "ALT");
 	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
 	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
+	registerAction(sf::Keyboard::E, "ROTATION_GIZMO");
+
 
 
 	m_IconPlay = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
@@ -59,7 +61,7 @@ void LevelEditor::init()
 	OpenProject();
 }
 
-void LevelEditor::setImGuiStyle()
+void EditorLayer::setImGuiStyle()
 {
 
 
@@ -140,33 +142,33 @@ void LevelEditor::setImGuiStyle()
 
 }
 
-Vec2 LevelEditor::windowToViewport(const Vec2& windowPos) const
+Vec2 EditorLayer::windowToViewport(const Vec2& windowPos) const
 {
 	auto viewportPos = windowPos - m_viewportBounds.first;
 	return viewportPos;
 }
  
 
-void LevelEditor::update(float dt)
+void EditorLayer::update(float dt)
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_rt.create(m_viewportSize.x, m_viewportSize.y);
-	m_levelView.setSize(m_viewportSize.x, m_viewportSize.y);
-	m_levelView.zoom(m_levelViewZoom);
-	m_rt.setView(m_levelView);
+	m_SceneView.setSize(m_viewportSize.x, m_viewportSize.y);
+	m_SceneView.zoom(m_SceneViewZoom);
+	m_rt.setView(m_SceneView);
 	
-	switch (m_LevelState)
+	switch (m_SceneState)
 	{
-	case LevelState::Edit:
+	case SceneState::Edit:
 	{
-		if (m_ActiveLevel)
-			m_ActiveLevel->OnUpdateEditor(m_rt, m_drawCollision);
+		if (m_ActiveScene)
+			m_ActiveScene->OnUpdateEditor(m_rt, m_drawCollision);
 		break;
 	}
-	case LevelState::Play:
+	case SceneState::Play:
 	{
-		if (m_ActiveLevel)
-			m_ActiveLevel->OnUpdateRuntime(m_rt, m_drawCollision, dt);
+		if (m_ActiveScene)
+			m_ActiveScene->OnUpdateRuntime(m_rt, m_drawCollision, dt);
 		break;
 	}
 	}
@@ -176,16 +178,16 @@ void LevelEditor::update(float dt)
 	sGUI();
 }
 
-void LevelEditor::sRender()
+void EditorLayer::sRender()
 {
 
 }
 
-void LevelEditor::NewProject()
+void EditorLayer::NewProject()
 {
 }
 
-bool LevelEditor::OpenProject()
+bool EditorLayer::OpenProject()
 {
 	std::string projectPath = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Project (*.eproject)\0*.eproject\0");
 	if (projectPath.empty())
@@ -195,34 +197,34 @@ bool LevelEditor::OpenProject()
 	return true;
 }
 
-void LevelEditor::OpenProject(const std::filesystem::path& path)
+void EditorLayer::OpenProject(const std::filesystem::path& path)
 {
 	if (Project::Load(path))
 	{
 		m_EditorProjectPath = path;
-		AssetHandle lastOpenedLevel = Project::GetActive()->GetConfig().lastOpenedLevel;
-		AssetHandle startLevel = Project::GetActive()->GetConfig().StartLevel;
-		if (lastOpenedLevel)
-			OpenLevel(lastOpenedLevel);
-		else if (startLevel)
-			OpenLevel(startLevel);
+		AssetHandle lastOpenedScene = Project::GetActive()->GetConfig().lastOpenedScene;
+		AssetHandle startScene = Project::GetActive()->GetConfig().StartScene;
+		if (lastOpenedScene)
+			OpenScene(lastOpenedScene);
+		else if (startScene)
+			OpenScene(startScene);
 		m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>(Project::GetActive());
 	}
 }
 
-void LevelEditor::SaveProject()
+void EditorLayer::SaveProject()
 {
 	Project::SaveActive(m_EditorProjectPath);
 }
 
-void LevelEditor::NewLevel()
+void EditorLayer::NewScene()
 {
-	std::string path = WindowsFileUtils::SaveFile(m_game->window().getSystemHandle(), "Elysium Level (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::SaveFile(m_game->window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
-		std::shared_ptr<Level> level = std::make_shared<Level>();
-		LevelImporter::SaveLevel(level, relativePath);
+		std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+		SceneImporter::SaveScene(scene, relativePath);
 		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
 		// refresh content browser
 		m_ContentBrowserPanel->RefreshAssetTree();
@@ -231,16 +233,16 @@ void LevelEditor::NewLevel()
 		{
 			if (metadata.FilePath == relativePath)
 			{
-				OpenLevel(handle);
+				OpenScene(handle);
 				break;
 			}
 		}
 	}
 }
 
-void LevelEditor::OpenLevel()
+void EditorLayer::OpenScene()
 {
-	std::string path = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Level (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
@@ -252,43 +254,43 @@ void LevelEditor::OpenLevel()
 		{
 			if (metadata.FilePath == relativePath)
 			{
-				OpenLevel(handle);
+				OpenScene(handle);
 				break;
 			}
 		}
 	}
 }
 
-void LevelEditor::OpenLevel(AssetHandle handle)
+void EditorLayer::OpenScene(AssetHandle handle)
 {
 	// assert handle
 
-	m_ActiveLevel = AssetManager::GetAsset<Level>(handle);
-	if (!m_ActiveLevel)
+	m_ActiveScene = AssetManager::GetAsset<Scene>(handle);
+	if (!m_ActiveScene)
 	{
 		return;
 	}
-	Project::SetLastOpenedLevel(handle);
-	m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
-	m_EditorLevel = m_ActiveLevel;
-	m_EditorLevelPath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(handle);
+	Project::SetLastOpenedScene(handle);
+	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+	m_EditorScene = m_ActiveScene;
+	m_EditorScenePath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(handle);
 }
 
-void LevelEditor::SaveLevel()
+void EditorLayer::SaveScene()
 {
-	if (!m_EditorLevelPath.empty())
+	if (!m_EditorScenePath.empty())
 	{
-		SerializeLevel(m_ActiveLevel, m_EditorLevelPath);
+		SerializeScene(m_ActiveScene, m_EditorScenePath);
 	}
 }
 
-void LevelEditor::SerializeLevel(std::shared_ptr<Level> level, const std::filesystem::path& path)
+void EditorLayer::SerializeScene(std::shared_ptr<Scene> Scene, const std::filesystem::path& path)
 {
-	LevelImporter::SaveLevel(level, path);
+	SceneImporter::SaveScene(Scene, path);
 }
 
 
-void LevelEditor::sGUI()
+void EditorLayer::sGUI()
 {
 	static bool dockspaceOpen = true;
 	static bool opt_fullsreen = true;
@@ -332,23 +334,23 @@ void LevelEditor::sGUI()
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Open Level", "Ctrl+O"))
+			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
 			{
-				SaveLevel(); // save active level
-				OpenLevel();
+				SaveScene(); // save active Scene
+				OpenScene();
 			}
 			ImGui::Separator();
-			if (ImGui::MenuItem("New Level", "Ctrl+N"))
+			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
 			{
-				std::cout << "wow new level!\n";
-				NewLevel();
+				std::cout << "wow new Scene!\n";
+				NewScene();
 			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
 	}
 
-	m_LevelHierarchyPanel.OnImGuiRender();
+	m_SceneHierarchyPanel.OnImGuiRender();
 	m_ContentBrowserPanel->OnImGuiRender();
 
 	ImGui::Begin("Viewport");
@@ -366,17 +368,17 @@ void LevelEditor::sGUI()
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 		{
 			AssetHandle handle = *(AssetHandle*)payload->Data;
-			if (AssetManager::GetAssetType(handle) == AssetType::Level)
+			if (AssetManager::GetAssetType(handle) == AssetType::Scene)
 			{
-				OpenLevel(handle);
+				OpenScene(handle);
 			}
 			else if (AssetManager::GetAssetType(handle) == AssetType::Texture)
 			{
 				// spawn entity with sprite renderer component
 				Vec2 viewportPos = windowToViewport(m_mousePos);
 				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-				Entity newEntity = m_ActiveLevel->AddEntityWithSprite(worldPos, handle);
-				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
+				Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
+				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 			else
 			{
@@ -387,7 +389,7 @@ void LevelEditor::sGUI()
 	}
 
 	// Gizmos
-	m_inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+	m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 	if (m_inspectedEntity)
 	{
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -400,78 +402,125 @@ void LevelEditor::sGUI()
 		static const float lineThickness = 4.0f;
 		static const float arrowSize = 6.0f;
 		static const float rectSize = 6.0f;
+		static const float circleRadius = 80.0f;
 
-		// X-translation gizmo
-		ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
-		// line
-		ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
-		drawList->AddLine(origin, endPointX, colorX, lineThickness);
-		// Y-translation gizmo
-		ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
-		// line
-		ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
-		drawList->AddLine(origin, endPointY, colorY, lineThickness);
-		if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+		if (m_gizmoType == GIZMO_OPERATION::ROTATE)
 		{
-			// X-arrow
-			ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
-			float d = sqrtf(ImLengthSqr(dir));
-			dir.x = dir.x / d * arrowSize;
-			dir.y = dir.y / d * arrowSize;
-			ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
-			ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
-			drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
-			// Y-arrow
-			dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
-			d = sqrtf(ImLengthSqr(dir));
-			dir.x = dir.x / d * arrowSize;
-			dir.y = dir.y / d * arrowSize;
-			orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
-			a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
-			drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
-		}
-		else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-		{
-			// X-square
-			drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2*rectSize, endPointX.y + rectSize), colorX);
-			// Y-square	
-			drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2*rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
-		}
-		
-		if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
-		{
-			m_gizmoHoverX = true;
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			// circle
+			ImU32 color = (m_gizmoRotateSelect || m_gizmoRotateHover) ? selectionColor : directionColor[2];
+			drawList->AddCircle(origin, circleRadius, color, 64);
+			// convex poly filled
+			ImVec2 circleArcPoints[32 + 1];
+			circleArcPoints[0] = origin;
+			float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().angle + 180.0f, 360.0f);
+			if (startAngle < 0)
+				startAngle += 360.0f;
+			startAngle -= 180.0f;
+			float endAngle = m_gizmoRotateSelect  ? - 1 * atan2(windowToViewport(m_mousePos).y - pixel.y, windowToViewport(m_mousePos).x - pixel.x) * 180.0 / 3.14 : startAngle;
+
+			float angle_step = (endAngle - startAngle) / 32;
+			for (unsigned int i = 1; i < 32; i++)
 			{
-				m_gizmoSelectX = true;
-				m_lastGizmoPosX = windowToViewport(m_mousePos);
+				float angle = startAngle + angle_step * i;
+				float costheta = cos(angle * 3.14 / 180.0);
+				float sintheta = sin(angle * 3.14 / 180.0);
+				circleArcPoints[i] = ImVec2(origin.x + circleRadius * costheta, origin.y - circleRadius * sintheta);
 			}
-			if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+			drawList->AddConvexPolyFilled(circleArcPoints, 32, 0x8020AACC);
+			drawList->AddPolyline(circleArcPoints, 32, color, true, 2);
+
+			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x - circleRadius, origin.y - circleRadius), ImVec2(origin.x + circleRadius, origin.y + circleRadius)))
 			{
-				m_gizmoSelectX = false;
+				m_gizmoRotateHover = true;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					m_gizmoRotateSelect = true;
+					m_lastGizmoRotatePos = windowToViewport(m_mousePos);
+				}
+				if (m_gizmoRotateSelect && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				{
+					m_gizmoRotateSelect = false;
+				}
+			}
+			else
+			{
+				m_gizmoRotateHover = false;
 			}
 		}
 		else
 		{
-			m_gizmoHoverX = false;
-		}
+			// X-translation gizmo
+			ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
+			// line
+			ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
+			drawList->AddLine(origin, endPointX, colorX, lineThickness);
+			// Y-translation gizmo
+			ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
+			// line
+			ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
+			drawList->AddLine(origin, endPointY, colorY, lineThickness);
+			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+			{
+				// X-arrow
+				ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
+				float d = sqrtf(ImLengthSqr(dir));
+				dir.x = dir.x / d * arrowSize;
+				dir.y = dir.y / d * arrowSize;
+				ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
+				ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
+				drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
+				// Y-arrow
+				dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
+				d = sqrtf(ImLengthSqr(dir));
+				dir.x = dir.x / d * arrowSize;
+				dir.y = dir.y / d * arrowSize;
+				orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
+				a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
+				drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
+			}
+			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+			{
+				// X-square
+				drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2 * rectSize, endPointX.y + rectSize), colorX);
+				// Y-square	
+				drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
+			}
 
-		if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
-		{
-			m_gizmoHoverY = true;
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
 			{
-				m_gizmoSelectY = true;
-				m_lastGizmoPosY = windowToViewport(m_mousePos);
+				m_gizmoHoverX = true;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectX = true;
+					m_lastGizmoPosX = windowToViewport(m_mousePos);
+				}
+				if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectX = false;
+				}
 			}
-			if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+			else
 			{
-				m_gizmoSelectY = false;
+				m_gizmoHoverX = false;
 			}
-		}
-		else
-		{
-			m_gizmoHoverY = false;
+
+			if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
+			{
+				m_gizmoHoverY = true;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectY = true;
+					m_lastGizmoPosY = windowToViewport(m_mousePos);
+				}
+				if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectY = false;
+				}
+			}
+			else
+			{
+				m_gizmoHoverY = false;
+			}
 		}
 
 	}
@@ -486,7 +535,7 @@ void LevelEditor::sGUI()
 
 }
 
-void LevelEditor::UI_Toolbar()
+void EditorLayer::UI_Toolbar()
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
@@ -499,7 +548,7 @@ void LevelEditor::UI_Toolbar()
 
 	ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-	bool toolbarEnabled = (bool)m_ActiveLevel;
+	bool toolbarEnabled = (bool)m_ActiveScene;
 
 	ImVec4 tintColor = ImVec4(1, 1, 1, 1);
 	if (!toolbarEnabled)
@@ -509,39 +558,39 @@ void LevelEditor::UI_Toolbar()
 	ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
 
 	bool hasPlayButton = true; // either edit or play...
-	bool hasPauseButton = m_LevelState == LevelState::Play;
+	bool hasPauseButton = m_SceneState == SceneState::Play;
 
 	if (hasPlayButton)
 	{
-		std::shared_ptr<Texture> icon = m_LevelState == LevelState::Edit ? m_IconPlay : m_IconStop;
+		std::shared_ptr<Texture> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
 		if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 		{
-			if (m_LevelState == LevelState::Edit)
+			if (m_SceneState == SceneState::Edit)
 			{
-				m_ActiveLevel = Level::Copy(m_EditorLevel);
-				m_ActiveLevel->OnRuntimeStart();
-				m_LevelState = LevelState::Play;
-				m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
+				m_ActiveScene = Scene::Copy(m_EditorScene);
+				m_ActiveScene->OnRuntimeStart();
+				m_SceneState = SceneState::Play;
+				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
 			}
-			else if (m_LevelState == LevelState::Play)
+			else if (m_SceneState == SceneState::Play)
 			{
-				m_ActiveLevel->OnRuntimeStop();
-				m_LevelState = LevelState::Edit;
-				m_ActiveLevel = m_EditorLevel;
-				m_LevelHierarchyPanel.SetLevel(m_ActiveLevel);
+				m_ActiveScene->OnRuntimeStop();
+				m_SceneState = SceneState::Edit;
+				m_ActiveScene = m_EditorScene;
+				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
 			}
 		}
 	}
 
 	if (hasPauseButton)
 	{
-		bool isPaused = m_ActiveLevel->IsPaused();
+		bool isPaused = m_ActiveScene->IsPaused();
 		ImGui::SameLine();
 		{
 			std::shared_ptr<Texture> icon = m_IconPause;
 			if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 			{
-				m_ActiveLevel->SetPaused(!isPaused);
+				m_ActiveScene->SetPaused(!isPaused);
 			}
 		}
 
@@ -553,7 +602,7 @@ void LevelEditor::UI_Toolbar()
 				std::shared_ptr<Texture> icon = m_IconStep;
 				if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 				{
-					m_ActiveLevel->Step();
+					m_ActiveScene->Step();
 				}
 			}
 		}
@@ -565,17 +614,17 @@ void LevelEditor::UI_Toolbar()
 
 }
 
-void LevelEditor::sDoAction(const Action& action)
+void EditorLayer::sDoAction(const Action& action)
 {
 	if (action.name() == "MOUSE_MOVE")
 	{
 		m_mousePos = action.pos();
 		Vec2 viewportPos = windowToViewport(m_mousePos);
-		Vec2 deltaPos = m_lastLevelViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+		Vec2 deltaPos = m_lastSceneViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 
-		if (m_levelViewMoving)
+		if (m_SceneViewMoving)
 		{
-			m_levelView.setCenter(m_levelView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
+			m_SceneView.setCenter(m_SceneView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
 		}
 
 		// Gizmo System
@@ -605,20 +654,28 @@ void LevelEditor::sDoAction(const Action& action)
 				m_inspectedEntity.getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
 			}
 		}
+		else if (m_gizmoRotateSelect && m_inspectedEntity)
+		{
+			deltaPos = viewportPos - m_lastGizmoRotatePos;
+			m_lastGizmoRotatePos = viewportPos;
+			float deltaRotation = atan2(deltaPos.y, deltaPos.x) * 180.0 / 3.14;
+			float newAngle = m_inspectedEntity.getComponent<CTransform>().angle + m_rotationFactor * deltaRotation;
+			m_inspectedEntity.getComponent<CTransform>().angle = newAngle; 
+		}
 	}
 
 	if (action.name() == "MOUSE_WHEEL_SCROLL")
 	{
-		if (!m_levelViewMoving && m_altPressed)
+		if (!m_SceneViewMoving && m_altPressed)
 		{
 			float delta = action.pos().x;
 			if (delta <= -1)
 			{
-				m_levelViewZoom = std::min(2.0f, m_levelViewZoom + 0.1f);
+				m_SceneViewZoom = std::min(2.0f, m_SceneViewZoom + 0.1f);
 			}
 			else if (delta >= 1)
 			{
-				m_levelViewZoom = std::max(0.5f, m_levelViewZoom - 0.1f);
+				m_SceneViewZoom = std::max(0.5f, m_SceneViewZoom - 0.1f);
 			}
 		}
 	}
@@ -645,22 +702,26 @@ void LevelEditor::sDoAction(const Action& action)
 		{
 			m_gizmoType = GIZMO_OPERATION::SCALE;
 		}
+		else if (action.name() == "ROTATION_GIZMO")
+		{
+			m_gizmoType = GIZMO_OPERATION::ROTATE;
+		}
 		else if (action.name() == "DELETE")
 		{
-			Entity inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 			if (inspectedEntity)
 			{
-				m_LevelHierarchyPanel.SetInspectedEntity({});
-				m_ActiveLevel->DestroyEntity(inspectedEntity);
+				m_SceneHierarchyPanel.SetInspectedEntity({});
+				m_ActiveScene->DestroyEntity(inspectedEntity);
 			}
 		}
 		else if (action.name() == "DUPLICATE")
 		{
-			Entity inspectedEntity = m_LevelHierarchyPanel.GetInspectedEntity();
+			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 			if (inspectedEntity)
 			{
-				Entity newEntity = m_ActiveLevel->AddEntity(inspectedEntity);
-				m_LevelHierarchyPanel.SetInspectedEntity(newEntity);
+				Entity newEntity = m_ActiveScene->AddEntity(inspectedEntity);
+				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 		}
 		else if (action.name() == "LEFT_CLICK")
@@ -670,16 +731,16 @@ void LevelEditor::sDoAction(const Action& action)
 
 			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
 			{
-				Entity entity = m_ActiveLevel->GetEntityIfClicked(worldPos);
+				Entity entity = m_ActiveScene->GetEntityIfClicked(worldPos);
 				if (entity)
 				{
-					m_LevelHierarchyPanel.SetInspectedEntity(entity);
+					m_SceneHierarchyPanel.SetInspectedEntity(entity);
 				}
 				else
 				{
-					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY))
+					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY || m_gizmoRotateHover || m_gizmoRotateSelect))
 					{
-						m_LevelHierarchyPanel.SetInspectedEntity({});
+						m_SceneHierarchyPanel.SetInspectedEntity({});
 
 					}
 				}
@@ -687,14 +748,14 @@ void LevelEditor::sDoAction(const Action& action)
 
 			if (m_altPressed)
 			{
-				m_levelViewMoving = true;
-				m_lastLevelViewPos = worldPos;
+				m_SceneViewMoving = true;
+				m_lastSceneViewPos = worldPos;
 			}
 
 		}
 		else if (action.name() == "QUIT")
 		{
-			SaveLevel();
+			SaveScene();
 			SaveProject();
 			m_hasEnded = true;
 			onEnd();
@@ -707,13 +768,13 @@ void LevelEditor::sDoAction(const Action& action)
 		if (action.name() == "ALT")
 		{
 			m_altPressed = false;
-			m_levelViewMoving = false;
+			m_SceneViewMoving = false;
 		}
 		if (action.name() == "LEFT_CLICK")
 		{
 			if (m_altPressed)
 			{
-				m_levelViewMoving = false;
+				m_SceneViewMoving = false;
 			}
 			if (m_gizmoSelectX)
 			{
@@ -723,21 +784,25 @@ void LevelEditor::sDoAction(const Action& action)
 			{
 				m_gizmoSelectY = false;
 			}
-		}
-		else if (action.name() == "PLAY_LEVEL")
-		{
-			// Level state, level play
-			if (m_LevelState == LevelState::Edit)
+			if (m_gizmoRotateSelect)
 			{
-				m_LevelState = LevelState::Play;
+				m_gizmoRotateSelect = false;
 			}
-			else if (m_LevelState == LevelState::Play)
-				m_LevelState = LevelState::Edit;
+		}
+		else if (action.name() == "PLAY_Scene")
+		{
+			// Scene state, Scene play
+			if (m_SceneState == SceneState::Edit)
+			{
+				m_SceneState = SceneState::Play;
+			}
+			else if (m_SceneState == SceneState::Play)
+				m_SceneState = SceneState::Edit;
 		}
 	}
 }
 
-void LevelEditor::onEnd()
+void EditorLayer::onEnd()
 {
 	m_game->quit();
 }

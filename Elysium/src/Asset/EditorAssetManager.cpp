@@ -7,7 +7,7 @@
 #include <fstream>
 
 static std::map<std::filesystem::path, AssetType> s_AssetExtensionMap = {
-	{".elysium", AssetType::Level},
+	{".elysium", AssetType::Scene},
 	{".png", AssetType::Texture}, // TODO: check other image file formats supported by sfml
 };
 

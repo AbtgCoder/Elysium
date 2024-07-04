@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Level.h"
+#include "Scene.h"
 #include <filesystem>
 
-class LevelSerializer
+class SceneSerializer
 {
 public:
-	LevelSerializer(const std::shared_ptr<Level>& level);
+	SceneSerializer(const std::shared_ptr<Scene>& Scene);
 
 	void Serialize(const std::filesystem::path& filepath);
 
 	bool Deserialize(const std::filesystem::path& filepath);
 private:
-	std::shared_ptr<Level> m_Level;
+	std::shared_ptr<Scene> m_Scene;
 };

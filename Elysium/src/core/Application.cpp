@@ -1,15 +1,15 @@
-#include "GameEngine.h"
-#include "Editor/LevelEditor.h"
+#include "Application.h"
+#include "Editor/EditorLayer.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
 
-GameEngine::GameEngine(const std::string& name)
+Application::Application(const std::string& name)
 {
 	init(name);
 }
 
-void GameEngine::init(const std::string& name)
+void Application::init(const std::string& name)
 {
 	// create window
 	m_window.create(sf::VideoMode::getDesktopMode(), name);
@@ -32,57 +32,57 @@ void GameEngine::init(const std::string& name)
 	ImGui::SFML::UpdateFontTexture();
 #endif
 
-	// Initialize Level Editor Scene
-	std::shared_ptr<Scene> levelEditor = std::make_shared<LevelEditor>(this);
-	changeScene("level_editor", levelEditor, true);
+	// Initialize Editor Layer
+	std::shared_ptr<Layer> editorLayer = std::make_shared<EditorLayer>(this);
+	changeLayer("Editor_Layer", editorLayer, true);
 
 }
 
-void GameEngine::update(float dt)
+void Application::update(float dt)
 {
-	currentScene()->update(dt);
+	currentLayer()->update(dt);
 }
 
-std::shared_ptr<Scene> GameEngine::currentScene()
+std::shared_ptr<Layer> Application::currentLayer()
 {
-	return m_sceneMap[m_currentScene];
+	return m_LayerMap[m_currentLayer];
 }
 
-sf::RenderWindow& GameEngine::window()
+sf::RenderWindow& Application::window()
 {
 	return m_window;
 }
 
-bool GameEngine::isRunning()
+bool Application::isRunning()
 {
 	return m_running;
 }
 
-const SceneMap& GameEngine::scenes() const
+const LayerMap& Application::Layers() const
 {
-	return m_sceneMap;
+	return m_LayerMap;
 }
 
 
 
-void GameEngine::changeScene(const std::string& sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene)
+void Application::changeLayer(const std::string& LayerName, std::shared_ptr<Layer> Layer, bool endCurrentLayer)
 {
-	if (endCurrentScene)
+	if (endCurrentLayer)
 	{
-		m_sceneMap.erase(m_currentScene);
+		m_LayerMap.erase(m_currentLayer);
 	}
 	
-	m_currentScene = sceneName;
-	m_sceneMap[m_currentScene] = scene;
+	m_currentLayer = LayerName;
+	m_LayerMap[m_currentLayer] = Layer;
 }
 
 
-void GameEngine::quit()
+void Application::quit()
 {
 	m_running = false;
 }
 
-void GameEngine::run()
+void Application::run()
 {
 	// main game loop
 	sf::Clock deltaClock;
@@ -98,7 +98,7 @@ void GameEngine::run()
 
 }
 
-void GameEngine::sUserInput()
+void Application::sUserInput()
 {
 	// handle user input
 
@@ -117,15 +117,15 @@ void GameEngine::sUserInput()
 
 		if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
 		{
-			// if current scene has actions
-			if (currentScene()->getActionMap().find(event.key.code) == currentScene()->getActionMap().end())
+			// if current Layer has actions
+			if (currentLayer()->getActionMap().find(event.key.code) == currentLayer()->getActionMap().end())
 			{
 				continue;
 			}
 
 			// determine start or end of action
 			const std::string actionType = (event.type == sf::Event::KeyPressed) ? "START" : "END";
-			currentScene()->sDoAction(Action(currentScene()->getActionMap().at(event.key.code), actionType));
+			currentLayer()->sDoAction(Action(currentLayer()->getActionMap().at(event.key.code), actionType));
 
 		}
 
@@ -135,9 +135,9 @@ void GameEngine::sUserInput()
 		{
 			switch (event.mouseButton.button)
 			{
-			case sf::Mouse::Left: { currentScene()->sDoAction(Action("LEFT_CLICK", "START", pos)); break; }
-			case sf::Mouse::Right: { currentScene()->sDoAction(Action("RIGHT_CLICK", "START", pos)); break; }
-			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "START", pos)); break; }
+			case sf::Mouse::Left: { currentLayer()->sDoAction(Action("LEFT_CLICK", "START", pos)); break; }
+			case sf::Mouse::Right: { currentLayer()->sDoAction(Action("RIGHT_CLICK", "START", pos)); break; }
+			case sf::Mouse::Middle: { currentLayer()->sDoAction(Action("MIDDLE_CLICK", "START", pos)); break; }
 			default: break;
 			}
 		}
@@ -145,19 +145,19 @@ void GameEngine::sUserInput()
 		{
 			switch (event.mouseButton.button)
 			{
-			case sf::Mouse::Left: { currentScene()->sDoAction(Action("LEFT_CLICK", "END", pos)); break; }
-			case sf::Mouse::Right: { currentScene()->sDoAction(Action("RIGHT_CLICK", "END", pos)); break; }
-			case sf::Mouse::Middle: { currentScene()->sDoAction(Action("MIDDLE_CLICK", "END", pos)); break; }
+			case sf::Mouse::Left: { currentLayer()->sDoAction(Action("LEFT_CLICK", "END", pos)); break; }
+			case sf::Mouse::Right: { currentLayer()->sDoAction(Action("RIGHT_CLICK", "END", pos)); break; }
+			case sf::Mouse::Middle: { currentLayer()->sDoAction(Action("MIDDLE_CLICK", "END", pos)); break; }
 			default: break;
 			}
 		}
 		if (event.type == sf::Event::MouseMoved)
 		{
-			currentScene()->sDoAction(Action("MOUSE_MOVE", Vec2((float)event.mouseMove.x, (float)event.mouseMove.y)));
+			currentLayer()->sDoAction(Action("MOUSE_MOVE", Vec2((float)event.mouseMove.x, (float)event.mouseMove.y)));
 		}
 		if (event.type == sf::Event::MouseWheelScrolled)
 		{
-			currentScene()->sDoAction(Action("MOUSE_WHEEL_SCROLL", Vec2(event.mouseWheelScroll.delta, event.mouseWheelScroll.delta)));
+			currentLayer()->sDoAction(Action("MOUSE_WHEEL_SCROLL", Vec2(event.mouseWheelScroll.delta, event.mouseWheelScroll.delta)));
 		}
 	}
 }
