@@ -287,6 +287,24 @@ void EditorLayer::SerializeScene(std::shared_ptr<Scene> Scene, const std::filesy
 	SceneImporter::SaveScene(Scene, path);
 }
 
+void EditorLayer::OnScenePlay()
+{
+	m_ActiveScene = Scene::Copy(m_EditorScene);
+	m_ActiveScene->OnRuntimeStart();
+	m_SceneState = SceneState::Play;
+	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
+}
+
+void EditorLayer::OnSceneStop()
+{
+	m_ActiveScene->OnRuntimeStop();
+	m_SceneState = SceneState::Edit;
+	m_ActiveScene = m_EditorScene;
+	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
+}
+
 
 void EditorLayer::sGUI()
 {
@@ -566,19 +584,11 @@ void EditorLayer::UI_Toolbar()
 		{
 			if (m_SceneState == SceneState::Edit)
 			{
-				m_ActiveScene = Scene::Copy(m_EditorScene);
-				m_ActiveScene->OnRuntimeStart();
-				m_SceneState = SceneState::Play;
-				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
-				m_PhysicsConfigPanel.SetScene(m_ActiveScene);
+				OnScenePlay();
 			}
 			else if (m_SceneState == SceneState::Play)
 			{
-				m_ActiveScene->OnRuntimeStop();
-				m_SceneState = SceneState::Edit;
-				m_ActiveScene = m_EditorScene;
-				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
-				m_PhysicsConfigPanel.SetScene(m_ActiveScene);
+				OnSceneStop();
 			}
 		}
 	}
@@ -752,6 +762,7 @@ void EditorLayer::sDoAction(const Action& action)
 		}
 		else if (action.name() == "QUIT")
 		{
+			OnSceneStop();
 			SaveScene();
 			SaveProject();
 			m_hasEnded = true;

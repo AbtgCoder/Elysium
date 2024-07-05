@@ -1,11 +1,18 @@
-Scene: Untitled
+Scene: Rigidbody Physics
+PhysicsConfig:
+  Gravity: [0, 9.80000019]
+  ExternalForce: [5, 0]
+  VelocityIterations: 6
+  PositionIterations: 3
+  PhysicsColliders: false
+  BroadphaseCollision: false
 Entities:
   - Entity: Circle
     Transform:
-      Position: [317, 300]
+      Position: [663.942261, 651.164001]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 0]
+      Velocity: [83.4004898, -117.599525]
     CircleShape:
       Radius: 50
     CircleCollider:
@@ -14,10 +21,10 @@ Entities:
       Mass: 1
   - Entity: Circle2
     Transform:
-      Position: [100, 500]
+      Position: [471.962463, 573.017761]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 0]
+      Velocity: [86.4006805, -54.0958023]
     CircleShape:
       Radius: 50
     RectangleShape:

@@ -112,7 +112,8 @@ void Application::sUserInput()
 
 		if (event.type == sf::Event::Closed)
 		{
-			m_running = false; // runtime stop, save scene
+			m_running = false; 
+			currentLayer()->sDoAction(Action("QUIT", "START"));
 		}
 
 		if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)

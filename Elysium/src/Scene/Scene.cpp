@@ -37,7 +37,8 @@ Scene::~Scene()
 
 std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 {
-	std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+	std::shared_ptr<Scene> scene = std::make_shared<Scene>(other->m_Name);
+
 	scene->m_gravity = other->m_gravity;
 	scene->m_externalForce = other->m_externalForce;
 	scene->m_drawPhysicsColliders = other->m_drawPhysicsColliders;

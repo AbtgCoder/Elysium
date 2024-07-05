@@ -11,7 +11,6 @@ typedef std::tuple <
 	std::vector<CInput>,
 	std::vector<CBoundingBox>,
 	std::vector<CPolygonCollider>,
-	std::vector<CGravity>,
 	std::vector<CState>,
 	std::vector<CScore>,
 	std::vector<CSpriteRenderer>,
@@ -98,5 +97,5 @@ private:
 	EntityComponentVectorTuple m_pool;
 	std::vector<bool> m_active;
 	EntityMemoryPool(size_t maxEntities)
-		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
+		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
 };

@@ -167,15 +167,6 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndMap;
 		out << YAML::EndMap;
 	}
-	if (entity.hasComponent<CGravity>())
-	{
-		out << YAML::Key << "Gravity";
-		out << YAML::BeginMap;
-
-		auto& gc = entity.getComponent<CGravity>();
-		out << YAML::Key << "Gravity" << YAML::Value << gc.gravity;
-		out << YAML::EndMap;
-	}
 	out << YAML::EndMap;
 }
 
@@ -183,7 +174,18 @@ void SceneSerializer::Serialize(const std::filesystem::path& filepath)
 {
 	YAML::Emitter out;
 	out << YAML::BeginMap;
-	out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+	out << YAML::Key << "Scene" << YAML::Value << m_Scene->m_Name;
+	
+	out << YAML::Key << "PhysicsConfig";
+	out << YAML::BeginMap;
+	out << YAML::Key << "Gravity" << YAML::Value << m_Scene->m_gravity;
+	out << YAML::Key << "ExternalForce" << YAML::Value << m_Scene->m_externalForce;
+	out << YAML::Key << "VelocityIterations" << YAML::Key << m_Scene->m_velocityIterations;
+	out << YAML::Key << "PositionIterations" << YAML::Key << m_Scene->m_positionIterations;
+	out << YAML::Key << "PhysicsColliders" << YAML::Key << m_Scene->m_drawPhysicsColliders;
+	out << YAML::Key << "BroadphaseCollision" << YAML::Key << m_Scene->m_KDTreeBroadPhaseCollision;
+	out << YAML::EndMap;
+	
 	out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 	for (auto entity : m_Scene->m_entityManager.GetEntities())
 	{
@@ -220,6 +222,17 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 	}
 
 	m_Scene->m_Name = data["Scene"].as<std::string>();
+
+	auto physicsConfig = data["PhysicsConfig"];
+	if (physicsConfig)
+	{
+		m_Scene->m_gravity = physicsConfig["Gravity"].as<Vec2>();
+		m_Scene->m_externalForce = physicsConfig["ExternalForce"].as<Vec2>();
+		m_Scene->m_velocityIterations = physicsConfig["VelocityIterations"].as<int>();
+		m_Scene->m_positionIterations = physicsConfig["PositionIterations"].as<int>();
+		m_Scene->m_drawPhysicsColliders = physicsConfig["PhysicsColliders"].as<bool>();
+		m_Scene->m_KDTreeBroadPhaseCollision = physicsConfig["BroadphaseCollision"].as<bool>();
+	}
 
 	auto entities = data["Entities"];
 	if (entities)
@@ -309,13 +322,6 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				{
 					pc2d.colliderVertices.push_back(element.as<Vec2>());
 				}
-			}
-
-			auto gravityComponent = entity["Gravity"];
-			if (gravityComponent)
-			{
-				auto& gc = deserializedEntity.addComponent<CGravity>();
-				gc.gravity = gravityComponent["Gravity"].as<float>();
 			}
 
 			if (tag == "player")

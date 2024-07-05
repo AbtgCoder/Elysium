@@ -139,7 +139,17 @@ void SceneHierarchyPanel::OnImGuiRender()
 	{
 		m_Scene->m_entityManager.update(); // separate update function ??
 		
-		ImGui::Begin("Entity Manager");
+		ImGui::Begin("Hierarchy");
+
+		auto& sceneName = m_Scene->m_Name;
+		char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strncpy_s(buffer, sizeof(buffer), sceneName.c_str(), sizeof(buffer));
+		if (ImGui::InputText("##SceneName", buffer, sizeof(buffer)))
+		{
+			sceneName = std::string(buffer);
+		}
+
 		for (auto e : m_Scene->m_entityManager.GetEntities())
 		{
 			DrawEntityNode(e);
@@ -202,7 +212,6 @@ void SceneHierarchyPanel::OnImGuiRender()
 		if (ImGui::BeginPopup("AddComponent"))
 		{
 			DisplayAddComponentEntry<CTransform>("Transform");
-			DisplayAddComponentEntry<CGravity>("Gravity");
 			if (m_InspectedEntity.hasComponent<CSpriteRenderer>())
 			{
 				if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
@@ -328,10 +337,6 @@ void SceneHierarchyPanel::OnImGuiRender()
 				}
 			});
 
-		DrawComponentGUI<CGravity>("Gravity", m_InspectedEntity, [](auto& component)
-			{
-				DrawFloatControl("Gravity", component.gravity, 0.0f, 10.0f);
-			});
 	}
 
 	ImGui::End();

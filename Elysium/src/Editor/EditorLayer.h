@@ -41,6 +41,9 @@ protected:
 	void SerializeScene(std::shared_ptr<Scene> Scene, const std::filesystem::path& path);
 	// TODO: implement save Scene as
 
+	void OnScenePlay();
+	void OnSceneStop();
+
 	// Scene Editor Camera and Camera Controller stuff
 	sf::View m_SceneView;
 	Vec2 m_SceneViewCenter;

@@ -162,17 +162,6 @@ public:
 };
 
 
-class CGravity : public Component
-{
-public:
-	float gravity = 0;
-	CGravity() {}
-	CGravity(float g) 
-		: gravity(g) {}
-	CGravity(CGravity& other)
-		: gravity(other.gravity) {}
-};
-
 class CState : public Component
 {
 public:
@@ -195,73 +184,3 @@ public:
 		: score(other.score) {}
 };
 
-
-#if 0
-class CAnimation : public Component
-{
-public:
-	Animation animation;
-	size_t animSpeed = 0;
-	size_t frameCount = 1;
-	bool repeat = false; // repetable animation or not ??
-	int layer = 0; // rendering layer
-	CAnimation() {}
-	CAnimation(const Animation& animation, bool r)
-		: animation(animation), repeat(r) {}
-	CAnimation(const Animation& animation, bool r, int l)
-		: animation(animation), repeat(r), layer(l) {}
-	CAnimation(CAnimation& other)
-		: animation(other.animation), repeat(other.repeat), layer(other.layer) {}
-};
-
-class CShape
-{
-public:
-	sf::CircleShape circle;
-
-	CShape(float radius, int points, const sf::Color& fill, const sf::Color& outline, float thickness)
-		: circle(radius, points)
-	{
-		circle.setFillColor(fill);
-		circle.setOutlineColor(outline);
-		circle.setOutlineThickness(thickness);
-		circle.setOrigin(radius, radius);
-	}
-};
-
-class CConvexShape
-{
-public:
-	sf::ConvexShape convex;
-	CConvexShape(int points, const sf::Color& fill, const sf::Color& outline, float thickness)
-	{
-		convex.setPointCount(points);
-		convex.setFillColor(fill);
-		convex.setOutlineColor(outline);
-		convex.setOutlineThickness(thickness);
-	}
-};
-
-
-class CCollision
-{
-public:
-	float radius = 0; // Collision Radius ??
-	CCollision(float r)
-		: radius(r) {}
-};
-
-
-
-
-class CLives
-{
-public:
-	int remaining = 0;
-	int total = 0;
-	CLives(int total)
-		: remaining(total), total(total) {}
-};
-
-
-#endif
