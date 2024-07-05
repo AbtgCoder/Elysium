@@ -4,6 +4,7 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "Panels/PhysicsConfigPanel.h"
 
 #include <filesystem>
 
@@ -69,8 +70,6 @@ protected:
 
 	
 	// Debug stuff
-	bool m_drawCollision = false;
-	sf::RectangleShape m_collisionRect;
 	bool m_drawGrid = false;
 	const Vec2 m_gridSize = { 64, 64 };
 	sf::Text m_gridText;
@@ -91,6 +90,7 @@ protected:
 	// Panels
 	SceneHierarchyPanel m_SceneHierarchyPanel;
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
+	PhysicsConfigPanel m_PhysicsConfigPanel;
 	
 	std::shared_ptr<Texture> m_IconPlay;
 	std::shared_ptr<Texture> m_IconPause;
@@ -103,7 +103,7 @@ protected:
 
 
 	void init();
-	void update(float dt);
+	void update(float ts);
 	void onEnd();
 	void sDoAction(const Action& action);
 

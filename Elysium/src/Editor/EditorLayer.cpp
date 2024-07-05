@@ -26,7 +26,6 @@ EditorLayer::EditorLayer(Application* Application)
 void EditorLayer::init()
 {
 	registerAction(sf::Keyboard::G, "TOGGLE_GRID");
-	registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
 	registerAction(sf::Keyboard::Escape, "QUIT");
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
@@ -54,9 +53,7 @@ void EditorLayer::init()
 	m_gridRect.setFillColor(sf::Color::Transparent);
 	m_gridRect.setOutlineColor(sf::Color::White);
 	m_gridRect.setOutlineThickness(1);
-	m_collisionRect.setFillColor(sf::Color::Transparent);
-	m_collisionRect.setOutlineColor(sf::Color::White);
-	m_collisionRect.setOutlineThickness(1);
+
 
 	OpenProject();
 }
@@ -149,7 +146,7 @@ Vec2 EditorLayer::windowToViewport(const Vec2& windowPos) const
 }
  
 
-void EditorLayer::update(float dt)
+void EditorLayer::update(float ts)
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_rt.create(m_viewportSize.x, m_viewportSize.y);
@@ -162,13 +159,13 @@ void EditorLayer::update(float dt)
 	case SceneState::Edit:
 	{
 		if (m_ActiveScene)
-			m_ActiveScene->OnUpdateEditor(m_rt, m_drawCollision);
+			m_ActiveScene->OnUpdateEditor(m_rt);
 		break;
 	}
 	case SceneState::Play:
 	{
 		if (m_ActiveScene)
-			m_ActiveScene->OnUpdateRuntime(m_rt, m_drawCollision, dt);
+			m_ActiveScene->OnUpdateRuntime(m_rt, ts);
 		break;
 	}
 	}
@@ -272,6 +269,7 @@ void EditorLayer::OpenScene(AssetHandle handle)
 	}
 	Project::SetLastOpenedScene(handle);
 	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
 	m_EditorScene = m_ActiveScene;
 	m_EditorScenePath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(handle);
 }
@@ -352,6 +350,7 @@ void EditorLayer::sGUI()
 
 	m_SceneHierarchyPanel.OnImGuiRender();
 	m_ContentBrowserPanel->OnImGuiRender();
+	m_PhysicsConfigPanel.OnImGuiRender();
 
 	ImGui::Begin("Viewport");
 	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
@@ -571,6 +570,7 @@ void EditorLayer::UI_Toolbar()
 				m_ActiveScene->OnRuntimeStart();
 				m_SceneState = SceneState::Play;
 				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+				m_PhysicsConfigPanel.SetScene(m_ActiveScene);
 			}
 			else if (m_SceneState == SceneState::Play)
 			{
@@ -578,6 +578,7 @@ void EditorLayer::UI_Toolbar()
 				m_SceneState = SceneState::Edit;
 				m_ActiveScene = m_EditorScene;
 				m_SceneHierarchyPanel.SetScene(m_ActiveScene);
+				m_PhysicsConfigPanel.SetScene(m_ActiveScene);
 			}
 		}
 	}
@@ -685,10 +686,6 @@ void EditorLayer::sDoAction(const Action& action)
 		if (action.name() == "TOGGLE_GRID")
 		{
 			m_drawGrid = !m_drawGrid;
-		}
-		else if (action.name() == "TOGGLE_COLLISION")
-		{
-			m_drawCollision = !m_drawCollision;
 		}
 		else if (action.name() == "ALT")
 		{

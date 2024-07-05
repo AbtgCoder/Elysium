@@ -4,9 +4,7 @@
 #include "core/Texture.h"
 #include "Physics/graham_scan.h"
 
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui-SFML.h"
+#include "ImGui/ImGuiHelper.h"
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
 {
@@ -20,93 +18,6 @@ void SceneHierarchyPanel::SetScene(const std::shared_ptr<Scene>& Scene)
 }
 
 
-static void DrawVec2Control(const std::string& label, Vec2& values, float resetValue = 0.0f, float columnWidth = 64.0f)
-{
-	ImGui::PushID(label.c_str());
-
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-	ImGui::Text(label.c_str());
-	ImGui::NextColumn();
-
-	ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
-
-	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 3.0f;
-	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-	// TODO: button styles ??
-	if (ImGui::Button("X", buttonSize))
-	{
-		values.x = resetValue;
-	}
-
-	ImGui::SameLine();
-	ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
-	ImGui::PopItemWidth();
-
-	ImGui::SameLine();
-	if (ImGui::Button("Y", buttonSize))
-	{
-		values.y = resetValue;
-	}
-
-	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
-	ImGui::PopItemWidth();
-
-	ImGui::PopStyleVar();
-
-	ImGui::Columns(1);
-	ImGui::PopID();
-}
-
-static void DrawFloatControl(const std::string& label, float& value, float vMin = 0.0f, float vMax = 360.0f, float columnWidth = 80.0f)
-{
-	ImGui::PushID(label.c_str());
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-	ImGui::Text(label.c_str());
-	ImGui::NextColumn();
-
-	ImVec2 contentPos = ImGui::GetCursorPos();
-	float columnWidth2 = ImGui::GetColumnWidth();
-	float widgetWidth = ImGui::CalcItemWidth();
-	contentPos.x += (columnWidth2 - widgetWidth) / 2;
-	ImGui::SetCursorPos(contentPos);
-
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
-	ImGui::DragFloat("##val", &value, 0.1f, vMin, vMax, "%.2f");
-	ImGui::PopStyleVar();
-
-	ImGui::Columns(1);
-	ImGui::PopID();
-}
-
-static void DrawIntControl(const std::string& label, int& value, int vMin = 0, int vMax = 120, float columnWidth = 80.0f)
-{
-	ImGui::PushID(label.c_str());
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-	ImGui::Text(label.c_str());
-	ImGui::NextColumn();
-
-	ImVec2 contentPos = ImGui::GetCursorPos();
-	float columnWidth2 = ImGui::GetColumnWidth();
-	float widgetWidth = ImGui::CalcItemWidth();
-	contentPos.x += (columnWidth2 - widgetWidth) / 2;
-	ImGui::SetCursorPos(contentPos);
-
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
-	ImGui::DragInt("##val", &value, 0.1f, vMin, vMax);
-	ImGui::PopStyleVar();
-
-	ImGui::Columns(1);
-	ImGui::PopID();
-}
 
 
 template<typename T, typename UIFunction>

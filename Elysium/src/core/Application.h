@@ -30,7 +30,7 @@ protected:
 	bool m_running = true;
 
 	void init(const std::string& path);
-	void update(float dt);
+	void update(float ts);
 
 	void sUserInput();
 

@@ -38,9 +38,9 @@ void Application::init(const std::string& name)
 
 }
 
-void Application::update(float dt)
+void Application::update(float ts)
 {
-	currentLayer()->update(dt);
+	currentLayer()->update(ts);
 }
 
 std::shared_ptr<Layer> Application::currentLayer()
@@ -89,8 +89,8 @@ void Application::run()
 	while (m_running && m_window.isOpen())
 	{
 		sUserInput();
-		float dt = deltaClock.restart().asSeconds();
-		update(dt);
+		float ts = deltaClock.restart().asSeconds(); // Timestep ts
+		update(ts);
 		m_window.display();
 	}
 
@@ -112,7 +112,7 @@ void Application::sUserInput()
 
 		if (event.type == sf::Event::Closed)
 		{
-			m_running = false;
+			m_running = false; // runtime stop, save scene
 		}
 
 		if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)

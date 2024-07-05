@@ -38,6 +38,12 @@ Scene::~Scene()
 std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 {
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+	scene->m_gravity = other->m_gravity;
+	scene->m_externalForce = other->m_externalForce;
+	scene->m_drawPhysicsColliders = other->m_drawPhysicsColliders;
+	scene->m_velocityIterations = other->m_velocityIterations;
+	scene->m_positionIterations = other->m_positionIterations;
+	scene->m_KDTreeBroadPhaseCollision = other->m_KDTreeBroadPhaseCollision;
 
 	// create entities in new Scene
 	for (auto e : other->m_entityManager.GetEntities())
@@ -169,7 +175,7 @@ void Scene::OnRuntimeStop()
 	// Physics world deletion
 }
 
-void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt)
+void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 {
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
@@ -180,8 +186,42 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 			// Movement
 			for (auto e : runtimeEntities)
 			{
+				float mass = 1.0f;
+				if (e.hasComponent<CPhysicsMaterial>())
+				{
+					mass = e.getComponent<CPhysicsMaterial>().mass;
+				}
+
+				Vec2 v0 = e.getComponent<CTransform>().velocity;
+				Vec2 r0 = e.getComponent<CTransform>().pos;
+
+				std::vector<Vec2> velocities(m_velocityIterations + 1);
+				std::vector<Vec2> positions(m_positionIterations + 1);
+
+				velocities[0] = v0;
+				positions[0] = r0;
+
+				float h = 0.01f;
+
+				// velocity integration
+				for (size_t i = 0; i < m_velocityIterations; i++)
+				{
+					velocities[i + 1] = velocities[i] + (m_gravity + (m_externalForce / mass)) * h;
+				}
+				// position integration
+				for (size_t i = 0; i < m_positionIterations; i++)
+				{
+					positions[i + 1] = positions[i] + velocities[i] * h;
+				}
+
+				e.getComponent<CTransform>().velocity = velocities[m_velocityIterations];
+
 				e.getComponent<CTransform>().prevPos = e.getComponent<CTransform>().pos;
-				if (e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200)
+				
+				e.getComponent<CTransform>().pos = positions[m_positionIterations];
+
+				// Rectangular Bounds
+				if ((e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200) && (e.getComponent<CTransform>().prevPos.y < 800 && e.getComponent<CTransform>().pos.y > 200))
 				{
 					e.getComponent<CTransform>().velocity.y *= -1;
 				}
@@ -189,47 +229,51 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 				{
 					e.getComponent<CTransform>().velocity.x *= -1;
 				}
-				e.getComponent<CTransform>().pos += e.getComponent<CTransform>().velocity;// *dt;
+				
 			}
 
-#if 0
-			// Broadphase collision detection
-			KDTreeNode* rootNode = new KDTreeNode();
-			for (auto e : m_runtimeEntities)
+			// Collision Detection and Resolution
+			if (m_KDTreeBroadPhaseCollision)
 			{
-				rootNode->entities.push_back(e);
-			}
-			makeKDTree(rootNode, 0);
-
-			// Narrowphase collision detection
-			Physics::NarrowPhaseCollision(rootNode);
-
-			delete rootNode;
-#endif
-
-			for (size_t i = 0; i < runtimeEntities.size(); i++)
-			{
-				for (size_t j = i + 1; j < runtimeEntities.size(); j++)
+				// Broadphase collision detection
+				KDTreeNode* rootNode = new KDTreeNode();
+				for (auto e : runtimeEntities)
 				{
-					if (runtimeEntities[i].hasComponent<CPolygonCollider>() && runtimeEntities[j].hasComponent<CPolygonCollider>())
+					rootNode->entities.push_back(e);
+				}
+				makeKDTree(rootNode, 0);
+
+				// Narrowphase collision detection
+				Physics::NarrowPhaseCollision(rootNode);
+
+				delete rootNode;
+			}
+			else
+			{
+				for (size_t i = 0; i < runtimeEntities.size(); i++)
+				{
+					for (size_t j = i + 1; j < runtimeEntities.size(); j++)
 					{
-						if (Physics::SAT(runtimeEntities[i], runtimeEntities[j]))
+						if (runtimeEntities[i].hasComponent<CPolygonCollider>() && runtimeEntities[j].hasComponent<CPolygonCollider>())
 						{
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							if (Physics::SAT(runtimeEntities[i], runtimeEntities[j]))
+							{
+								std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							}
 						}
-					}
-					else if (runtimeEntities[i].hasComponent<CCircleCollider>() && runtimeEntities[j].hasComponent<CCircleCollider>())
-					{
-						if (Physics::CircleCircleCollision(runtimeEntities[i], runtimeEntities[j]))
+						else if (runtimeEntities[i].hasComponent<CCircleCollider>() && runtimeEntities[j].hasComponent<CCircleCollider>())
 						{
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							if (Physics::CircleCircleCollision(runtimeEntities[i], runtimeEntities[j]))
+							{
+								std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							}
 						}
-					}
-					else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
-					{
-						if (Physics::AABBElasticCollision(runtimeEntities[i], runtimeEntities[j]))
+						else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
 						{
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							if (Physics::AABBElasticCollision(runtimeEntities[i], runtimeEntities[j]))
+							{
+								std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+							}
 						}
 					}
 				}
@@ -239,13 +283,13 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsCo
 
 
 	// Rendering
-	RenderScene(renderTexture, drawPhysicsColliders);
+	RenderScene(renderTexture);
 }
 
-void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
+void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
 {
 	// stuff
-	RenderScene(renderTexture, drawPhysicsColliders);
+	RenderScene(renderTexture);
 }
 
 void Scene::Step(int frames)
@@ -253,14 +297,14 @@ void Scene::Step(int frames)
 	m_StepFrames = frames;
 }
 
-void Scene::RenderScene(sf::RenderTexture& renderTexture, bool drawPhysicsColliders)
+void Scene::RenderScene(sf::RenderTexture& renderTexture)
 {
 	//renderTexture.clear(sf::Color::Blue);
 	renderTexture.clear();
 
 	for (auto e : m_entityManager.GetEntities())
 	{
-		if (drawPhysicsColliders)
+		if (m_drawPhysicsColliders)
 		{
 			if (e.hasComponent<CBoundingBox>())
 			{

@@ -29,8 +29,8 @@ public:
 
 	void OnRuntimeStart();
 	void OnRuntimeStop();
-	void OnUpdateRuntime(sf::RenderTexture& renderTexture, bool drawPhysicsColliders, float dt);
-	void OnUpdateEditor(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+	void OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt);
+	void OnUpdateEditor(sf::RenderTexture& renderTexture);
 
 	bool IsRunning() const { return m_IsRunning; }
 	bool IsPaused() const { return m_IsPaused; }
@@ -50,12 +50,20 @@ private:
 	sf::CircleShape m_CircleShape;
 	sf::RectangleShape m_RectangleShape;
 
-	void RenderScene(sf::RenderTexture& renderTexture, bool drawPhysicsColliders);
+	void RenderScene(sf::RenderTexture& renderTexture);
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
 	int m_StepFrames = 0;
+
+	// Physics
+	Vec2 m_gravity = { 0.0f, 9.8f };
+	Vec2 m_externalForce = { 5.0f, 0.0f };
+	int m_velocityIterations = 6;
+	int m_positionIterations = 3;
+	bool m_drawPhysicsColliders = false;
+	bool m_KDTreeBroadPhaseCollision = false;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
@@ -64,4 +72,5 @@ private:
 
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;
+	friend class PhysicsConfigPanel;
 };

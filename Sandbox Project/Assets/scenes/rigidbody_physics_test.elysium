@@ -1,0 +1,26 @@
+Scene: Untitled
+Entities:
+  - Entity: Circle
+    Transform:
+      Position: [317, 300]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 50
+    CircleCollider:
+      Radius: 50
+    PhysicsMaterial:
+      Mass: 1
+  - Entity: Circle2
+    Transform:
+      Position: [100, 500]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+    CircleShape:
+      Radius: 50
+    RectangleShape:
+      Size: [50, 50]
+    CircleCollider:
+      Radius: 50

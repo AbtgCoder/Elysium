@@ -144,7 +144,7 @@ public:
 class CPhysicsMaterial : public Component
 {
 public:
-	float mass = 1.0f; // in Kgs
+	float mass = 1.0f; // in Kgs //TODO: should be > 0
 	CPhysicsMaterial() {}
 	CPhysicsMaterial(float m)
 		: mass(m) {}

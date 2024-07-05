@@ -14,7 +14,7 @@ public:
 	Layer();
 	Layer(Application* Application);
 
-	virtual void update(float dt) = 0;
+	virtual void update(float ts) = 0;
 	virtual void sDoAction(const Action& action) = 0;
 	virtual void sRender() = 0;
 
