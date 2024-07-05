@@ -251,6 +251,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
 				DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
 				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
+				DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
 			});
 
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 

@@ -55,6 +55,11 @@ float Vec2::squaredDist(const Vec2& v) const
 	return ((dx * dx) + (dy * dy));
 }
 
+float Vec2::cross(const Vec2& v) const
+{
+	return x * v.y - y * v.x;
+}
+
 float Vec2::polar_angle(const Vec2& v) const
 {
 	return std::atan2(v.y - y, v.x - x);

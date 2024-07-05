@@ -10,6 +10,7 @@ public:
 
 	Vec2();
 	Vec2(float xin, float yin);
+	Vec2(const Vec2& v) = default;
 	Vec2(sf::Vector2f v);
 	Vec2(sf::Vector2i v);
 
@@ -36,6 +37,8 @@ public:
 
 	float dist(const Vec2& v) const;
 	float squaredDist(const Vec2& v) const;
+
+	float cross(const Vec2& v) const;
 
 	float polar_angle(const Vec2& v) const;
 };

@@ -28,7 +28,8 @@ public:
 	Vec2 prevPos = { 0.0, 0.0 };
 	Vec2 velocity = { 0.0, 0.0 };
 	Vec2 scale = {1.0, 1.0};
-	float angle=0;
+	float angle = 0;
+	float angularVelocity = 0.0f;
 
 	CTransform() {}
 	CTransform(const Vec2& p)
@@ -37,8 +38,7 @@ public:
 		: pos(p), prevPos(p), scale(sc), angle(a) {}
 	CTransform(const Vec2& p, const Vec2& sp, const Vec2& sc, float a)
 		: pos(p), prevPos(p), velocity(sp), scale(sc), angle(a) {}
-	CTransform(CTransform& other)
-		: pos(other.pos), prevPos(other.prevPos), velocity(other.velocity), scale(other.scale), angle(other.angle) {}
+	CTransform(CTransform& other) = default;
 };
 
 class CRectangle : public Component

@@ -187,6 +187,7 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 			// Movement
 			for (auto e : runtimeEntities)
 			{
+				// do at RuntimeStart
 				float mass = 1.0f;
 				if (e.hasComponent<CPhysicsMaterial>())
 				{
@@ -198,12 +199,36 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 				std::vector<Vec2> velocities(m_velocityIterations + 1);
 				std::vector<Vec2> positions(m_positionIterations + 1);
+				std::vector<float> angularVelocities(m_velocityIterations + 1);
+				std::vector<float> angles(m_positionIterations + 1);
+
 
 				velocities[0] = v0;
 				positions[0] = r0;
+				angularVelocities[0] = e.getComponent<CTransform>().angularVelocity;
+				angles[0] = e.getComponent<CTransform>().angle;
+
+				Vec2 pointOfApplication = r0 + Vec2(1.0f, 1.0f);
+				Vec2 r = pointOfApplication - r0; 
+				float torque = r.cross(m_externalForce); // r X F
+				float momentOfInertia = 1.0f; // calculate at OnRuntimeStart about COM (only for rigidbodys ??)
+				if (e.hasComponent<CBoundingBox>())
+				{
+					momentOfInertia = 1 / 6 * mass * e.getComponent<CBoundingBox>().size.x * e.getComponent<CBoundingBox>().size.x;
+				}
 
 				float h = 0.01f;
 
+				// angular velocity integration
+				for (size_t i = 0; i < m_velocityIterations; i++)
+				{
+					angularVelocities[i + 1] = angularVelocities[i] + (torque / momentOfInertia) * h;
+				}
+				// angle integration
+				for (size_t i = 0; i < m_positionIterations; i++)
+				{
+					angles[i + 1] = angles[i] + angularVelocities[i] * h;
+				}
 				// velocity integration
 				for (size_t i = 0; i < m_velocityIterations; i++)
 				{
@@ -214,6 +239,9 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 				{
 					positions[i + 1] = positions[i] + velocities[i] * h;
 				}
+
+				e.getComponent<CTransform>().angularVelocity = angularVelocities[m_velocityIterations];
+				e.getComponent<CTransform>().angle = angles[m_positionIterations];
 
 				e.getComponent<CTransform>().velocity = velocities[m_velocityIterations];
 
@@ -354,7 +382,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			{
 				m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
 				m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
-				m_RectangleShape.setRotation(e.getComponent<CTransform>().angle);
+				m_RectangleShape.setRotation(-1*e.getComponent<CTransform>().angle);
 				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				renderTexture.draw(m_RectangleShape);
 			}
