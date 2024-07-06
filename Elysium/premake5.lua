@@ -12,6 +12,8 @@ project "Elysium"
             "src/**.cpp",
             "imgui/**.h",
             "imgui/**.cpp",
+            "Elysium/*.rc",
+            "Elysium/resource.h",
         }
         --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
