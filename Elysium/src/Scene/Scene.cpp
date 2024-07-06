@@ -189,9 +189,11 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 			{
 				// do at RuntimeStart
 				float mass = 1.0f;
+				float restitution = 1.0f;
 				if (e.hasComponent<CPhysicsMaterial>())
 				{
 					mass = e.getComponent<CPhysicsMaterial>().mass;
+					restitution = e.getComponent<CPhysicsMaterial>().restitutionCoefficient;
 				}
 
 				Vec2 v0 = e.getComponent<CTransform>().velocity;
@@ -252,11 +254,11 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 				// Rectangular Bounds
 				if ((e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200) && (e.getComponent<CTransform>().prevPos.y < 800 && e.getComponent<CTransform>().pos.y > 200))
 				{
-					e.getComponent<CTransform>().velocity.y *= -1;
+					e.getComponent<CTransform>().velocity.y *= -restitution;
 				}
 				if (e.getComponent<CTransform>().pos.x > 1200 || e.getComponent<CTransform>().pos.x < -200)
 				{
-					e.getComponent<CTransform>().velocity.x *= -1;
+					e.getComponent<CTransform>().velocity.x *= -restitution;
 				}
 				
 			}

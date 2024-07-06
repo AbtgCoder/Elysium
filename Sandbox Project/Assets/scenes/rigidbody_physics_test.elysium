@@ -13,18 +13,21 @@ Entities:
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 50
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
+      RestitutionCoefficient: 1
   - Entity: Circle2
     Transform:
       Position: [363.962463, 314.017761]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 50
     RectangleShape:
@@ -37,5 +40,9 @@ Entities:
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     RectangleShape:
       Size: [50, 50]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 1

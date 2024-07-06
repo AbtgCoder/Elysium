@@ -145,11 +145,14 @@ class CPhysicsMaterial : public Component
 {
 public:
 	float mass = 1.0f; // in Kgs //TODO: should be > 0
+	float restitutionCoefficient = 1.0f;
+
 	CPhysicsMaterial() {}
 	CPhysicsMaterial(float m)
 		: mass(m) {}
-	CPhysicsMaterial(CPhysicsMaterial& other)
-		: mass(other.mass) {}
+	CPhysicsMaterial(float m, float e)
+		: mass(m), restitutionCoefficient(e) {}
+	CPhysicsMaterial(CPhysicsMaterial& other) = default;
 };
 
 class CSpriteRenderer : public Component

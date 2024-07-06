@@ -80,30 +80,35 @@ bool Physics::AABBElasticCollision(Entity a, Entity b)
 		float v2y = b.getComponent<CTransform>().velocity.y;
 		float v2x = b.getComponent<CTransform>().velocity.x;
 
-		// elastic collision
+		// collision
 		float m1 = 1.0f;
+		float e1 = 1.0f;
 		float m2 = 1.0f;
+		float e2 = 1.0f;
+
 		if (a.hasComponent<CPhysicsMaterial>())
 		{
 			m1 = a.getComponent<CPhysicsMaterial>().mass;
+			e1 = a.getComponent<CPhysicsMaterial>().restitutionCoefficient;
 		}
 		if (b.hasComponent<CPhysicsMaterial>())
 		{
 			m2 = b.getComponent<CPhysicsMaterial>().mass;
+			e2 = b.getComponent<CPhysicsMaterial>().restitutionCoefficient;
 		}
 
 		Vec2 prevOverlap = GetPreviousOverlap(a, b);
 		if (prevOverlap.y > 0)
 		{
 			// horizontal
-			a.getComponent<CTransform>().velocity.x = (v1x * (m1 - m2) + (2 * m2 * v2x)) / (m1 + m2);
-			b.getComponent<CTransform>().velocity.x = (v2x * (m2 - m1) + (2 * m1 * v1x)) / (m1 + m2);
+			a.getComponent<CTransform>().velocity.x = (v1x * (m1 - m2) + ((1 + e1) * m2 * v2x)) / (m1 + m2);
+			b.getComponent<CTransform>().velocity.x = (v2x * (m2 - m1) + ((1 + e2) * m1 * v1x)) / (m1 + m2);
 		}
 		if (prevOverlap.x > 0)
 		{
 			// vertical
-			a.getComponent<CTransform>().velocity.y = (v1y * (m1 - m2) + (2 * m2 * v2y)) / (m1 + m2);
-			b.getComponent<CTransform>().velocity.y = (v2y * (m2 - m1) + (2 * m1 * v1y)) / (m1 + m2);
+			a.getComponent<CTransform>().velocity.y = (v1y * (m1 - m2) + ((1 + e1) * m2 * v2y)) / (m1 + m2);
+			b.getComponent<CTransform>().velocity.y = (v2y * (m2 - m1) + ((1 + e2) * m1 * v1y)) / (m1 + m2);
 		}
 		return true;
 	}
@@ -121,21 +126,27 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	float len_c1_c2 = c1_c2.length();
 	if (len_c1_c2 <= r1 + r2)
 	{
-		// elastic collision
+		// collision
 		float m1 = 1.0f;
+		float e1 = 1.0f;
 		float m2 = 1.0f;
+		float e2 = 1.0f;
+
 		if (a.hasComponent<CPhysicsMaterial>())
 		{
 			m1 = a.getComponent<CPhysicsMaterial>().mass;
+			e1 = a.getComponent<CPhysicsMaterial>().restitutionCoefficient;
 		}
 		if (b.hasComponent<CPhysicsMaterial>())
 		{
 			m2 = b.getComponent<CPhysicsMaterial>().mass;
+			e2 = b.getComponent<CPhysicsMaterial>().restitutionCoefficient;
 		}
+
 		Vec2 v1_v2 = a.getComponent<CTransform>().velocity - b.getComponent<CTransform>().velocity;
 		float v1_v2_dot_c1_c2 = v1_v2.x * c1_c2.x + v1_v2.y * c1_c2.y;
-		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - (c1 - c2) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * (2 * m2 / (m1 + m2));
-		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity - (c2 - c1) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * (2 * m1 / (m1 + m2));
+		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - (c1 - c2) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e1) * m2 / (m1 + m2));
+		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity - (c2 - c1) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e2) * m1 / (m1 + m2));
 		return true;
 	}
 	else

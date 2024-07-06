@@ -387,6 +387,11 @@ void EditorLayer::sGUI()
 			AssetHandle handle = *(AssetHandle*)payload->Data;
 			if (AssetManager::GetAssetType(handle) == AssetType::Scene)
 			{
+				if (m_SceneState == SceneState::Play)
+				{
+					OnSceneStop();
+				}
+				SaveScene();
 				OpenScene(handle);
 			}
 			else if (AssetManager::GetAssetType(handle) == AssetType::Texture)

@@ -76,6 +76,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Scale" << YAML::Value << tc.scale;
 		out << YAML::Key << "Angle" << YAML::Value << tc.angle;
 		out << YAML::Key << "Velocity" << YAML::Value << tc.velocity;
+		out << YAML::Key << "AngularVelocity" << YAML::Value << tc.angularVelocity;
 
 		out << YAML::EndMap; // TransformComponent
 	}
@@ -134,6 +135,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::BeginMap;
 		auto& pm = entity.getComponent<CPhysicsMaterial>();
 		out << YAML::Key << "Mass" << YAML::Value << pm.mass;
+		out << YAML::Key << "RestitutionCoefficient" << YAML::Value << pm.restitutionCoefficient;
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CBoundingBox>())
@@ -251,6 +253,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				tc.scale = transformComponent["Scale"].as<Vec2>();
 				tc.angle = transformComponent["Angle"].as<float>();
 				tc.velocity = transformComponent["Velocity"].as<Vec2>();
+				tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
 			}
 
 			auto spriteRendererComponent = entity["SpriteRenderer"];
@@ -300,6 +303,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& pm = deserializedEntity.addComponent<CPhysicsMaterial>();
 				pm.mass = physicsMaterialComponent["Mass"].as<float>();
+				pm.restitutionCoefficient = physicsMaterialComponent["RestitutionCoefficient"].as<float>();
 			}
 			auto boundingBoxComponent = entity["AABB"];
 			if (boundingBoxComponent)

@@ -1,112 +1,137 @@
-Scene: Untitled
+Scene: Physics Test
+PhysicsConfig:
+  Gravity: [0, 9.80000019]
+  ExternalForce: [0, 0]
+  VelocityIterations: 6
+  PositionIterations: 3
+  PhysicsColliders: false
+  BroadphaseCollision: false
 Entities:
   - Entity: Circle1
     Transform:
-      Position: [309, 619]
+      Position: [275.781921, 608.044312]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [3, 5]
+      Velocity: [20, 30]
+      AngularVelocity: 0
     CircleShape:
       Radius: 50
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
       Mass: 5
+      RestitutionCoefficient: 0.899999976
   - Entity: Circle2
     Transform:
       Position: [9, 661]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 25
     CircleCollider:
       Radius: 25
     PhysicsMaterial:
       Mass: 1
+      RestitutionCoefficient: 1
   - Entity: Circle3
     Transform:
       Position: [711, 640]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 100
     CircleCollider:
       Radius: 100
     PhysicsMaterial:
       Mass: 6
+      RestitutionCoefficient: 0.300000012
   - Entity: Circle4
     Transform:
       Position: [551, 299]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 75
     CircleCollider:
       Radius: 75
     PhysicsMaterial:
       Mass: 15
+      RestitutionCoefficient: 0.5
   - Entity: Circle5
     Transform:
       Position: [-38, 408]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 60
     CircleCollider:
       Radius: 60
     PhysicsMaterial:
       Mass: 10
+      RestitutionCoefficient: 1
   - Entity: Circle6
     Transform:
       Position: [676, 363]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 30
     CircleCollider:
       Radius: 30
     PhysicsMaterial:
       Mass: 1
+      RestitutionCoefficient: 0.949999988
   - Entity: Circle7
     Transform:
-      Position: [453, 701]
+      Position: [478.771729, 712.219238]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     CircleShape:
       Radius: 90
     CircleCollider:
       Radius: 90
     PhysicsMaterial:
       Mass: 10
+      RestitutionCoefficient: 0.400000006
   - Entity: Rectangle1
     Transform:
-      Position: [191, 518]
+      Position: [219.206024, 475.695648]
       Scale: [1, 1]
-      Angle: 0
+      Angle: .nan
       Velocity: [2, -3]
+      AngularVelocity: .nan
     RectangleShape:
       Size: [80, 50]
     PhysicsMaterial:
       Mass: 5
+      RestitutionCoefficient: 1
     AABB:
       Offset: [0, 0]
       Size: [80, 50]
   - Entity: Rectangle2
     Transform:
-      Position: [410, 385]
+      Position: [353.587952, 342.701721]
       Scale: [1, 1]
-      Angle: 61.632534
+      Angle: .nan
       Velocity: [-4, -3]
+      AngularVelocity: .nan
     RectangleShape:
       Size: [50, 50]
     PhysicsMaterial:
       Mass: 3
+      RestitutionCoefficient: 1
     AABB:
       Offset: [0, 0]
       Size: [50, 50]

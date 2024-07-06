@@ -272,6 +272,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 		DrawComponentGUI<CPhysicsMaterial>("Physics Material", m_InspectedEntity, [](auto& component)
 			{
 				DrawFloatControl("Mass", component.mass, 1.0f, 100.0f);
+				DrawFloatControl("Restitution", component.restitutionCoefficient, 0.0f, 1.0f);
 			});
 
 		DrawComponentGUI<CSpriteRenderer>("Sprite Renderer", m_InspectedEntity, [](auto& component)
