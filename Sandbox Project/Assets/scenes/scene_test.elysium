@@ -1,4 +1,11 @@
 Scene: Untitled
+PhysicsConfig:
+  Gravity: [0, 9.80000019]
+  ExternalForce: [5, 0]
+  VelocityIterations: 6
+  PositionIterations: 3
+  PhysicsColliders: false
+  BroadphaseCollision: false
 Entities:
   - Entity: Big Pipe
     Transform:
@@ -6,6 +13,7 @@ Entities:
       Scale: [1, 1]
       Angle: 0
       Velocity: [1, -2]
+      AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12438653369529251365
       Layer: 0
@@ -21,6 +29,7 @@ Entities:
       Scale: [1, 1]
       Angle: 0
       Velocity: [1, 2]
+      AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0
@@ -36,20 +45,20 @@ Entities:
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
+      AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 6392853097170261536
       Layer: 0
     AABB:
       Offset: [0, 0]
       Size: [60, 73]
-    Gravity:
-      Gravity: 1.29999995
   - Entity: Tile
     Transform:
       Position: [65.5, 532.5]
       Scale: [1, 1]
       Angle: 0
       Velocity: [-2, -3]
+      AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0
@@ -59,14 +68,13 @@ Entities:
       Points:
         Size: 5
         Elements: [[61, 1], [63, 3], [60, 63], [1, 63], [1, 4]]
-    Gravity:
-      Gravity: 0
   - Entity: Tile
     Transform:
       Position: [128.999939, 673.499878]
       Scale: [1, 1]
       Angle: 0
       Velocity: [1, 0]
+      AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 4518961158634738713
       Layer: 0
@@ -76,5 +84,3 @@ Entities:
       Points:
         Size: 10
         Elements: [[3, 1], [248, 1], [202, 49], [155, 96], [145, 102], [135, 104], [116, 104], [106, 102], [96, 96], [49, 49]]
-    Gravity:
-      Gravity: 0

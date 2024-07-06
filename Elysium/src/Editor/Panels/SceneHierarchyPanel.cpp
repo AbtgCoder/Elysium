@@ -4,6 +4,7 @@
 #include "core/Texture.h"
 #include "Physics/graham_scan.h"
 
+
 #include "ImGui/ImGuiHelper.h"
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
@@ -239,6 +240,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			}
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
+			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
 			ImGui::EndPopup();
 		}
 
@@ -252,6 +254,10 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
 				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
 				DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
+			});
+
+		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 
+			{
 			});
 
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 
@@ -354,6 +360,10 @@ void SceneHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName,
 			m_InspectedEntity.addComponent<T>(std::forward<TArgs>(mArgs)...);
 			ImGui::CloseCurrentPopup();
 		}
+	}
+	else
+	{
+		// log/display: entity already has component T
 	}
 }
 

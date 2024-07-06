@@ -41,6 +41,25 @@ public:
 	CTransform(CTransform& other) = default;
 };
 
+// forward declaration
+class ScriptableEntity;
+class CNativeScriptComponent : public Component
+{
+public:
+	ScriptableEntity* instance = nullptr;
+
+	// function pointers
+	ScriptableEntity* (*InstantiateScript)(); // function InstantiateScript , return type -> ScriptableEntity*
+	void (*DestroyScript)(CNativeScriptComponent*); // function DestroyScript , return type -> void , parameter: NativeScriptComponent*
+
+	template<typename T>
+	void Bind()
+	{
+		InstantiateScript = []() {return static_cast<ScriptableEntity*>(new T()); };
+		DestroyScript = [](CNativeScriptComponent* nsc) { delete nsc->instance; nsc->instance = nullptr; };
+	}
+};
+
 class CRectangle : public Component
 {
 public:

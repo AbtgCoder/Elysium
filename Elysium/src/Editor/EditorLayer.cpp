@@ -767,7 +767,8 @@ void EditorLayer::sDoAction(const Action& action)
 		}
 		else if (action.name() == "QUIT")
 		{
-			OnSceneStop();
+			if (m_SceneState == SceneState::Play)
+				OnSceneStop();
 			SaveScene();
 			SaveProject();
 			m_hasEnded = true;

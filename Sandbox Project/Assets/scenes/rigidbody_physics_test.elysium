@@ -1,7 +1,7 @@
 Scene: Rigidbody Physics
 PhysicsConfig:
   Gravity: [0, 9.80000019]
-  ExternalForce: [5, 0]
+  ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 6
   PhysicsColliders: false

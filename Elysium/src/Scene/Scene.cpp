@@ -3,6 +3,7 @@
 #include "Asset/AssetManager.h"
 #include "Core/Texture.h"
 
+#include "Scripts/RotateEntity.h"
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -82,7 +83,15 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 		{
 			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
 		}
+
+		if (e.hasComponent<CNativeScriptComponent>())
+		{
+			runtimeEntity.addComponent<CNativeScriptComponent>().Bind<RotateEntity>();
+		}
 	}
+
+	scene->m_entityManager.update();
+
 	return scene;
 }
 
@@ -166,12 +175,35 @@ void Scene::OnRuntimeStart()
 {
 	m_IsRunning = true;
 
+	// Instantiate script
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CNativeScriptComponent>())
+		{
+			auto& nsc = e.getComponent<CNativeScriptComponent>();
+			nsc.instance = nsc.InstantiateScript();
+			nsc.instance->m_Entity = e;
+			nsc.instance->OnCreate();
+		}
+	}
+
 	// Physics world initialization
 }
 
 void Scene::OnRuntimeStop()
 {
 	m_IsRunning = false;
+
+	// Destroy script
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CNativeScriptComponent>())
+		{
+			auto& nsc = e.getComponent<CNativeScriptComponent>();
+			nsc.instance->OnDestroy();
+			nsc.DestroyScript(&nsc);
+		}
+	}
 
 	// Physics world deletion
 }
@@ -181,6 +213,19 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
 		auto runtimeEntities = m_entityManager.GetEntities();
+
+		// Update scripts
+		{
+			for (auto e : m_entityManager.GetEntities())
+			{
+				if (e.hasComponent<CNativeScriptComponent>())
+				{
+					auto& nsc = e.getComponent<CNativeScriptComponent>();
+					if (nsc.instance)
+						nsc.instance->OnUpdate(dt);
+				}
+			}
+		}
 
 		// Physics
 		{
