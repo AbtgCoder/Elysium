@@ -426,6 +426,7 @@ void EditorLayer::sGUI()
 		static const float arrowSize = 6.0f;
 		static const float rectSize = 6.0f;
 		static const float circleRadius = 80.0f;
+		static const float squareSize = 20.0f;
 
 		if (m_gizmoType == GIZMO_OPERATION::ROTATE)
 		{
@@ -508,6 +509,8 @@ void EditorLayer::sGUI()
 				// Y-square	
 				drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
 			}
+			ImU32 colorSquare = (m_gizmoSelectSquare || m_gizmoHoverSquare) ? selectionColor : directionColor[2];
+			drawList->AddRectFilled(ImVec2(origin.x + lineThickness/2.0f, origin.y - squareSize - lineThickness/2.0f), ImVec2(origin.x + squareSize + lineThickness/2.0, origin.y - lineThickness/2.0f), colorSquare);
 
 			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
 			{
@@ -543,6 +546,24 @@ void EditorLayer::sGUI()
 			else
 			{
 				m_gizmoHoverY = false;
+			}
+
+			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x + lineThickness / 2.0f, origin.y - squareSize - lineThickness / 2.0f), ImVec2(origin.x + squareSize + lineThickness / 2.0, origin.y - lineThickness / 2.0f)))
+			{
+				m_gizmoHoverSquare = true;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectSquare = true;
+					m_lastGizmoSquarePos = windowToViewport(m_mousePos);
+				}
+				if (m_gizmoSelectSquare && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				{
+					m_gizmoSelectSquare = false;
+				}
+			}
+			else
+			{
+				m_gizmoHoverSquare = false;
 			}
 		}
 
@@ -671,6 +692,19 @@ void EditorLayer::sDoAction(const Action& action)
 				m_inspectedEntity.getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
 			}
 		}
+		else if (m_gizmoSelectSquare && m_inspectedEntity)
+		{
+			deltaPos = viewportPos - m_lastGizmoSquarePos;
+			m_lastGizmoSquarePos = viewportPos;
+			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+			{
+				m_inspectedEntity.getComponent<CTransform>().pos += deltaPos;
+			}
+			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+			{
+				m_inspectedEntity.getComponent<CTransform>().scale += deltaPos * m_scalingFactor;
+			}
+		}
 		else if (m_gizmoRotateSelect && m_inspectedEntity)
 		{
 			deltaPos = viewportPos - m_lastGizmoRotatePos;
@@ -752,7 +786,7 @@ void EditorLayer::sDoAction(const Action& action)
 				}
 				else
 				{
-					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY || m_gizmoRotateHover || m_gizmoRotateSelect))
+					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY || m_gizmoRotateHover || m_gizmoRotateSelect || m_gizmoSelectSquare || m_gizmoHoverSquare))
 					{
 						m_SceneHierarchyPanel.SetInspectedEntity({});
 
@@ -803,6 +837,10 @@ void EditorLayer::sDoAction(const Action& action)
 			if (m_gizmoRotateSelect)
 			{
 				m_gizmoRotateSelect = false;
+			}
+			if (m_gizmoSelectSquare)
+			{
+				m_gizmoSelectSquare = false;
 			}
 		}
 		else if (action.name() == "PLAY_Scene")

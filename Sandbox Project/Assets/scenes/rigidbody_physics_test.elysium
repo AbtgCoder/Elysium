@@ -27,7 +27,7 @@ Entities:
     Tag:
       Tag: Circle2
     Transform:
-      Position: [363.962463, 314.017761]
+      Position: [368.962463, 311.017761]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -42,8 +42,8 @@ Entities:
     Tag:
       Tag: Rectangle
     Transform:
-      Position: [221, 487]
-      Scale: [1, 1]
+      Position: [148, 513]
+      Scale: [1.00000203, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0

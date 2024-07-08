@@ -69,6 +69,9 @@ protected:
 	bool m_gizmoRotateSelect = false;
 	float m_rotationFactor = 0.05;
 	Vec2 m_lastGizmoRotatePos;
+	bool m_gizmoSelectSquare = false;
+	bool m_gizmoHoverSquare = false;
+	Vec2 m_lastGizmoSquarePos;
 	int m_gizmoType = GIZMO_OPERATION::TRANSLATE;
 
 	

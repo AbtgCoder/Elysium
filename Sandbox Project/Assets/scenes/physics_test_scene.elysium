@@ -1,6 +1,6 @@
 Scene: Physics Test
 PhysicsConfig:
-  Gravity: [0, 8.39999962]
+  Gravity: [0, 0]
   ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 3
@@ -14,7 +14,7 @@ Entities:
       Position: [275.781921, 608.044312]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [2, 3]
+      Velocity: [50, 80]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
@@ -22,7 +22,7 @@ Entities:
       Radius: 50
     PhysicsMaterial:
       Mass: 5
-      RestitutionCoefficient: 0.899999976
+      RestitutionCoefficient: 1
   - Entity: 6363393493610926459
     Tag:
       Tag: Circle2
