@@ -95,9 +95,20 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	return scene;
 }
 
-Entity Scene::AddEntity(Entity entity)
+Entity Scene::AddEntity(const std::string& name)
 {
-	return {};// m_entityManager.addEntity(entity);
+	return AddEntityWithUUID(Elysium::UUID(), name);
+}
+
+Entity Scene::AddEntityWithUUID(Elysium::UUID uuid, const std::string& name)
+{
+	Entity e = m_entityManager.addEntity();
+	e.addComponent<CId>(uuid);
+	e.addComponent<CTransform>();
+	auto& tag = e.addComponent<CTag>();
+	tag.tag = name.empty() ? "Entity" : name;
+
+	return e;
 }
 
 Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
@@ -153,9 +164,33 @@ Entity Scene::GetEntityIfClicked(Vec2 mousePos)
 	return {};
 }
 
+Entity Scene::GetEntityByUUID(Elysium::UUID id)
+{
+	//TODO: assert valid id probably
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.getComponent<CId>().id == id)
+		{
+			return e;
+		}
+	}
+}
+
 void Scene::DestroyEntity(Entity entity)
 {
 	entity.destroy();
+}
+
+bool Scene::IsEntityUUIDValid(Elysium::UUID uuid)
+{
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.getComponent<CId>().id == uuid)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 std::vector<Entity>& Scene::GetAllPhysicsEntities()
@@ -188,6 +223,17 @@ void Scene::OnRuntimeStart()
 	}
 
 	// Physics world initialization
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CJoint>())
+		{
+			auto& joint = e.getComponent<CJoint>();
+			if (joint.entity2Id > -1) //TODO: check if both entity id's are valid ??, and first id should be equal to entitie's id
+			{
+				std::cout << "joint info: " << joint.entity1Id << " " << joint.entity2Id << " " << joint.anchorPos << "\n";
+			}
+		}
+	}
 }
 
 void Scene::OnRuntimeStop()
@@ -264,7 +310,7 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 					momentOfInertia = 1 / 6 * mass * e.getComponent<CBoundingBox>().size.x * e.getComponent<CBoundingBox>().size.x;
 				}
 
-				float h = 0.01f;
+				float h = dt;
 
 				// angular velocity integration
 				for (size_t i = 0; i < m_velocityIterations; i++)
@@ -396,7 +442,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_PhysicsPoly.setPointCount(vertices.size());
 				Vec2 ePos = e.getComponent<CTransform>().pos;
 				sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-				Vec2 eSize(tex.getSize().x, tex.getSize().y);
+				//Vec2 eSize(tex.getSize().x, tex.getSize().y);
+				Vec2 eSize = e.getComponent<CPolygonCollider>().size;
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
 					m_PhysicsPoly.setPoint(i, sf::Vector2f(ePos.x - eSize.x/2 + vertices[i].x, ePos.y + eSize.y/2 - vertices[i].y));
@@ -433,6 +480,17 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				renderTexture.draw(m_RectangleShape);
 			}
+
+			//TODO:  only if entity is selected
+		/*	if (e.hasComponent<CJoint>())
+			{
+				m_CircleShape.setRadius(30.0f);
+				m_CircleShape.setOrigin(30.0f, 30.0f);
+				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CJoint>().anchorPos.x, e.getComponent<CTransform>().pos.y + e.getComponent<CJoint>().anchorPos.y);
+				m_CircleShape.setFillColor(sf::Color(221, 255, 221, 120));
+				m_CircleShape.setOutlineColor(sf::Color(221, 255, 221, 255));
+				renderTexture.draw(m_CircleShape);
+			}*/
 		}
 
 	}

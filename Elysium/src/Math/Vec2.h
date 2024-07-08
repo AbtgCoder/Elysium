@@ -32,12 +32,15 @@ public:
 	friend std::ostream& operator << (std::ostream& out, const Vec2& v);
 
 
+	Vec2 perpendicular() const;
+
 	Vec2 normalize();
 	float length();
 
 	float dist(const Vec2& v) const;
 	float squaredDist(const Vec2& v) const;
 
+	float dot(const Vec2& v) const;
 	float cross(const Vec2& v) const;
 
 	float polar_angle(const Vec2& v) const;

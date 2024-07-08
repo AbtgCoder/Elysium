@@ -55,6 +55,11 @@ float Vec2::squaredDist(const Vec2& v) const
 	return ((dx * dx) + (dy * dy));
 }
 
+float Vec2::dot(const Vec2& v) const
+{
+	return x * v.x + y * v.y;
+}
+
 float Vec2::cross(const Vec2& v) const
 {
 	return x * v.y - y * v.x;
@@ -89,7 +94,12 @@ void Vec2::operator/=(const float val)
 	y /= val;
 }
 
-Vec2 Vec2::normalize() 
+Vec2 Vec2::perpendicular() const
+{
+	return Vec2(-y, x);
+}
+
+Vec2 Vec2::normalize()
 {
 	float len = (*this).length();
 	return Vec2(x / len, y / len);

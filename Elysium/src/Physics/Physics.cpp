@@ -155,13 +155,13 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	}
 }
 
-
-
 bool Physics::SAT(Entity a, Entity b)
 {
+	//std::cout << "new frame\n";
 	std::vector<Vec2> colliderVerticesA;
 	Vec2 aPos = a.getComponent<CTransform>().pos;
 	Vec2 aSize = a.getComponent<CPolygonCollider>().size;
+
 	std::vector<Vec2> convexHullA = a.getComponent<CPolygonCollider>().colliderVertices;
 	for (auto p : convexHullA)
 	{
@@ -183,22 +183,24 @@ bool Physics::SAT(Entity a, Entity b)
 	
 
 	std::vector<Vec2> axes;
-
 	for (size_t i = 0; i < colliderVerticesA.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesA[i + 1] - colliderVerticesA[i];
-		axes.push_back(Vec2(-1 * edge.y, edge.x));
+		axes.push_back(Vec2(-1 * edge.y, edge.x).normalize());
 	}
 	Vec2 lastEdge = colliderVerticesA[0] - colliderVerticesA.back();
-	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x));
+	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
 
 	for (size_t i = 0; i < colliderVerticesB.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesB[i + 1] - colliderVerticesB[i];
-		axes.push_back(Vec2(-1 * edge.y, edge.x));
+		axes.push_back(Vec2(-1 * edge.y, edge.x).normalize());
 	}
 	lastEdge = colliderVerticesB[0] - colliderVerticesB.back();
-	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x));
+	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
+
+	float collisionDepth = INFINITE;
+	Vec2 collisionNormal;
 
 	for (auto axis : axes)
 	{
@@ -211,7 +213,7 @@ bool Physics::SAT(Entity a, Entity b)
 			{
 				amax = dot;
 			}
-			if (dot < amin)
+			else if (dot < amin)
 			{
 				amin = dot;
 			}
@@ -225,7 +227,7 @@ bool Physics::SAT(Entity a, Entity b)
 			{
 				bmax = dot;
 			}
-			if (dot < bmin)
+			else if (dot < bmin)
 			{
 				bmin = dot;
 			}
@@ -233,7 +235,12 @@ bool Physics::SAT(Entity a, Entity b)
 
 		if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
 		{
-			continue;
+			float d = std::min(bmax - amin, amax - bmin);
+			if (d < collisionDepth)
+			{
+				collisionDepth = d;
+				collisionNormal = axis;
+			}
 		}
 		else
 		{
@@ -242,7 +249,8 @@ bool Physics::SAT(Entity a, Entity b)
 		}
 	}
 
+	std::cout << "Collision normal : " << collisionNormal <<  " depth: " << collisionDepth << "\n";
 
-	//std::cout << "yes!! collision\n";
+
 	return true;
 }

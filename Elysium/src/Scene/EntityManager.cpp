@@ -18,7 +18,6 @@ void EntityManager::update()
 Entity EntityManager::addEntity()
 {
 	Entity e = Entity(EntityMemoryPool::Instance().addEntity());
-	e.addComponent<CTag>("Empty Entity");
 	m_EntitiesToAdd.push_back(e);
 	return e;
 }

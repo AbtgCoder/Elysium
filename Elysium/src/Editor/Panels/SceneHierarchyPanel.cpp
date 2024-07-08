@@ -22,7 +22,7 @@ void SceneHierarchyPanel::SetScene(const std::shared_ptr<Scene>& Scene)
 
 
 template<typename T, typename UIFunction>
-static void DrawComponentGUI(const std::string& name, Entity entity, UIFunction uiFunction)
+void SceneHierarchyPanel::DrawComponentGUI(const std::string& name, Entity entity, UIFunction uiFunction)
 {
 	const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 	if (entity.hasComponent<T>())
@@ -140,7 +140,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 	{
 		m_Scene->m_entityManager.update(); // separate update function ??
 		
-		ImGui::Begin("Hierarchy");
+		ImGui::Begin("Scene Hierarchy");
 
 		auto& sceneName = m_Scene->m_Name;
 		char buffer[256];
@@ -166,22 +166,16 @@ void SceneHierarchyPanel::OnImGuiRender()
 		{
 			if (ImGui::MenuItem("Create Empty Entity"))
 			{
-				auto entity = m_Scene->m_entityManager.addEntity();
-				entity.addComponent<CTag>("Empty Entity");
-				entity.addComponent<CTransform>();
+				m_Scene->AddEntity("Empty Entity");
 			}
 			if (ImGui::MenuItem("Create Circle Entity"))
 			{
-				auto entity = m_Scene->m_entityManager.addEntity();
-				entity.addComponent<CTag>("Circle");
-				entity.addComponent<CTransform>();
+				auto entity = m_Scene->AddEntity("Circle");
 				entity.addComponent<CCircle>();
 			}
 			if (ImGui::MenuItem("Create Rectangle Entity"))
 			{
-				auto entity = m_Scene->m_entityManager.addEntity();
-				entity.addComponent<CTag>("Rectangle");
-				entity.addComponent<CTransform>();
+				auto entity = m_Scene->AddEntity("rectangle");
 				entity.addComponent<CRectangle>();
 			}
 			ImGui::EndPopup();
@@ -238,6 +232,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
 				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
 			}
+			DisplayAddComponentEntry<CJoint>("Joint Component", m_InspectedEntity.getComponent<CId>().id); //TODO: only if entity has rigidbody or add that if not already present
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
@@ -279,6 +274,33 @@ void SceneHierarchyPanel::OnImGuiRender()
 			{
 				DrawFloatControl("Mass", component.mass, 1.0f, 100.0f);
 				DrawFloatControl("Restitution", component.restitutionCoefficient, 0.0f, 1.0f);
+			});
+
+		DrawComponentGUI<CJoint>("Joint Component", m_InspectedEntity, [this](auto& component)
+			{
+				std::string label = "None (Rigidbody 2D)";
+				if (m_Scene->IsEntityUUIDValid(component.entity2Id))
+				{
+					label = m_Scene->GetEntityByUUID(component.entity2Id).getComponent<CTag>().tag + " (Rigidbody 2D)";
+				}
+
+				ImVec2 buttonLabelSize = ImGui::CalcTextSize(label.c_str());
+				buttonLabelSize.x += 20.0f;
+				float buttonLabelWidth = std::max<float>(100.0f, buttonLabelSize.x);
+
+				ImGui::Button(label.c_str(), ImVec2(buttonLabelWidth, 0.0f));
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+					{
+						Elysium::UUID entityId = *(Elysium::UUID*)payload->Data;
+						//TODO: check if entity id valid && only if ENTITY HAS RIGIDBODY component
+						component.entity2Id = entityId;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				DrawVec2Control("Anchor", component.anchorPos, 0.0f, 80.0f);
 			});
 
 		DrawComponentGUI<CSpriteRenderer>("Sprite Renderer", m_InspectedEntity, [](auto& component)
@@ -381,9 +403,27 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	ImGuiTreeNodeFlags flags = ((m_InspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 	bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(entity.id()), flags, tag.c_str());
-	if (ImGui::IsItemClicked())
+
+	if (ImGui::IsItemHovered())
 	{
-		m_InspectedEntity = entity;
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+		{
+			m_MouseButtonPressed = true;
+		}
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && m_MouseButtonPressed)
+		{
+			m_InspectedEntity = entity;
+			m_MouseButtonPressed = false; 
+		}
+	}
+
+	// Drag drop entity
+	if (ImGui::BeginDragDropSource())
+	{
+		Elysium::UUID entityId = entity.getComponent<CId>().id;
+		ImGui::SetDragDropPayload("ENTITY", &entityId, sizeof(Elysium::UUID));
+		ImGui::EndDragDropSource();
 	}
 
 	bool entityDeleted = false;

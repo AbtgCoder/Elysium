@@ -1,13 +1,15 @@
 Scene: Untitled
 PhysicsConfig:
-  Gravity: [0, 9.80000019]
-  ExternalForce: [5, 0]
+  Gravity: [0, 0]
+  ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 3
   PhysicsColliders: false
   BroadphaseCollision: false
 Entities:
-  - Entity: Big Pipe
+  - Entity: 3835143888492085499
+    Tag:
+      Tag: Big Pipe
     Transform:
       Position: [605, 661]
       Scale: [1, 1]
@@ -17,18 +19,14 @@ Entities:
     SpriteRenderer:
       TextureHandle: 12438653369529251365
       Layer: 0
-    PolygonCollider:
-      Offset: [0, 0]
-      TexSize: [128, 192]
-      Points:
-        Size: 6
-        Elements: [[12, 1], [115, 1], [123, 136], [123, 188], [4, 188], [4, 136]]
-  - Entity: Tile
+  - Entity: 4163440874578799761
+    Tag:
+      Tag: Tile1
     Transform:
-      Position: [102.5, 341.5]
+      Position: [24.5, 362.5]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [1, 2]
+      Velocity: [0, 0]
       AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
@@ -39,7 +37,13 @@ Entities:
       Points:
         Size: 5
         Elements: [[61, 1], [63, 3], [60, 63], [1, 63], [1, 4]]
-  - Entity: Player
+    Joint:
+      Entity1ID: 4163440874578799761
+      Entity2ID: 3835143888492085499
+      AnchorPosition: [0, 0]
+  - Entity: 5365315938177892065
+    Tag:
+      Tag: Player
     Transform:
       Position: [765, 314.599365]
       Scale: [1, 1]
@@ -52,12 +56,14 @@ Entities:
     AABB:
       Offset: [0, 0]
       Size: [60, 73]
-  - Entity: Tile
+  - Entity: 17184699621355724851
+    Tag:
+      Tag: Tile2
     Transform:
-      Position: [65.5, 532.5]
+      Position: [65.5, 501.5]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [-2, -3]
+      Velocity: [0, -10]
       AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
@@ -68,9 +74,11 @@ Entities:
       Points:
         Size: 5
         Elements: [[61, 1], [63, 3], [60, 63], [1, 63], [1, 4]]
-  - Entity: Tile
+  - Entity: 9581617897322791353
+    Tag:
+      Tag: Tile
     Transform:
-      Position: [128.999939, 673.499878]
+      Position: [128.999939, 672.499878]
       Scale: [1, 1]
       Angle: 0
       Velocity: [1, 0]
@@ -78,9 +86,3 @@ Entities:
     SpriteRenderer:
       TextureHandle: 4518961158634738713
       Layer: 0
-    PolygonCollider:
-      Offset: [0, 0]
-      TexSize: [250, 150]
-      Points:
-        Size: 10
-        Elements: [[3, 1], [248, 1], [202, 49], [155, 96], [145, 102], [135, 104], [116, 104], [106, 102], [96, 96], [49, 49]]

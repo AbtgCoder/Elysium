@@ -3,11 +3,22 @@
 
 #include "Asset/Asset.h"
 #include "Math/Vec2.h"
+#include "core/UUID.h"
 
 class Component
 {
 public:
 	bool has = false;
+};
+
+class CId : public Component
+{
+public:
+	Elysium::UUID id;
+	CId() = default;
+	CId(Elysium::UUID uuid)
+		: id(uuid) {}
+	CId(const CId&) = default;
 };
 
 class CTag : public Component
@@ -172,6 +183,24 @@ public:
 	CPhysicsMaterial(float m, float e)
 		: mass(m), restitutionCoefficient(e) {}
 	CPhysicsMaterial(CPhysicsMaterial& other) = default;
+};
+
+class CJoint : public Component
+{
+public:
+	Elysium::UUID entity1Id; // TODO: only works if this is a valid entityID)
+	Elysium::UUID entity2Id; // TODO: only works if this is a valid entityID)
+	Vec2 anchorPos; // NOTE: this is relative to entity1 pos
+
+	CJoint() = default;
+	CJoint(Elysium::UUID id)
+		: entity1Id(id) {}
+	CJoint(Elysium::UUID id, const Vec2& aPos)
+		: entity1Id(id), anchorPos(aPos) {}
+	CJoint(Elysium::UUID id1, Elysium::UUID id2)
+		: entity1Id(id1), entity2Id(id2) {}
+	CJoint(Elysium::UUID id1, Elysium::UUID id2, const Vec2& aPos)
+		: entity1Id(id1), entity2Id(id2), anchorPos(aPos) {}
 };
 
 class CSpriteRenderer : public Component

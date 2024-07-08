@@ -2,6 +2,7 @@
 
 #include "Asset/Asset.h"
 #include "Physics/Physics.h"
+#include "core/UUID.h"
 
 #include "EntityManager.h"
 
@@ -16,10 +17,14 @@ public:
 
 	static std::shared_ptr<Scene> Copy(std::shared_ptr<Scene> other);
 
-	Entity AddEntity(Entity entity);
+	Entity AddEntity(const std::string& name);
+	Entity AddEntityWithUUID(Elysium::UUID uuid, const std::string& name);
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
 	Entity GetEntityIfClicked(Vec2 mousePos);
+	Entity GetEntityByUUID(Elysium::UUID id);
 	void DestroyEntity(Entity entity);
+
+	bool IsEntityUUIDValid(Elysium::UUID uuid);
 
 	std::vector<Entity>& GetAllPhysicsEntities();
 

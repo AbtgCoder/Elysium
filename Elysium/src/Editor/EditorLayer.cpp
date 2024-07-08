@@ -346,6 +346,7 @@ void EditorLayer::sGUI()
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 	}
 
+	// Menu Bar
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -732,8 +733,9 @@ void EditorLayer::sDoAction(const Action& action)
 			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 			if (inspectedEntity)
 			{
-				Entity newEntity = m_ActiveScene->AddEntity(inspectedEntity);
-				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+				//TODO: implement duplicate entity
+				/*Entity newEntity = m_ActiveScene->AddEntity(inspectedEntity);
+				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);*/
 			}
 		}
 		else if (action.name() == "LEFT_CLICK")

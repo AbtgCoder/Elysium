@@ -5,6 +5,7 @@
 #include <vector>
 
 typedef std::tuple <
+	std::vector<CId>, 
 	std::vector<CTag>,
 	std::vector<CTransform>,
 	std::vector<CLifespan>,
@@ -18,6 +19,7 @@ typedef std::tuple <
 	std::vector<CCircle>,
 	std::vector<CCircleCollider>,
 	std::vector<CPhysicsMaterial>,
+	std::vector<CJoint>,
 	std::vector<CNativeScriptComponent>
 > EntityComponentVectorTuple;
 
@@ -49,6 +51,7 @@ public:
 				{
 					index = i;
 					// TODO: set all component values to zero
+					removeComponent<CId>(index);
 					removeComponent<CTag>(index);
 				}
 				break;
@@ -98,5 +101,5 @@ private:
 	EntityComponentVectorTuple m_pool;
 	std::vector<bool> m_active;
 	EntityMemoryPool(size_t maxEntities)
-		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
+		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
 };

@@ -65,7 +65,15 @@ SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
 static void SerializeEntity(YAML::Emitter& out, Entity entity)
 {
 	out << YAML::BeginMap; // Entity
-	out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<CTag>().tag;
+	out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<CId>().id;
+	if (entity.hasComponent<CTag>())
+	{
+		out << YAML::Key << "Tag";
+		out << YAML::BeginMap;
+		auto& tag = entity.getComponent<CTag>().tag;
+		out << YAML::Key << "Tag" << YAML::Value << tag;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CTransform>())
 	{
 		out << YAML::Key << "Transform";
@@ -169,6 +177,16 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndMap;
 		out << YAML::EndMap;
 	}
+	if (entity.hasComponent<CJoint>())
+	{
+		out << YAML::Key << "Joint";
+		out << YAML::BeginMap;
+		auto& jc = entity.getComponent<CJoint>();
+		out << YAML::Key << "Entity1ID" << YAML::Value << jc.entity1Id;
+		out << YAML::Key << "Entity2ID" << YAML::Value << jc.entity2Id;
+		out << YAML::Key << "AnchorPosition" << YAML::Value << jc.anchorPos;
+		out << YAML::EndMap;
+	}
 	out << YAML::EndMap;
 }
 
@@ -241,9 +259,13 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 	{
 		for (auto entity : entities)
 		{
-			auto tag = entity["Entity"].as<std::string>();
-			Entity deserializedEntity = m_Scene->m_entityManager.addEntity();
-			deserializedEntity.addComponent<CTag>(tag);
+			uint64_t uuid = entity["Entity"].as<uint64_t>();
+
+			std::string name;
+			auto tagComponent = entity["Tag"];
+			if (tagComponent)
+				name = tagComponent["Tag"].as<std::string>();
+			Entity deserializedEntity = m_Scene->AddEntityWithUUID(uuid, name);
 
 			auto transformComponent = entity["Transform"];
 			if (transformComponent)
@@ -328,10 +350,19 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				}
 			}
 
-			if (tag == "player")
+			auto jointComponent = entity["Joint"];
+			if (jointComponent)
 			{
-				m_Scene->m_player = deserializedEntity;
+				auto& jc = deserializedEntity.addComponent<CJoint>();
+				jc.entity1Id = jointComponent["Entity1ID"].as<Elysium::UUID>(); // TODO: this should be equal to entity's uuid else there might be problems ??
+				jc.entity2Id = jointComponent["Entity2ID"].as<Elysium::UUID>(); 
+				jc.anchorPos = jointComponent["AnchorPosition"].as<Vec2>();
 			}
+
+			//if (tag == "player")
+			//{
+			//	m_Scene->m_player = deserializedEntity;
+			//}
 
 		}
 	}

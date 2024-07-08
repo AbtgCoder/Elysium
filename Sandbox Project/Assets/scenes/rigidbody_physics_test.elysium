@@ -7,7 +7,9 @@ PhysicsConfig:
   PhysicsColliders: false
   BroadphaseCollision: false
 Entities:
-  - Entity: Circle
+  - Entity: 2904498414818527765
+    Tag:
+      Tag: Circle
     Transform:
       Position: [618.942261, 447.164001]
       Scale: [1, 1]
@@ -21,7 +23,9 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-  - Entity: Circle2
+  - Entity: 5792722074902989541
+    Tag:
+      Tag: Circle2
     Transform:
       Position: [363.962463, 314.017761]
       Scale: [1, 1]
@@ -34,7 +38,9 @@ Entities:
       Size: [50, 50]
     CircleCollider:
       Radius: 50
-  - Entity: Rectangle
+  - Entity: 16897073082553704844
+    Tag:
+      Tag: Rectangle
     Transform:
       Position: [221, 487]
       Scale: [1, 1]

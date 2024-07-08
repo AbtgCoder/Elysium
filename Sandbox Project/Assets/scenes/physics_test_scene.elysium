@@ -1,18 +1,20 @@
 Scene: Physics Test
 PhysicsConfig:
-  Gravity: [0, 9.80000019]
+  Gravity: [0, 8.39999962]
   ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 3
   PhysicsColliders: false
   BroadphaseCollision: false
 Entities:
-  - Entity: Circle1
+  - Entity: 2223338579085364562
+    Tag:
+      Tag: Circle1
     Transform:
       Position: [275.781921, 608.044312]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [20, 30]
+      Velocity: [2, 3]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
@@ -21,7 +23,9 @@ Entities:
     PhysicsMaterial:
       Mass: 5
       RestitutionCoefficient: 0.899999976
-  - Entity: Circle2
+  - Entity: 6363393493610926459
+    Tag:
+      Tag: Circle2
     Transform:
       Position: [9, 661]
       Scale: [1, 1]
@@ -35,7 +39,9 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-  - Entity: Circle3
+  - Entity: 8009260932182340391
+    Tag:
+      Tag: Circle3
     Transform:
       Position: [711, 640]
       Scale: [1, 1]
@@ -49,7 +55,9 @@ Entities:
     PhysicsMaterial:
       Mass: 6
       RestitutionCoefficient: 0.300000012
-  - Entity: Circle4
+  - Entity: 18137345549017413089
+    Tag:
+      Tag: Circle4
     Transform:
       Position: [551, 299]
       Scale: [1, 1]
@@ -63,7 +71,9 @@ Entities:
     PhysicsMaterial:
       Mass: 15
       RestitutionCoefficient: 0.5
-  - Entity: Circle5
+  - Entity: 16629013485040769514
+    Tag:
+      Tag: Circle5
     Transform:
       Position: [-38, 408]
       Scale: [1, 1]
@@ -77,7 +87,9 @@ Entities:
     PhysicsMaterial:
       Mass: 10
       RestitutionCoefficient: 1
-  - Entity: Circle6
+  - Entity: 8569642155602113153
+    Tag:
+      Tag: Circle6
     Transform:
       Position: [676, 363]
       Scale: [1, 1]
@@ -91,7 +103,9 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 0.949999988
-  - Entity: Circle7
+  - Entity: 9937589626716976714
+    Tag:
+      Tag: Circle7
     Transform:
       Position: [478.771729, 712.219238]
       Scale: [1, 1]
@@ -105,7 +119,9 @@ Entities:
     PhysicsMaterial:
       Mass: 10
       RestitutionCoefficient: 0.400000006
-  - Entity: Rectangle1
+  - Entity: 7672354874276814212
+    Tag:
+      Tag: Rectangle1
     Transform:
       Position: [219.206024, 475.695648]
       Scale: [1, 1]
@@ -120,7 +136,9 @@ Entities:
     AABB:
       Offset: [0, 0]
       Size: [80, 50]
-  - Entity: Rectangle2
+  - Entity: 11856384698373560932
+    Tag:
+      Tag: Rectangle2
     Transform:
       Position: [353.587952, 342.701721]
       Scale: [1, 1]
