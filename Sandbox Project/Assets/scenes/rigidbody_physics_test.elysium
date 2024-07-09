@@ -23,6 +23,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      Friction: 0.0199999996
   - Entity: 5792722074902989541
     Tag:
       Tag: Circle2
@@ -42,7 +43,7 @@ Entities:
     Tag:
       Tag: Rectangle
     Transform:
-      Position: [148, 513]
+      Position: [163, 507]
       Scale: [1.00000203, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -52,3 +53,4 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      Friction: 0.0199999996

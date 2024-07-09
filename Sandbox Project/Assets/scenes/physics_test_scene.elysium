@@ -23,6 +23,7 @@ Entities:
     PhysicsMaterial:
       Mass: 5
       RestitutionCoefficient: 1
+      Friction: 0.200000003
   - Entity: 6363393493610926459
     Tag:
       Tag: Circle2
@@ -39,6 +40,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      Friction: 0.0199999996
   - Entity: 8009260932182340391
     Tag:
       Tag: Circle3
@@ -55,6 +57,7 @@ Entities:
     PhysicsMaterial:
       Mass: 6
       RestitutionCoefficient: 0.300000012
+      Friction: 0.0199999996
   - Entity: 18137345549017413089
     Tag:
       Tag: Circle4
@@ -71,6 +74,7 @@ Entities:
     PhysicsMaterial:
       Mass: 15
       RestitutionCoefficient: 0.5
+      Friction: 0.0199999996
   - Entity: 16629013485040769514
     Tag:
       Tag: Circle5
@@ -87,6 +91,7 @@ Entities:
     PhysicsMaterial:
       Mass: 10
       RestitutionCoefficient: 1
+      Friction: 0.0199999996
   - Entity: 8569642155602113153
     Tag:
       Tag: Circle6
@@ -103,14 +108,15 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 0.949999988
+      Friction: 0.0199999996
   - Entity: 9937589626716976714
     Tag:
       Tag: Circle7
     Transform:
-      Position: [478.771729, 712.219238]
+      Position: [473.771729, 706.219238]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 0]
+      Velocity: [-10, -40]
       AngularVelocity: 0
     CircleShape:
       Radius: 90
@@ -118,7 +124,8 @@ Entities:
       Radius: 90
     PhysicsMaterial:
       Mass: 10
-      RestitutionCoefficient: 0.400000006
+      RestitutionCoefficient: 1
+      Friction: 0.0199999996
   - Entity: 7672354874276814212
     Tag:
       Tag: Rectangle1
@@ -133,6 +140,7 @@ Entities:
     PhysicsMaterial:
       Mass: 5
       RestitutionCoefficient: 1
+      Friction: 0.0199999996
     AABB:
       Offset: [0, 0]
       Size: [80, 50]
@@ -150,6 +158,7 @@ Entities:
     PhysicsMaterial:
       Mass: 3
       RestitutionCoefficient: 1
+      Friction: 0.0199999996
     AABB:
       Offset: [0, 0]
       Size: [50, 50]

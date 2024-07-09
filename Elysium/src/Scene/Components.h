@@ -176,6 +176,7 @@ class CPhysicsMaterial : public Component
 public:
 	float mass = 1.0f; // in Kgs //TODO: should be > 0
 	float restitutionCoefficient = 1.0f;
+	float friction = 0.02f; // btw 0 and 1
 
 	CPhysicsMaterial() {}
 	CPhysicsMaterial(float m)

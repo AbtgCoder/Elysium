@@ -131,22 +131,38 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 		float e1 = 1.0f;
 		float m2 = 1.0f;
 		float e2 = 1.0f;
+		float f1 = 0.2f;
+		float f2 = 0.2f;
 
 		if (a.hasComponent<CPhysicsMaterial>())
 		{
 			m1 = a.getComponent<CPhysicsMaterial>().mass;
 			e1 = a.getComponent<CPhysicsMaterial>().restitutionCoefficient;
+			f1 = a.getComponent<CPhysicsMaterial>().friction;
 		}
 		if (b.hasComponent<CPhysicsMaterial>())
 		{
 			m2 = b.getComponent<CPhysicsMaterial>().mass;
 			e2 = b.getComponent<CPhysicsMaterial>().restitutionCoefficient;
+			f2 = b.getComponent<CPhysicsMaterial>().friction;
 		}
-
+		float e = std::min(e1, e2);
+		float friction = sqrtf(f1 * f2);
+		// normal impulse
 		Vec2 v1_v2 = a.getComponent<CTransform>().velocity - b.getComponent<CTransform>().velocity;
 		float v1_v2_dot_c1_c2 = v1_v2.x * c1_c2.x + v1_v2.y * c1_c2.y;
-		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - (c1 - c2) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e1) * m2 / (m1 + m2));
-		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity - (c2 - c1) * ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e2) * m1 / (m1 + m2));
+		float dJn = ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e) * m1 * m2 / (m1 + m2));
+		Vec2 Jn = c1_c2 * dJn;
+		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - Jn / m1;
+		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity + Jn / m2;
+		// tangential impulse (due to friction)
+		Vec2 tangent = { c1_c2.y, -1 * c1_c2.x };
+		float vt = v1_v2.dot(tangent);
+		float dJt = vt * ((1 + e) * m1 * m2 / (m1 + m2));
+		dJt = std::max(-1 * friction * dJn, std::min(dJt, friction * dJn));
+		Vec2 Jt = tangent * dJt;
+		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - Jt / m1;
+		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity + Jt / m2;
 		return true;
 	}
 	else

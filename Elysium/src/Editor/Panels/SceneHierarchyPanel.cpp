@@ -274,6 +274,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			{
 				DrawFloatControl("Mass", component.mass, 1.0f, 100.0f);
 				DrawFloatControl("Restitution", component.restitutionCoefficient, 0.0f, 1.0f);
+				DrawFloatControl("Friction", component.friction, 0.0f, 1.0f);
 			});
 
 		DrawComponentGUI<CJoint>("Joint Component", m_InspectedEntity, [this](auto& component)

@@ -144,6 +144,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		auto& pm = entity.getComponent<CPhysicsMaterial>();
 		out << YAML::Key << "Mass" << YAML::Value << pm.mass;
 		out << YAML::Key << "RestitutionCoefficient" << YAML::Value << pm.restitutionCoefficient;
+		out << YAML::Key << "Friction" << YAML::Value << pm.friction;
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CBoundingBox>())
@@ -326,6 +327,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto& pm = deserializedEntity.addComponent<CPhysicsMaterial>();
 				pm.mass = physicsMaterialComponent["Mass"].as<float>();
 				pm.restitutionCoefficient = physicsMaterialComponent["RestitutionCoefficient"].as<float>();
+				pm.friction = physicsMaterialComponent["Friction"].as<float>();
 			}
 			auto boundingBoxComponent = entity["AABB"];
 			if (boundingBoxComponent)

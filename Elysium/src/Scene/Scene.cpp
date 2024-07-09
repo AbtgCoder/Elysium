@@ -50,8 +50,7 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	// create entities in new Scene
 	for (auto e : other->m_entityManager.GetEntities())
 	{
-		auto runtimeEntity = scene->m_entityManager.addEntity();
-		runtimeEntity.getComponent<CTag>().tag = "runtime_" + e.getComponent<CTag>().tag;
+		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, "runtime_" + e.getComponent<CTag>().tag);
 		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
 		if (e.hasComponent<CSpriteRenderer>())
 		{
@@ -115,6 +114,7 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 {
 	// asset, asset type as texture
 	auto entity = m_entityManager.addEntity();
+	entity.addComponent<CId>(Elysium::UUID());
 	entity.addComponent<CTag>("Tile");
 	entity.addComponent<CTransform>(pos);
 	entity.addComponent<CSpriteRenderer>();
@@ -343,7 +343,7 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 				e.getComponent<CTransform>().pos = positions[m_positionIterations];
 
 				// Rectangular Bounds
-				if ((e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200) && (e.getComponent<CTransform>().prevPos.y < 800 && e.getComponent<CTransform>().pos.y > 200))
+				if ((e.getComponent<CTransform>().pos.y > 800 || e.getComponent<CTransform>().pos.y < 200))
 				{
 					e.getComponent<CTransform>().velocity.y *= -restitution;
 				}
