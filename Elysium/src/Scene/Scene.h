@@ -2,6 +2,7 @@
 
 #include "Asset/Asset.h"
 #include "Physics/Physics.h"
+#include "Physics/PhysicsWorld.h"
 #include "core/UUID.h"
 
 #include "EntityManager.h"
@@ -63,12 +64,14 @@ private:
 	int m_StepFrames = 0;
 
 	// Physics
+	PhysicsWorld* m_PhysicsWorld = nullptr;
 	Vec2 m_gravity = { 0.0f, 9.8f };
 	Vec2 m_externalForce = { 5.0f, 0.0f };
 	int m_velocityIterations = 6;
 	int m_positionIterations = 3;
 	bool m_drawPhysicsColliders = false;
 	bool m_KDTreeBroadPhaseCollision = false;
+	std::vector<Vec2> m_contactPoints;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 

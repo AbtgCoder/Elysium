@@ -405,7 +405,7 @@ void EditorLayer::sGUI()
 			}
 			else
 			{
-				// log warning: wrong asset type!
+				//ESM_ERROR("Can't drop this asset type: ", AssetManager::GetAssetType(handle));
 			}
 		}
 		ImGui::EndDragDropTarget();

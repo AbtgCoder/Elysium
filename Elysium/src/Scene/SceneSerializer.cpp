@@ -50,6 +50,30 @@ namespace YAML
 	};
 }
 
+static std::string RigidBody2DBodyTypeToString(CRigidBody::BodyType bodyType)
+{
+	switch (bodyType)
+	{
+	case CRigidBody::BodyType::Static:    return "Static";
+	case CRigidBody::BodyType::Dynamic:   return "Dynamic";
+	case CRigidBody::BodyType::Kinematic: return "Kinematic";
+	}
+
+	// assert invalid value type
+	return {};
+}
+
+static CRigidBody::BodyType RigidBody2DBodyTypeFromString(const std::string& bodyTypeString)
+{
+	if (bodyTypeString == "Static")    return CRigidBody::BodyType::Static;
+	if (bodyTypeString == "Dynamic")   return CRigidBody::BodyType::Dynamic;
+	if (bodyTypeString == "Kinematic") return CRigidBody::BodyType::Kinematic;
+	
+	// assert invalid value type
+
+	return CRigidBody::BodyType::Static;
+}
+
 YAML::Emitter& operator<<(YAML::Emitter& out, const Vec2& v)
 {
 	out << YAML::Flow;
@@ -177,6 +201,14 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 		out << YAML::EndMap;
+	}
+	if (entity.hasComponent<CRigidBody>())
+	{
+		out << YAML::Key << "Rigidbody2D";
+		out << YAML::BeginMap;
+		auto& rb2d = entity.getComponent<CRigidBody>();
+		out << YAML::Key << "BodyType" << YAML::Value << RigidBody2DBodyTypeToString(rb2d.Type);
+		out << YAML::EndMap; 
 	}
 	if (entity.hasComponent<CJoint>())
 	{
@@ -315,6 +347,12 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				ac.frameCount = frameCount;
 				ac.layer = animationComponent["Layer"].as<int>();
 			}*/
+			auto rigidbodyComponent = entity["Rigidbody2D"];
+			if (rigidbodyComponent)
+			{
+				auto& rb2d = deserializedEntity.addComponent<CRigidBody>();
+				rb2d.Type = RigidBody2DBodyTypeFromString(rigidbodyComponent["BodyType"].as<std::string>());
+			}
 			auto circleColliderComponent = entity["CircleCollider"];
 			if (circleColliderComponent)
 			{

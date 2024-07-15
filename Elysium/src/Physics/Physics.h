@@ -8,7 +8,7 @@ class Physics
 public:
 	Physics() {};
 
-	static bool AABBElasticCollision(Entity a, Entity b);
+	static std::vector<Vec2> AABBCollision(Entity a, Entity b);
 	static Vec2 GetOverlap(Entity a, Entity b);
 	static Vec2 GetPreviousOverlap(Entity a, Entity b);
 

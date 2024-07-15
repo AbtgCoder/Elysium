@@ -8,11 +8,13 @@ public:
 	float x = 0;
 	float y = 0;
 
-	Vec2();
+	Vec2() : x(0), y(0) {}
 	Vec2(float xin, float yin);
 	Vec2(const Vec2& v) = default;
 	Vec2(sf::Vector2f v);
 	Vec2(sf::Vector2i v);
+
+	void Set(float xin, float yin) { x = xin; y = yin; }
 
 	float operator[](size_t i) const;
 	
@@ -40,8 +42,23 @@ public:
 	float dist(const Vec2& v) const;
 	float squaredDist(const Vec2& v) const;
 
-	float dot(const Vec2& v) const;
+	double dot(const Vec2& v) const;
 	float cross(const Vec2& v) const;
 
 	float polar_angle(const Vec2& v) const;
 };
+
+inline float Cross(const Vec2& a, const Vec2& b)
+{
+	return a.x * b.y - a.y * b.x;
+}
+
+inline Vec2 Cross(const Vec2& a, float s)
+{
+	return Vec2(s * a.y, -s * a.x);
+}
+
+inline Vec2 Cross(float s, const Vec2& a)
+{
+	return Vec2(-s * a.y, s * a.x);
+}

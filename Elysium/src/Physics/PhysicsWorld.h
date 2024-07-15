@@ -2,13 +2,29 @@
 
 #include "Math/Vec2.h"
 
+#include "PhysicsBodyPairArbiter.h"
+
+#include <map>
+
 class PhysicsWorld
 {
 public:
 	PhysicsWorld(const Vec2& gravity);
-	~PhysicsWorld() = default;
+	PhysicsWorld(const Vec2& gravity, int iterations);
+	~PhysicsWorld();
 
+	void AddBody(PhysicsBody* body);
+	void Clear();
 
-private:
-	Vec2 m_gravity;
+	void Step(float dt);
+
+	void BroadPhase();
+public:
+	std::vector<PhysicsBody*> m_bodies;
+	std::map<ArbiterKey, Arbiter> m_arbiters;
+
+	Vec2 m_gravity = {0.0f, 9.8f};
+	int m_ImpulseIterations = 10;
+	bool accumulateImpulses = true;
+	bool warmStarting = true;
 };

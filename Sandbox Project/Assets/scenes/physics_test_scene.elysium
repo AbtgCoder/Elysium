@@ -11,7 +11,7 @@ Entities:
     Tag:
       Tag: Circle1
     Transform:
-      Position: [275.781921, 608.044312]
+      Position: [281.781921, 620.044312]
       Scale: [1, 1]
       Angle: 0
       Velocity: [50, 80]
@@ -79,7 +79,7 @@ Entities:
     Tag:
       Tag: Circle5
     Transform:
-      Position: [-38, 408]
+      Position: [40, 408]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -96,7 +96,7 @@ Entities:
     Tag:
       Tag: Circle6
     Transform:
-      Position: [676, 363]
+      Position: [673, 396]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]

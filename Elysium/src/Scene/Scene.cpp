@@ -1,3 +1,5 @@
+#include "core/Log.h"
+
 #include "Scene.h"
 
 #include "Asset/AssetManager.h"
@@ -78,6 +80,10 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
 		}
 
+		if (e.hasComponent<CRigidBody>())
+		{
+			runtimeEntity.addComponent<CRigidBody>(e.getComponent<CRigidBody>());
+		}
 		if (e.hasComponent<CPhysicsMaterial>())
 		{
 			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
@@ -208,6 +214,8 @@ std::vector<Entity>& Scene::GetAllPhysicsEntities()
 
 void Scene::OnRuntimeStart()
 {
+	ESM_INFO("Starting Runtime");
+
 	m_IsRunning = true;
 
 	// Instantiate script
@@ -223,8 +231,38 @@ void Scene::OnRuntimeStart()
 	}
 
 	// Physics world initialization
+	m_PhysicsWorld = new PhysicsWorld({0.0f, 3.0f}, 1);
 	for (auto e : m_entityManager.GetEntities())
 	{
+		if (e.hasComponent<CRigidBody>())
+		{
+			auto& transform = e.getComponent<CTransform>();
+			auto& rb2d = e.getComponent<CRigidBody>();
+
+			PhysicsBody* body = new PhysicsBody();
+			body->m_position = transform.pos;
+			body->m_rotation = transform.angle;
+		//	body->m_velocity = transform.velocity;
+			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
+			rb2d.runtimeBody = body;
+
+			if (e.hasComponent<CCircleCollider>())
+			{
+				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
+				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
+				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().scale.x;
+				body->m_shape = circleShape;	
+			}
+			if (e.hasComponent<CPhysicsMaterial>())
+			{
+				auto& pm = e.getComponent<CPhysicsMaterial>();
+				body->m_friction = pm.friction;
+				body->ResetMassData(0.00012738f);
+			}
+			m_PhysicsWorld->AddBody(body);
+		}
+		
+
 		if (e.hasComponent<CJoint>())
 		{
 			auto& joint = e.getComponent<CJoint>();
@@ -252,12 +290,15 @@ void Scene::OnRuntimeStop()
 	}
 
 	// Physics world deletion
+	delete m_PhysicsWorld;
 }
 
 void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 {
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
+		m_contactPoints.clear();
+
 		auto runtimeEntities = m_entityManager.GetEntities();
 
 		// Update scripts
@@ -275,6 +316,62 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 		// Physics
 		{
+			//for (auto e : m_entityManager.GetEntities())
+			//{
+			//	e.getComponent<CTransform>().pos += e.getComponent<CTransform>().velocity;
+
+			//}
+			//for (size_t i = 0; i < runtimeEntities.size(); i++)
+			//{
+			//	for (size_t j = i + 1; j < runtimeEntities.size(); j++)
+			//	{
+			//		if (runtimeEntities[i].hasComponent<CCircleCollider>() && runtimeEntities[j].hasComponent<CCircleCollider>())
+			//		{
+			//			if (Physics::CircleCircleCollision(runtimeEntities[i], runtimeEntities[j]))
+			//			{
+			//				std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+			//			}
+			//		}
+			//		/*else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
+			//		{
+			//			auto cp = Physics::AABBCollision(runtimeEntities[i], runtimeEntities[j]);
+			//			if (cp.size() > 0)
+			//			{
+			//				for (auto p : cp)
+			//				{
+			//					m_contactPoints.push_back(p);
+			//				}
+			//				std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
+			//			}
+			//		}*/
+			//	}
+			//}
+
+			m_PhysicsWorld->Step(0.1f);
+
+			// Debug: Display contact points
+			std::map<ArbiterKey, Arbiter>::const_iterator iter;
+			for (iter = m_PhysicsWorld->m_arbiters.begin(); iter != m_PhysicsWorld->m_arbiters.end(); ++iter)
+			{
+				const Arbiter& arbiter = iter->second;
+				for (int i = 0; i < arbiter.m_numContacts; ++i)
+				{
+					Vec2 p = arbiter.m_contacts[i].m_position;
+					m_contactPoints.push_back(p);
+				}
+			}
+
+			for (auto e : m_entityManager.GetEntities())
+			{
+				if (e.hasComponent<CRigidBody>())
+				{
+					auto& rb2d = e.getComponent<CRigidBody>();
+					PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+					e.getComponent<CTransform>().pos = body->m_position;
+				}
+			}
+
+#if 0
 			// Movement
 			for (auto e : runtimeEntities)
 			{
@@ -334,7 +431,7 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 				}
 
 				e.getComponent<CTransform>().angularVelocity = angularVelocities[m_velocityIterations];
-				e.getComponent<CTransform>().angle = angles[m_positionIterations];
+				//e.getComponent<CTransform>().angle = angles[m_positionIterations];
 
 				e.getComponent<CTransform>().velocity = velocities[m_velocityIterations];
 
@@ -352,6 +449,11 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 					e.getComponent<CTransform>().velocity.x *= -restitution;
 				}
 				
+			}
+
+			for (auto e : m_entityManager.GetEntities())
+			{
+				e.getComponent<CTransform>().pos += e.getComponent<CTransform>().velocity * dt;
 			}
 
 			// Collision Detection and Resolution
@@ -392,14 +494,21 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 						}
 						else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
 						{
-							if (Physics::AABBElasticCollision(runtimeEntities[i], runtimeEntities[j]))
+							auto cp = Physics::AABBCollision(runtimeEntities[i], runtimeEntities[j]);
+							if (cp.size() > 0)
 							{
+								for (auto p : cp)
+								{
+									m_contactPoints.push_back(p);
+								}
 								std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
 							}
 						}
 					}
 				}
 			}
+#endif
+
 		}
 	}
 
@@ -470,6 +579,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
 				m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				m_CircleShape.setFillColor(sf::Color::Transparent);
 				renderTexture.draw(m_CircleShape);
 			}
 			else if (e.hasComponent<CRectangle>())
@@ -493,6 +603,18 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			}*/
 		}
 
+	}
+
+	if (m_IsRunning)
+	{
+		for (auto p : m_contactPoints)
+		{
+			m_CircleShape.setRadius(3.0f);
+			m_CircleShape.setOrigin(3.0f, 3.0f);
+			m_CircleShape.setPosition(p.x, p.y);
+			m_CircleShape.setFillColor(sf::Color(255, 0, 0));
+			renderTexture.draw(m_CircleShape);
+		}
 	}
 
 }

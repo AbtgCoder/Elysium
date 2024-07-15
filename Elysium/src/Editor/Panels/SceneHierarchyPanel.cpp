@@ -232,6 +232,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
 				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
 			}
+			DisplayAddComponentEntry<CRigidBody>("Rigidbody 2D");
 			DisplayAddComponentEntry<CJoint>("Joint Component", m_InspectedEntity.getComponent<CId>().id); //TODO: only if entity has rigidbody or add that if not already present
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
@@ -275,6 +276,27 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DrawFloatControl("Mass", component.mass, 1.0f, 100.0f);
 				DrawFloatControl("Restitution", component.restitutionCoefficient, 0.0f, 1.0f);
 				DrawFloatControl("Friction", component.friction, 0.0f, 1.0f);
+			});
+
+		DrawComponentGUI<CRigidBody>("Rigidbody 2D", m_InspectedEntity, [](auto& component)
+			{
+				const char* bodyTypeStrings[] = { "Static", "Dynamic" };
+				const char* currentBodyTypeString = bodyTypeStrings[(int)component.Type];
+				if (ImGui::BeginCombo("Body Type", currentBodyTypeString))
+				{
+					for (int i = 0; i < 2; i++)
+					{
+						bool isSelected = currentBodyTypeString == bodyTypeStrings[i];
+						if (ImGui::Selectable(bodyTypeStrings[i], isSelected))
+						{
+							currentBodyTypeString = bodyTypeStrings[i];
+							component.Type = (CRigidBody::BodyType)i;
+						}
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
 			});
 
 		DrawComponentGUI<CJoint>("Joint Component", m_InspectedEntity, [this](auto& component)

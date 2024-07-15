@@ -39,7 +39,7 @@ public:
 	Vec2 prevPos = { 0.0, 0.0 };
 	Vec2 velocity = { 0.0, 0.0 };
 	Vec2 scale = {1.0, 1.0};
-	float angle = 0;
+	float angle = 0.0f;
 	float angularVelocity = 0.0f;
 
 	CTransform() {}
@@ -145,6 +145,19 @@ public:
 		: size(other.size), halfSize(other.halfSize), offset(other.offset) {}
 };
 
+class CRigidBody : public Component
+{
+public:
+	enum class BodyType { Static = 0, Dynamic, Kinematic};
+	BodyType Type = BodyType::Static;
+
+	// storage for runtime
+	void* runtimeBody = nullptr;
+
+	CRigidBody() = default;
+	CRigidBody(const CRigidBody&) = default;
+};
+
 class CCircleCollider : public Component
 {
 public:
@@ -174,7 +187,7 @@ public:
 class CPhysicsMaterial : public Component
 {
 public:
-	float mass = 1.0f; // in Kgs //TODO: should be > 0
+	float mass = 1.0f; // in Kgs //TODO: should be > 0 
 	float restitutionCoefficient = 1.0f;
 	float friction = 0.02f; // btw 0 and 1
 

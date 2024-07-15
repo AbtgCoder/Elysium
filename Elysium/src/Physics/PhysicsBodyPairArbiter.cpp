@@ -1,0 +1,174 @@
+#include "PhysicsBodyPairArbiter.h"
+
+#include "core/Log.h"
+
+Arbiter::Arbiter(PhysicsBody* b1, PhysicsBody* b2)
+{
+	/*if (b1 < b2)
+	{
+		m_body1 = b1;
+		m_body2 = b2;
+	}
+	else
+	{
+		m_body1 = b2;
+		m_body2 = b1;
+	}*/
+
+	m_body1 = b1;
+	m_body2 = b2;
+
+	m_numContacts = Collide(m_contacts, m_body1, m_body2);
+
+	m_friction = sqrtf(m_body1->m_friction * m_body2->m_friction);
+}
+
+void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
+{
+	Contact mergedContacts[2];
+
+	for (int i = 0; i < numNewContacts; ++i)
+	{
+		Contact* cNew = newContacts + i;
+		int k = -1;
+		for (int j = 0; j < m_numContacts; ++j)
+		{
+			Contact* cOld = m_contacts + j;
+			if (cNew->m_id.key == cOld->m_id.key)
+			{
+				k = j;
+				break;
+			}
+		}
+
+		if (k > -1)
+		{
+			Contact* c = mergedContacts + i;
+			Contact* cOld = m_contacts + k;
+			*c = *cNew;
+
+			c->m_Jn = cOld->m_Jn;
+			c->m_Jt = cOld->m_Jt;
+			c->m_Jnb = cOld->m_Jnb;
+		}
+		else
+		{
+			mergedContacts[i] = newContacts[i];
+		}
+	}
+
+	for (int i = 0; i < numNewContacts; ++i)
+		m_contacts[i] = mergedContacts[i];
+
+	m_numContacts = numNewContacts;
+}
+
+void Arbiter::PreStep(float inv_dt)
+{
+	const float k_allowedPenetration = 0.01f;
+	float k_biasFactor = 0.2; // NOTE: this is if world->positionCorrection is true else its 0.0f
+
+	// for each contact
+	for (int i = 0; i < m_numContacts; i++)
+	{
+		Contact* c = m_contacts + i;
+
+		Vec2 r1 = c->m_position - m_body1->m_position;
+		Vec2 r2 = c->m_position - m_body2->m_position;
+
+		// precompute normal mass, tangent mass and bias
+		float rn1 = r1.dot(c->m_normal);
+		float rn2 = r2.dot(c->m_normal);
+		float kNormal = m_body1->m_invMass + m_body2->m_invMass;
+		kNormal += m_body1->m_invI * (r1.dot(r1) - rn1 * rn1) + m_body2->m_invI * (r2.dot(r2) - rn2 * rn2); //NOTE: this only works if c->normal is a unit vector
+		c->m_massNormal = 1.0f / kNormal;
+
+		Vec2 tangent = { c->m_normal.y, -c->m_normal.x };
+		float rt1 = r1.dot(tangent);
+		float rt2 = r2.dot(tangent);
+		float kTangent = m_body1->m_invMass + m_body2->m_invMass;
+		kTangent += m_body1->m_invI * (r1.dot(r1) - rt1 * rt1) + m_body2->m_invI * (r2.dot(r2) - rt2 * rt2); //NOTE: this only works if c->normal is a unit vector
+		c->m_massTangent = 1.0f / kTangent;
+
+		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
+		c->m_bias = k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
+
+		// TODO: if accumulate impulses then:
+		{
+			// Apply normal + frictional impulse
+			Vec2 J = c->m_normal * c->m_Jn + tangent * c->m_Jt;
+			std::cout << "prestep impulse: " << J << "\n";
+			m_body1->m_velocity -= J * m_body1->m_invMass;
+			m_body1->m_angularVelocity -= (r1.x * J.y - r1.y * J.x) * m_body1->m_invI;
+			
+			m_body2->m_velocity += J * m_body2->m_invMass;
+			m_body2->m_angularVelocity += (r2.x * J.y - r2.y * J.x) * m_body2->m_invMass;
+		}
+	}
+}
+
+void Arbiter::ApplyImpulse()
+{
+	PhysicsBody* b1 = m_body1;
+	PhysicsBody* b2 = m_body2;
+
+	for (int i = 0; i < m_numContacts; i++)
+	{
+		Contact* c = m_contacts + i;
+		c->m_r1 = c->m_position - b1->m_position;
+		c->m_r2 = c->m_position - b2->m_position;
+
+		// relative velocity at contact
+		Vec2 dv = b1->m_velocity + Cross(b1->m_angularVelocity, c->m_r1) - b2->m_velocity - Cross(b2->m_angularVelocity, c->m_r2);
+
+		// compute normal impulse
+		float vn = dv.dot(c->m_normal);
+		float dJn = c->m_massNormal * (vn + c->m_bias);
+
+		std::cout << "vn: " << vn << " dJn: " << dJn << "\n";
+
+		// if accumulate impulses:
+		float Jn0 = c->m_Jn;
+		c->m_Jn = std::min(Jn0 + dJn, 0.0f);
+		dJn = c->m_Jn + Jn0;
+
+		ESM_LOG("jn0", Jn0, "djn", dJn);
+		// Apply contact normal impulse
+		Vec2 Jn = c->m_normal * dJn; 
+		ESM_LOG("old velocities", b1->m_velocity, b2->m_velocity, "Jn", Jn);
+		b1->m_velocity -= Jn * b1->m_invMass;
+		ESM_LOG("new velocity", b1->m_velocity);
+		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invMass;
+		b2->m_velocity += Jn * b2->m_invMass;
+		ESM_LOG("collision normal", c->m_normal, "new velocity", b2->m_velocity);
+
+		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invMass;
+
+		std::cout << "mass inverses: " << b1->m_invMass << " " << b2->m_invMass << "\n";
+
+		// relative velocity at contact
+		dv = b2->m_velocity + Cross(b2->m_angularVelocity, c->m_r2) - b1->m_velocity - Cross(b1->m_angularVelocity, c->m_r1);
+		// compute tangent impulse
+		Vec2 tangent = Cross(c->m_normal, 1.0f);
+		float vt = dv.dot(tangent);
+		float dJt = c->m_massTangent * (-vt);
+
+		// if accumulate impulses:
+		// compute frictional impulse
+		float maxJt = m_friction * c->m_Jn;
+		// clamp friction
+		float oldTangentImpulse = c->m_Jt;
+		c->m_Jt = std::max(-maxJt, std::min(oldTangentImpulse + dJt, maxJt));
+		dJt = c->m_Jt - oldTangentImpulse;
+
+		// apply contact tangent impulse
+		Vec2 Jt = tangent * dJt;
+		b1->m_velocity -= Jt * b1->m_invMass;
+		b1->m_angularVelocity -= Cross(c->m_r1, Jt) * b1->m_invMass;
+		b2->m_velocity += Jt * b2->m_invMass;
+		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invMass;
+
+		std::cout << "sequential impulse(tangent): " << Jt << "\n";
+
+	}
+}

@@ -1,9 +1,6 @@
 #include "Vec2.h"
 #include <math.h>
 
-Vec2::Vec2()
-{
-}
 
 Vec2::Vec2(float xin, float yin)
 	: x(xin)
@@ -55,7 +52,7 @@ float Vec2::squaredDist(const Vec2& v) const
 	return ((dx * dx) + (dy * dy));
 }
 
-float Vec2::dot(const Vec2& v) const
+double Vec2::dot(const Vec2& v) const
 {
 	return x * v.x + y * v.y;
 }

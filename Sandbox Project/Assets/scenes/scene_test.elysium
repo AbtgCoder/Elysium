@@ -4,7 +4,7 @@ PhysicsConfig:
   ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 3
-  PhysicsColliders: false
+  PhysicsColliders: true
   BroadphaseCollision: false
 Entities:
   - Entity: 3835143888492085499
@@ -60,10 +60,10 @@ Entities:
     Tag:
       Tag: Tile2
     Transform:
-      Position: [65.5, 501.5]
+      Position: [60.5, 408.5]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, -10]
+      Velocity: [0, 0]
       AngularVelocity: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
