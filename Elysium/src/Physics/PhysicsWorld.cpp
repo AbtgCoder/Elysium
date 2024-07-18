@@ -44,7 +44,6 @@ void PhysicsWorld::BroadPhase()
 		for (size_t j = i + 1; j < m_bodies.size(); ++j)
 		{
 			PhysicsBody* bj = m_bodies[j];
-
 			if (bi->m_invMass == 0.0f && bj->m_invMass == 0.0f)
 				continue;
 
@@ -90,20 +89,7 @@ void PhysicsWorld::Step(float dt)
 		b->m_angularVelocity += b->m_torque * b->m_invI * dt;
 
 	}
-	// integrate velocities
-	for (int i = 0; i < (int)m_bodies.size(); i++)
-	{
-		PhysicsBody* b = m_bodies[i];
 
-		if (b->m_type == PhysicsBodyType::staticBody)
-			continue;
-
-		b->m_position += b->m_velocity * dt;
-		b->m_rotation += b->m_angularVelocity * dt;
-
-		b->m_force.Set(0.0f, 0.0f);
-		b->m_torque = 0.0f;
-	}
 	// perform pre-steps
 	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
 	{
@@ -117,18 +103,20 @@ void PhysicsWorld::Step(float dt)
 			arb->second.ApplyImpulse();
 		}
 	}
-	// integrate velocities
-	//for (int i = 0; i < (int)m_bodies.size(); i++)
-	//{
-	//	PhysicsBody* b = m_bodies[i];
-	//	//std::cout << "body old position: " << b->m_position << "\n";
-	//	b->m_position += b->m_velocity * dt;
-	//	//std::cout << "body new position: " << b->m_position << "\n";
-	//	b->m_rotation += b->m_angularVelocity * dt;
 
-	//	b->m_force.Set(0.0f, 0.0f);
-	//	b->m_torque = 0.0f;
-	//}
+	// integrate velocities
+	for (int i = 0; i < (int)m_bodies.size(); i++)
+	{
+		PhysicsBody* b = m_bodies[i];
+		if (b->m_type == PhysicsBodyType::staticBody)
+			continue;
+
+		b->m_position += b->m_velocity * dt;
+		b->m_rotation += b->m_angularVelocity * dt;
+
+		b->m_force.Set(0.0f, 0.0f);
+		b->m_torque = 0.0f;
+	}
 }
 
 

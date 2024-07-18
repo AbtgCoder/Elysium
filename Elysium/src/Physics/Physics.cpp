@@ -24,10 +24,10 @@ void Physics::NarrowPhaseCollision(KDTreeNode* node)
 			{
 				if (node->entities[i].hasComponent<CPolygonCollider>() && node->entities[j].hasComponent<CPolygonCollider>())
 				{
-					if (Physics::SAT(node->entities[i], node->entities[j]))
+					/*if (Physics::SAT(node->entities[i], node->entities[j]))
 					{
 						std::cout << node->entities[i].getComponent<CTag>().tag << " collided with " << node->entities[j].getComponent<CTag>().tag << "\n";
-					}
+					}*/
 				}
 				else if (node->entities[i].hasComponent<CCircleCollider>() && node->entities[j].hasComponent<CCircleCollider>())
 				{
@@ -160,7 +160,7 @@ CollisionFeature* FindCollisionFeature(const std::vector<Vec2>& vertices, const 
 }
 
 // Sutherland-Hodgman clipping
-std::vector<Vec2> ClipLineSegment(const Vec2& lineStart, const Vec2& lineEnd, const Vec2& normal, float offset)
+std::vector<Vec2> ClipLine(const Vec2& lineStart, const Vec2& lineEnd, const Vec2& normal, float offset)
 {
 	std::vector<Vec2> cp;
 	double d1 = normal.dot(lineStart) - offset;
@@ -332,11 +332,11 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 	std::cout << ref->v << " Reference face: " << ref->v1 << " " << ref->v2 << "\n";
 	std::cout << inc->v << " Incident face: "  << inc->v1 << " " << inc->v2 << "\n";
 	Vec2 refv = (ref->v2 - ref->v1).normalize();
-	auto cp = ClipLineSegment(inc->v1, inc->v2, refv, refv.dot(ref->v1));   // clip incident edge by the first vertex of reference edge
+	auto cp = ClipLine(inc->v1, inc->v2, refv, refv.dot(ref->v1));   // clip incident edge by the first vertex of reference edge
 	if (cp.size() < 2)
 		return empty;
 
-	cp = ClipLineSegment(cp[0], cp[1], refv * -1, -1 * refv.dot(ref->v2)); // clip incident edge by the second vertex of reference edge
+	cp = ClipLine(cp[0], cp[1], refv * -1, -1 * refv.dot(ref->v2)); // clip incident edge by the second vertex of reference edge
 	if (cp.size() < 2)
 		return empty;
 
@@ -471,9 +471,10 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	}
 }
 
-bool Physics::SAT(Entity a, Entity b)
+std::vector<Vec2> Physics::SAT(Entity a, Entity b)
 {
-	//std::cout << "new frame\n";
+	std::vector<Vec2> empty;
+
 	std::vector<Vec2> colliderVerticesA;
 	Vec2 aPos = a.getComponent<CTransform>().pos;
 	Vec2 aSize = a.getComponent<CPolygonCollider>().size;
@@ -481,7 +482,7 @@ bool Physics::SAT(Entity a, Entity b)
 	std::vector<Vec2> convexHullA = a.getComponent<CPolygonCollider>().colliderVertices;
 	for (auto p : convexHullA)
 	{
-		colliderVerticesA.push_back(Vec2(aPos.x - aSize.x / 2 + p.x, aPos.y + aSize.y / 2 - p.y));
+		colliderVerticesA.push_back(aPos - (aPos - Vec2(aPos.x - aSize.x / 2 + p.x, aPos.y + aSize.y / 2 - p.y)).rotate(a.getComponent<CTransform>().angle));
 	}
 	std::vector<Vec2> colliderVerticesB;
 	Vec2 bPos = b.getComponent<CTransform>().pos;
@@ -489,38 +490,34 @@ bool Physics::SAT(Entity a, Entity b)
 	std::vector<Vec2> convexHullB = b.getComponent<CPolygonCollider>().colliderVertices;
 	for (auto p : convexHullB)
 	{
-		colliderVerticesB.push_back(Vec2(bPos.x - bSize.x / 2 + p.x, bPos.y + bSize.y / 2 - p.y));
+		colliderVerticesB.push_back(bPos - (bPos - Vec2(bPos.x - bSize.x / 2 + p.x, bPos.y + bSize.y / 2 - p.y)).rotate(b.getComponent<CTransform>().angle));
 	}
 
-	if ((colliderVerticesA.size() == 0 || colliderVerticesB.size() == 0))
-	{
-		return false;
-	}
-	
-
-	std::vector<Vec2> axes;
+	// collision normal: axis along which min. penetration occurs
+	std::vector<Vec2> axesA;
 	for (size_t i = 0; i < colliderVerticesA.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesA[i + 1] - colliderVerticesA[i];
-		axes.push_back(Vec2(-1 * edge.y, edge.x).normalize());
+		axesA.push_back(Vec2(-1 * edge.y, edge.x).normalize());
 	}
 	Vec2 lastEdge = colliderVerticesA[0] - colliderVerticesA.back();
-	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
+	axesA.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
 
+	std::vector<Vec2> axesB;
 	for (size_t i = 0; i < colliderVerticesB.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesB[i + 1] - colliderVerticesB[i];
-		axes.push_back(Vec2(-1 * edge.y, edge.x).normalize());
+		axesB.push_back(Vec2(-1 * edge.y, edge.x).normalize());
 	}
 	lastEdge = colliderVerticesB[0] - colliderVerticesB.back();
-	axes.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
+	axesB.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
 
-	float collisionDepth = INFINITE;
+	float collisionDepth = FLT_MAX;
 	Vec2 collisionNormal;
 
-	for (auto axis : axes)
+	for (auto axis : axesA)
 	{
-		float amin = INFINITE, amax = -1 * INFINITE;
+		float amin = axis.dot(colliderVerticesA[0]), amax = amin;
 		for (size_t i = 0; i < colliderVerticesA.size(); i++)
 		{
 			Vec2 p = colliderVerticesA[i];
@@ -534,7 +531,7 @@ bool Physics::SAT(Entity a, Entity b)
 				amin = dot;
 			}
 		}
-		float bmin = INFINITE, bmax = -1 * INFINITE;
+		float bmin = axis.dot(colliderVerticesB[0]), bmax = bmin;
 		for (size_t i = 0; i < colliderVerticesB.size(); i++)
 		{
 			Vec2 p = colliderVerticesB[i];
@@ -560,13 +557,127 @@ bool Physics::SAT(Entity a, Entity b)
 		}
 		else
 		{
-			//std::cout << "no collision\n";
-			return false;
+			return empty;
 		}
 	}
 
-	std::cout << "Collision normal : " << collisionNormal <<  " depth: " << collisionDepth << "\n";
+	for (auto axis : axesB)
+	{
+		float amin = axis.dot(colliderVerticesA[0]), amax = amin;
+		for (size_t i = 0; i < colliderVerticesA.size(); i++)
+		{
+			Vec2 p = colliderVerticesA[i];
+			float dot = axis.x * p.x + axis.y * p.y;
+			if (dot > amax)
+			{
+				amax = dot;
+			}
+			else if (dot < amin)
+			{
+				amin = dot;
+			}
+		}
+		float bmin = axis.dot(colliderVerticesB[0]), bmax = bmin;
+		for (size_t i = 0; i < colliderVerticesB.size(); i++)
+		{
+			Vec2 p = colliderVerticesB[i];
+			float dot = axis.x * p.x + axis.y * p.y;
+			if (dot > bmax)
+			{
+				bmax = dot;
+			}
+			else if (dot < bmin)
+			{
+				bmin = dot;
+			}
+		}
+
+		if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
+		{
+			float d = std::min(bmax - amin, amax - bmin);
+			if (d < collisionDepth)
+			{
+				collisionDepth = d;
+				collisionNormal = axis;
+			}
+		}
+		else
+		{
+			return empty;
+		}
+	}
+
+	Vec2 direction = b.getComponent<CTransform>().pos - a.getComponent<CTransform>().pos;
+	if (direction.dot(collisionNormal) < 0.0f)
+	{
+		collisionNormal = collisionNormal * -1; //  because we want the collision normal to be in a direction such that A & B move away from each other
+	}
+
+	CollisionFeature* cf1 = FindCollisionFeature(colliderVerticesA, collisionNormal);
+	CollisionFeature* cf2 = FindCollisionFeature(colliderVerticesB, collisionNormal * -1);
+
+	// find reference and incident edges (ref edge is the edge most perpendicular to the separation normal)
+	CollisionFeature* ref;
+	CollisionFeature* inc;
+	bool flip = false;
+	if (std::abs(cf1->dot(collisionNormal)) <= std::abs(cf2->dot(collisionNormal)))
+	{
+		ref = cf1;
+		inc = cf2;
+	}
+	else
+	{
+		ref = cf2;
+		inc = cf1;
+		// we need to set a flag indicating that the reference
+		// and incident edge were flipped so that when we do the final
+		// clip operation, we use the right edge normal
+		flip = true;
+	}
+
+	std::cout << ref->v << " Reference face: " << ref->v1 << " " << ref->v2 << "\n";
+	std::cout << inc->v << " Incident face: " << inc->v1 << " " << inc->v2 << "\n";
+	Vec2 refv = (ref->v2 - ref->v1).normalize();
+	auto cp = ClipLine(inc->v1, inc->v2, refv, refv.dot(ref->v1));   // clip incident edge by the first vertex of reference edge
+	if (cp.size() < 2)
+		return empty;
+
+	cp = ClipLine(cp[0], cp[1], refv * -1, -1 * refv.dot(ref->v2)); // clip incident edge by the second vertex of reference edge
+	if (cp.size() < 2)
+		return empty;
+
+	return cp;
+
+	// get the reference edge normal
+	Vec2 refn = (ref->v2 - ref->v1).perpendicular().normalize();
+	// if we had to flip the incident and reference edges
+	// then we need to flip the reference edge normal to
+	// clip properly
+	if (flip)
+	{
+		refn = refn * -1;
+	}
+	double max = refn.dot(ref->v);
+	ESM_LOG("flip", flip, "refn", refn, "vmax", max);
+	// make sure the final points are not past this maximum
+	if (refn.dot(cp[0]) - max < 0.0)
+	{
+		cp.erase(cp.begin());
+		if (refn.dot(cp[0]) - max < 0.0)
+		{
+			cp.erase(cp.begin()); 
+		}
+
+	}
+	else if (refn.dot(cp[1]) - max < 0.0)
+	{
+		cp.erase(cp.begin() + 1); 
+	}
+
+	//cp.push_back(ref->v1);
+	//cp.push_back(ref->v2);
 
 
-	return true;
+	return cp;
+
 }

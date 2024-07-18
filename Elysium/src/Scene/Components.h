@@ -75,7 +75,8 @@ class CRectangle : public Component
 {
 public:
 	Vec2 size = {50.0, 50.0};
-	
+	sf::Color color = { 255, 255, 255, 255 };
+
 	CRectangle() {}
 	CRectangle(float s)
 		: size(s, s) {}
@@ -89,11 +90,11 @@ class CCircle : public Component
 {
 public:
 	float radius = 50.0f;
+	sf::Color color = {255, 255, 255, 255};
 	CCircle() {}
 	CCircle(float r)
 		: radius(r) {}
-	CCircle(CCircle& other)
-		: radius(other.radius) {}
+	CCircle(CCircle& other) = default;
 };
 
 class CLifespan : public Component

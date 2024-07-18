@@ -258,11 +258,39 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 
 			{
+				float colorArray[4];
+				colorArray[0] = component.color.r / 255.0f;
+				colorArray[1] = component.color.g / 255.0f;
+				colorArray[2] = component.color.b / 255.0f;
+				colorArray[3] = component.color.a / 255.0f;
+				if (ImGui::ColorEdit4("Color", colorArray))
+				{
+					component.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0] * 255),
+						static_cast<sf::Uint8>(colorArray[1] * 255),
+						static_cast<sf::Uint8>(colorArray[2] * 255),
+						static_cast<sf::Uint8>(colorArray[3] * 255)
+					);
+				}
 				DrawFloatControl("Radius", component.radius, 0.0f, 200.0f);
 			});
 
 		DrawComponentGUI<CRectangle>("Rectangle Shape", m_InspectedEntity, [](auto& component)
 			{
+				float colorArray[4];
+				colorArray[0] = component.color.r / 255.0f;
+				colorArray[1] = component.color.g / 255.0f;
+				colorArray[2] = component.color.b / 255.0f;
+				colorArray[3] = component.color.a / 255.0f;
+				if (ImGui::ColorEdit4("Color", colorArray))
+				{
+					component.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0] * 255),
+						static_cast<sf::Uint8>(colorArray[1] * 255),
+						static_cast<sf::Uint8>(colorArray[2] * 255),
+						static_cast<sf::Uint8>(colorArray[3] * 255)
+					);
+				}
 				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
 			});
 

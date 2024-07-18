@@ -45,6 +45,8 @@ public:
 	double dot(const Vec2& v) const;
 	float cross(const Vec2& v) const;
 
+	Vec2 rotate(float angle) const;
+
 	float polar_angle(const Vec2& v) const;
 };
 
@@ -62,3 +64,4 @@ inline Vec2 Cross(float s, const Vec2& a)
 {
 	return Vec2(-s * a.y, s * a.x);
 }
+

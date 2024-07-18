@@ -91,7 +91,7 @@ void Arbiter::PreStep(float inv_dt)
 		c->m_massTangent = 1.0f / kTangent;
 
 		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
-		c->m_bias = k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
+		c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, -1 * c->m_separation + k_allowedPenetration);
 
 		// TODO: if accumulate impulses then:
 		{
@@ -125,7 +125,6 @@ void Arbiter::ApplyImpulse()
 		float vn = dv.dot(c->m_normal);
 		float dJn = c->m_massNormal * (vn + c->m_bias);
 
-		std::cout << "vn: " << vn << " dJn: " << dJn << "\n";
 
 		// if accumulate impulses:
 		float Jn0 = c->m_Jn;
@@ -137,21 +136,21 @@ void Arbiter::ApplyImpulse()
 		Vec2 Jn = c->m_normal * dJn; 
 		ESM_LOG("old velocities", b1->m_velocity, b2->m_velocity, "Jn", Jn);
 		b1->m_velocity -= Jn * b1->m_invMass;
-		ESM_LOG("new velocity", b1->m_velocity);
 		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invMass;
 		b2->m_velocity += Jn * b2->m_invMass;
-		ESM_LOG("collision normal", c->m_normal, "new velocity", b2->m_velocity);
-
 		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invMass;
+		ESM_LOG("collision normal", c->m_normal, "new velocities: ", b1->m_velocity, b2->m_velocity);
 
 		std::cout << "mass inverses: " << b1->m_invMass << " " << b2->m_invMass << "\n";
 
 		// relative velocity at contact
-		dv = b2->m_velocity + Cross(b2->m_angularVelocity, c->m_r2) - b1->m_velocity - Cross(b1->m_angularVelocity, c->m_r1);
+		dv = b1->m_velocity + Cross(b1->m_angularVelocity, c->m_r1) - b2->m_velocity - Cross(b2->m_angularVelocity, c->m_r2);
 		// compute tangent impulse
 		Vec2 tangent = Cross(c->m_normal, 1.0f);
 		float vt = dv.dot(tangent);
-		float dJt = c->m_massTangent * (-vt);
+		float dJt = c->m_massTangent * (vt);
+
+		ESM_LOG("djt", dJt);
 
 		// if accumulate impulses:
 		// compute frictional impulse
@@ -159,7 +158,9 @@ void Arbiter::ApplyImpulse()
 		// clamp friction
 		float oldTangentImpulse = c->m_Jt;
 		c->m_Jt = std::max(-maxJt, std::min(oldTangentImpulse + dJt, maxJt));
-		dJt = c->m_Jt - oldTangentImpulse;
+		dJt = c->m_Jt + oldTangentImpulse;
+		ESM_LOG("new djt", dJt, "maxJt", maxJt, "mJt", c->m_Jt);
+
 
 		// apply contact tangent impulse
 		Vec2 Jt = tangent * dJt;

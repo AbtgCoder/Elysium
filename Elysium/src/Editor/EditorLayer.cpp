@@ -359,7 +359,6 @@ void EditorLayer::sGUI()
 			ImGui::Separator();
 			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
 			{
-				std::cout << "wow new Scene!\n";
 				NewScene();
 			}
 			ImGui::EndMenu();

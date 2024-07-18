@@ -62,6 +62,15 @@ float Vec2::cross(const Vec2& v) const
 	return x * v.y - y * v.x;
 }
 
+//NOTE: angle should be in radians
+Vec2 Vec2::rotate(float angle) const
+{
+	float cosA = std::cos(angle);
+	float sinA = std::sin(angle);
+	return Vec2((x * cosA - y * sinA),
+		(x * sinA + y * cosA));
+}
+
 float Vec2::polar_angle(const Vec2& v) const
 {
 	return std::atan2(v.y - y, v.x - x);

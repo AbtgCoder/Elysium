@@ -2,6 +2,13 @@
 
 void PhysicsPolygonShape::Set(const std::vector<Vec2>& points)
 {
+	for (size_t i = 0; i < points.size(); i++)
+	{
+		m_vertices[i] = points[i];
+	}
+	m_centroid.Set(0.0f, 0.0f);//TODO: offset
+	m_count = points.size();
+	//TODO: compute and store normals
 }
 
 // Box vertex and edge numbering:
@@ -27,7 +34,7 @@ void PhysicsPolygonShape::SetAsBox(float hx, float hy)
 	m_centroid.Set(0.0f, 0.0f);
 }
 
-void PhysicsPolygonShape::SetAsBox(float hx, float hy, const Vec2& center, float angle)
+void PhysicsPolygonShape::SetAsBox(float hx, float hy, const Vec2& center, float angle) //NOTE: this angle is local rotation
 {
 	m_count = 4;
 	m_vertices[0].Set(-hx, -hy);

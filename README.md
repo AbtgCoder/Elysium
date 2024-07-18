@@ -22,6 +22,7 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 ### Features currently in development
 - [ ] Select and Manipulate multiple entities
 - [ ] Basic 2D Rigidbody physics
+- [ ] Native Scripting via C++
 - [ ] Editor Improvements
 
 ### Features to come

@@ -1,5 +1,4 @@
 #include "PhysicsCircleCollision.h"
-#include <iostream>
 int PhysicsCircleCircleCollision(Contact* contacts, PhysicsBody* body1, PhysicsBody* body2)
 {
 	PhysicsCircleShape* circleA = (PhysicsCircleShape*)body1->GetShape();

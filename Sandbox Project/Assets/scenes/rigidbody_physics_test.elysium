@@ -4,17 +4,17 @@ PhysicsConfig:
   ExternalForce: [0, 0]
   VelocityIterations: 1
   PositionIterations: 1
-  PhysicsColliders: false
+  PhysicsColliders: true
   BroadphaseCollision: false
 Entities:
   - Entity: 2904498414818527765
     Tag:
       Tag: Circle
     Transform:
-      Position: [365, 687]
+      Position: [313, 686]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, -2]
+      Velocity: [0, 0]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
@@ -30,52 +30,58 @@ Entities:
     Tag:
       Tag: Circle2
     Transform:
-      Position: [325, 358.017761]
+      Position: [365, 358.017761]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 5]
+      Velocity: [0, -3]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
-    RectangleShape:
-      Size: [50, 50]
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 0.200000003
+      Friction: 0.300000012
     Rigidbody2D:
-      BodyType: Dynamic
+      BodyType: Static
   - Entity: 16897073082553704844
     Tag:
       Tag: Rectangle1
     Transform:
-      Position: [83, 531]
+      Position: [77, 591]
       Scale: [1.00000203, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
-      Size: [80, 50]
+      Size: [500, 50]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 0.0199999996
+      Friction: 0.5
     AABB:
       Offset: [0, 0]
-      Size: [80, 50]
+      Size: [500, 50]
+    Rigidbody2D:
+      BodyType: Static
   - Entity: 838373737969284512
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [85, 488]
+      Position: [-18, 430]
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
+      Angle: 19.6000004
+      Velocity: [0, -5]
       AngularVelocity: 0
     RectangleShape:
       Size: [70, 50]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 1
+      Friction: 0
     AABB:
       Offset: [0, 0]
       Size: [70, 50]
+    Rigidbody2D:
+      BodyType: Dynamic
