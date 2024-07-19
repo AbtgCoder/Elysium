@@ -237,7 +237,7 @@ void Scene::OnRuntimeStart()
 	}
 
 	// Physics world initialization
-	m_PhysicsWorld = new PhysicsWorld({0.0f, -3.0f}, 10);
+	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.0f}, 10);
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.hasComponent<CRigidBody>())
@@ -249,6 +249,7 @@ void Scene::OnRuntimeStart()
 			body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM};
 			body->m_rotation = transform.angle / DEG_PER_RAD;
 			body->m_velocity = transform.velocity;
+			body->m_angularVelocity = transform.angularVelocity;
 			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
 			rb2d.runtimeBody = body;
 
@@ -571,6 +572,10 @@ void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
 	RenderScene(renderTexture);
 }
 
+void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
+{
+}
+
 void Scene::Step(int frames)
 {
 	m_StepFrames = frames;
@@ -590,6 +595,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_CircleShape.setRadius(e.getComponent<CCircleCollider>().radius);
 				m_CircleShape.setOrigin(e.getComponent<CCircleCollider>().radius, e.getComponent<CCircleCollider>().radius);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
 				m_CircleShape.setFillColor(sf::Color::Transparent);
 				m_CircleShape.setOutlineColor(e.getComponent<CCircle>().color);
 				m_CircleShape.setOutlineThickness(1.0f);

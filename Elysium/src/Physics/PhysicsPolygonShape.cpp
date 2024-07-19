@@ -6,9 +6,11 @@ void PhysicsPolygonShape::Set(const std::vector<Vec2>& points)
 	{
 		m_vertices[i] = points[i];
 	}
-	m_centroid.Set(0.0f, 0.0f);//TODO: offset
 	m_count = points.size();
 	//TODO: compute and store normals
+
+	m_centroid.Set(0.0f, 0.0f);//TODO: compute centroid
+
 }
 
 // Box vertex and edge numbering:

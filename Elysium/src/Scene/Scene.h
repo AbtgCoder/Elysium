@@ -38,6 +38,9 @@ public:
 	void OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt);
 	void OnUpdateEditor(sf::RenderTexture& renderTexture);
 
+	// Physics
+	void LaunchBomb(sf::RenderTexture& renderTexture);
+
 	bool IsRunning() const { return m_IsRunning; }
 	bool IsPaused() const { return m_IsPaused; }
 

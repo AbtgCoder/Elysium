@@ -15,6 +15,10 @@ int Collide(Contact* contacts, PhysicsBody* body1, PhysicsBody* body2)
 		// collidecircles (contacts, circleshape*, transform1, circleshape*, transform2)
 		return PhysicsCircleCircleCollision(contacts, body1, body2);
 	}
+	else if ((body1->GetShapeType() == PhysicsShape::Type::e_circle && body2->GetShapeType() == PhysicsShape::Type::e_polygon) || (body2->GetShapeType() == PhysicsShape::Type::e_circle && body1->GetShapeType() == PhysicsShape::Type::e_polygon))
+	{
+		return PhysicsCirclePolygonCollision(contacts, body1, body2);
+	}
 
 	return 0;
 }

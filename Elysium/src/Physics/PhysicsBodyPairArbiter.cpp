@@ -36,6 +36,7 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 			Contact* cOld = m_contacts + j;
 			if (cNew->m_id.key == cOld->m_id.key)
 			{
+				ESM_INFO("matched contact");
 				k = j;
 				break;
 			}
@@ -96,8 +97,8 @@ void Arbiter::PreStep(float inv_dt)
 		// TODO: if accumulate impulses then:
 		{
 			// Apply normal + frictional impulse
-			Vec2 J = c->m_normal * c->m_Jn + tangent * c->m_Jt;
-			std::cout << "prestep impulse: " << J << "\n";
+			Vec2 J = c->m_normal * c->m_Jn * -1 + tangent * c->m_Jt;
+			//std::cout << "prestep impulse: " << J << "\n";
 			m_body1->m_velocity -= J * m_body1->m_invMass;
 			m_body1->m_angularVelocity -= (r1.x * J.y - r1.y * J.x) * m_body1->m_invI;
 			
@@ -123,34 +124,34 @@ void Arbiter::ApplyImpulse()
 
 		// compute normal impulse
 		float vn = dv.dot(c->m_normal);
-		float dJn = c->m_massNormal * (vn + c->m_bias);
+		float dJn = c->m_massNormal * (-vn + c->m_bias);
 
 
 		// if accumulate impulses:
 		float Jn0 = c->m_Jn;
-		c->m_Jn = std::min(Jn0 + dJn, 0.0f);
-		dJn = c->m_Jn + Jn0;
+		c->m_Jn = std::max(Jn0 + dJn, 0.0f);
+		dJn = c->m_Jn - Jn0;
 
-		ESM_LOG("jn0", Jn0, "djn", dJn);
+	//	ESM_LOG("jn0", Jn0, "djn", dJn);
 		// Apply contact normal impulse
-		Vec2 Jn = c->m_normal * dJn; 
-		ESM_LOG("old velocities", b1->m_velocity, b2->m_velocity, "Jn", Jn);
+		Vec2 Jn = c->m_normal * dJn * -1; 
+		//ESM_LOG("old velocities", b1->m_velocity, b2->m_velocity, "Jn", Jn);
 		b1->m_velocity -= Jn * b1->m_invMass;
 		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invMass;
 		b2->m_velocity += Jn * b2->m_invMass;
 		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invMass;
-		ESM_LOG("collision normal", c->m_normal, "new velocities: ", b1->m_velocity, b2->m_velocity);
+	//	ESM_LOG("collision normal", c->m_normal, "new velocities: ", b1->m_velocity, b2->m_velocity);
 
-		std::cout << "mass inverses: " << b1->m_invMass << " " << b2->m_invMass << "\n";
+		//std::cout << "mass inverses: " << b1->m_invMass << " " << b2->m_invMass << "\n";
 
 		// relative velocity at contact
 		dv = b1->m_velocity + Cross(b1->m_angularVelocity, c->m_r1) - b2->m_velocity - Cross(b2->m_angularVelocity, c->m_r2);
 		// compute tangent impulse
-		Vec2 tangent = Cross(c->m_normal, 1.0f);
+		Vec2 tangent = Cross(c->m_normal, -1.0f);
 		float vt = dv.dot(tangent);
-		float dJt = c->m_massTangent * (vt);
+		float dJt = c->m_massTangent * (-vt);
 
-		ESM_LOG("djt", dJt);
+		//ESM_LOG("djt", dJt);
 
 		// if accumulate impulses:
 		// compute frictional impulse
@@ -158,8 +159,8 @@ void Arbiter::ApplyImpulse()
 		// clamp friction
 		float oldTangentImpulse = c->m_Jt;
 		c->m_Jt = std::max(-maxJt, std::min(oldTangentImpulse + dJt, maxJt));
-		dJt = c->m_Jt + oldTangentImpulse;
-		ESM_LOG("new djt", dJt, "maxJt", maxJt, "mJt", c->m_Jt);
+		dJt = c->m_Jt - oldTangentImpulse;
+	//	ESM_LOG("new djt", dJt, "maxJt", maxJt, "mJt", c->m_Jt);
 
 
 		// apply contact tangent impulse
@@ -169,7 +170,9 @@ void Arbiter::ApplyImpulse()
 		b2->m_velocity += Jt * b2->m_invMass;
 		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invMass;
 
-		std::cout << "sequential impulse(tangent): " << Jt << "\n";
+	//	ESM_LOG("tangent", tangent, "tangential impulse", dJt);
+
+	//	ESM_LOG("new velocities: ", b1->m_velocity, b2->m_velocity);
 
 	}
 }

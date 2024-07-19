@@ -29,12 +29,12 @@ void EditorLayer::init()
 	registerAction(sf::Keyboard::Escape, "QUIT");
 	registerAction(sf::Keyboard::Delete, "DELETE");
 	registerAction(sf::Keyboard::D, "DUPLICATE");
-	registerAction(sf::Keyboard::P, "PLAY_Scene");
+	//registerAction(sf::Keyboard::P, "PLAY_Scene");
 	registerAction(sf::Keyboard::LAlt, "ALT");
 	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
 	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
 	registerAction(sf::Keyboard::E, "ROTATION_GIZMO");
-
+	registerAction(sf::Keyboard::Space, "LAUNCH_BOMB");
 
 
 	m_IconPlay = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
@@ -814,6 +814,10 @@ void EditorLayer::sDoAction(const Action& action)
 	
 	if (action.type() == "END")
 	{
+		if (action.name() == "LAUNCH_BOMB")
+		{
+			m_ActiveScene->LaunchBomb(m_rt);
+		}
 		if (action.name() == "ALT")
 		{
 			m_altPressed = false;

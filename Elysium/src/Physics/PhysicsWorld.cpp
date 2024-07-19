@@ -104,12 +104,26 @@ void PhysicsWorld::Step(float dt)
 		}
 	}
 
+	float linearDamping = 0.99f;
+	float angularDamping = 0.99f;
+	float sleepThreshold = 1.0f;
+
+
 	// integrate velocities
 	for (int i = 0; i < (int)m_bodies.size(); i++)
 	{
 		PhysicsBody* b = m_bodies[i];
 		if (b->m_type == PhysicsBodyType::staticBody)
 			continue;
+
+		
+		b->m_velocity *= linearDamping;
+		b->m_angularVelocity *= angularDamping;
+
+		if (b->m_velocity.length() < sleepThreshold && std::abs(b->m_angularVelocity) < sleepThreshold) {
+			b->m_velocity.Set(0.0f, 0.0f);
+			b->m_angularVelocity = 0;
+		}
 
 		b->m_position += b->m_velocity * dt;
 		b->m_rotation += b->m_angularVelocity * dt;
