@@ -118,6 +118,13 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::BeginMap;
 		auto& cc = entity.getComponent<CCircle>();
 		out << YAML::Key << "Radius" << YAML::Value << cc.radius;
+		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
+		out << YAML::BeginSeq;
+		out << (float)cc.color.r;
+		out << (float)cc.color.g;
+		out << (float)cc.color.b;
+		out << (float)cc.color.a;
+		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CRectangle>())
@@ -126,6 +133,29 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::BeginMap;
 		auto& rc = entity.getComponent<CRectangle>();
 		out << YAML::Key << "Size" << YAML::Value << rc.size;
+		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
+		out << YAML::BeginSeq;
+		out << (float)rc.color.r;
+		out << (float)rc.color.g;
+		out << (float)rc.color.b;
+		out << (float)rc.color.a;
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
+	}
+	if (entity.hasComponent<CPolygon>())
+	{
+		out << YAML::Key << "PolygonShape";
+		out << YAML::BeginMap;
+		auto& pc = entity.getComponent<CPolygon>();
+		out << YAML::Key << "Sides" << YAML::Value << pc.sides;
+		out << YAML::Key << "Size" << YAML::Value << pc.size;
+		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
+		out << YAML::BeginSeq;
+		out << (float)pc.color.r;
+		out << (float)pc.color.g;
+		out << (float)pc.color.b;
+		out << (float)pc.color.a;
+		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CSpriteRenderer>())
@@ -139,20 +169,22 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		out << YAML::EndMap;
 	}
+
 	//if (entity->hasComponent<CAnimation>())
 	//{
 	//	out << YAML::Key << "Animation";
 	//	out << YAML::BeginMap;
-
+	//
 	//	auto& ac = entity->getComponent<CAnimation>();
 	//	out << YAML::Key << "Texture" << YAML::Value << ac.animation.getName();
 	//	out << YAML::Key << "Speed" << YAML::Value << ac.animSpeed;
 	//	out << YAML::Key << "Frames" << YAML::Value << ac.frameCount;
 	//	out << YAML::Key << "Repeatable" << YAML::Value << ac.repeat;
 	//	out << YAML::Key << "Layer" << YAML::Value << ac.layer;
-
+	//
 	//	out << YAML::EndMap;
 	//}
+	
 	if (entity.hasComponent<CCircleCollider>())
 	{
 		out << YAML::Key << "CircleCollider";
@@ -327,6 +359,16 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& cc = deserializedEntity.addComponent<CCircle>();
 				cc.radius = circleComponent["Radius"].as<float>();
+				auto colorArray = circleComponent["Color"];
+				if (colorArray)
+				{
+					cc.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0].as<float>()),
+						static_cast<sf::Uint8>(colorArray[1].as<float>()),
+						static_cast<sf::Uint8>(colorArray[2].as<float>()),
+						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					);
+				}
 			}
 
 			auto rectangleComponent = entity["RectangleShape"];
@@ -334,7 +376,36 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& rc = deserializedEntity.addComponent<CRectangle>();
 				rc.size = rectangleComponent["Size"].as<Vec2>();
+				auto colorArray = rectangleComponent["Color"];
+				if (colorArray)
+				{
+					rc.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0].as<float>()),
+						static_cast<sf::Uint8>(colorArray[1].as<float>()),
+						static_cast<sf::Uint8>(colorArray[2].as<float>()),
+						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					);
+				}
 			}
+
+			auto polygonShapeComponent = entity["PolygonShape"];
+			if (polygonShapeComponent)
+			{
+				auto& pc = deserializedEntity.addComponent<CPolygon>();
+				pc.sides = polygonShapeComponent["Sides"].as<int>(); // TODO: clamp to given range, or just assert ??
+				pc.size = polygonShapeComponent["Size"].as<float>();
+				auto colorArray = polygonShapeComponent["Color"];
+				if (colorArray)
+				{
+					pc.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0].as<float>()),
+						static_cast<sf::Uint8>(colorArray[1].as<float>()),
+						static_cast<sf::Uint8>(colorArray[2].as<float>()),
+						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					);
+				}
+			}
+
 			/*auto animationComponent = entity["Animation"];
 			if (animationComponent)
 			{
@@ -347,6 +418,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				ac.frameCount = frameCount;
 				ac.layer = animationComponent["Layer"].as<int>();
 			}*/
+			
 			auto rigidbodyComponent = entity["Rigidbody2D"];
 			if (rigidbodyComponent)
 			{

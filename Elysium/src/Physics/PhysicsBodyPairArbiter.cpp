@@ -36,7 +36,18 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 			Contact* cOld = m_contacts + j;
 			if (cNew->m_id.key == cOld->m_id.key)
 			{
-				ESM_INFO("matched contact");
+				/*ESM_INFO("matched contact");
+				
+				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.indexA);
+				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.indexB);
+				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.typeA);
+				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.typeB);
+
+				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.indexA);
+				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.indexB);
+				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.typeA);
+				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.typeB);*/
+				
 				k = j;
 				break;
 			}
@@ -66,8 +77,25 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 
 void Arbiter::PreStep(float inv_dt)
 {
+	
+	/*Contact* c = m_contacts;
+	Vec2 mtv = c->m_normal * c->m_separation;
+	if (m_body1->m_type == PhysicsBodyType::staticBody)
+	{
+		m_body2->m_position += mtv;
+	}
+	else if (m_body2->m_type == PhysicsBodyType::staticBody)
+	{
+		m_body1->m_position -= mtv;
+	}
+	else
+	{
+		m_body1->m_position -= mtv / 2.0f;
+		m_body2->m_position += mtv / 2.0f;
+	}*/
+
 	const float k_allowedPenetration = 0.01f;
-	float k_biasFactor = 0.2; // NOTE: this is if world->positionCorrection is true else its 0.0f
+	float k_biasFactor = 0.2f; 
 
 	// for each contact
 	for (int i = 0; i < m_numContacts; i++)
@@ -92,13 +120,14 @@ void Arbiter::PreStep(float inv_dt)
 		c->m_massTangent = 1.0f / kTangent;
 
 		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
-		c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, -1 * c->m_separation + k_allowedPenetration);
-
-		// TODO: if accumulate impulses then:
+		c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
+		//ESM_LOG("bias", c->m_bias);
+		
+		//if accumulate impulses then:
 		{
 			// Apply normal + frictional impulse
-			Vec2 J = c->m_normal * c->m_Jn * -1 + tangent * c->m_Jt;
-			//std::cout << "prestep impulse: " << J << "\n";
+			Vec2 J = c->m_normal * c->m_Jn + tangent * c->m_Jt;
+			//ESM_LOG("prestep impulse", J);
 			m_body1->m_velocity -= J * m_body1->m_invMass;
 			m_body1->m_angularVelocity -= (r1.x * J.y - r1.y * J.x) * m_body1->m_invI;
 			
@@ -113,6 +142,11 @@ void Arbiter::ApplyImpulse()
 	PhysicsBody* b1 = m_body1;
 	PhysicsBody* b2 = m_body2;
 
+
+	std::vector<Vec2> normalImpulses;
+	std::vector<Vec2> tangentialImpulses;
+
+
 	for (int i = 0; i < m_numContacts; i++)
 	{
 		Contact* c = m_contacts + i;
@@ -120,59 +154,70 @@ void Arbiter::ApplyImpulse()
 		c->m_r2 = c->m_position - b2->m_position;
 
 		// relative velocity at contact
-		Vec2 dv = b1->m_velocity + Cross(b1->m_angularVelocity, c->m_r1) - b2->m_velocity - Cross(b2->m_angularVelocity, c->m_r2);
+		Vec2 dv = b2->m_velocity + Cross(b2->m_angularVelocity, c->m_r2) - b1->m_velocity - Cross(b1->m_angularVelocity, c->m_r1);
 
 		// compute normal impulse
 		float vn = dv.dot(c->m_normal);
 		float dJn = c->m_massNormal * (-vn + c->m_bias);
 
+		//ESM_LOG("vn", vn, "djn", dJn);
 
-		// if accumulate impulses:
+		// clamp the accumulated impulse:
 		float Jn0 = c->m_Jn;
 		c->m_Jn = std::max(Jn0 + dJn, 0.0f);
 		dJn = c->m_Jn - Jn0;
 
-	//	ESM_LOG("jn0", Jn0, "djn", dJn);
-		// Apply contact normal impulse
-		Vec2 Jn = c->m_normal * dJn * -1; 
-		//ESM_LOG("old velocities", b1->m_velocity, b2->m_velocity, "Jn", Jn);
+		Vec2 Jn = c->m_normal * dJn;
+
+		normalImpulses.push_back(Jn);
+
+		//	ESM_LOG("collision normal", c->m_normal, "new velocities: ", b1->m_velocity, b2->m_velocity);
+
+	}
+
+	for (int i = 0; i < m_numContacts; i++)
+	{
+		Contact* c = m_contacts + i;
+		Vec2 Jn = normalImpulses[i];
 		b1->m_velocity -= Jn * b1->m_invMass;
 		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invMass;
 		b2->m_velocity += Jn * b2->m_invMass;
 		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invMass;
-	//	ESM_LOG("collision normal", c->m_normal, "new velocities: ", b1->m_velocity, b2->m_velocity);
+	}
 
-		//std::cout << "mass inverses: " << b1->m_invMass << " " << b2->m_invMass << "\n";
+	for (int i = 0; i < m_numContacts; i++)
+	{
+		Contact* c = m_contacts + i;
 
 		// relative velocity at contact
-		dv = b1->m_velocity + Cross(b1->m_angularVelocity, c->m_r1) - b2->m_velocity - Cross(b2->m_angularVelocity, c->m_r2);
-		// compute tangent impulse
-		Vec2 tangent = Cross(c->m_normal, -1.0f);
+		Vec2 dv = b2->m_velocity + Cross(b2->m_angularVelocity, c->m_r2) - b1->m_velocity - Cross(b1->m_angularVelocity, c->m_r1);
+
+		Vec2 tangent = Cross(c->m_normal, 1.0f);
 		float vt = dv.dot(tangent);
 		float dJt = c->m_massTangent * (-vt);
-
-		//ESM_LOG("djt", dJt);
-
-		// if accumulate impulses:
-		// compute frictional impulse
+		
+		// accumulate tangential impulses:
 		float maxJt = m_friction * c->m_Jn;
 		// clamp friction
 		float oldTangentImpulse = c->m_Jt;
 		c->m_Jt = std::max(-maxJt, std::min(oldTangentImpulse + dJt, maxJt));
 		dJt = c->m_Jt - oldTangentImpulse;
-	//	ESM_LOG("new djt", dJt, "maxJt", maxJt, "mJt", c->m_Jt);
-
 
 		// apply contact tangent impulse
 		Vec2 Jt = tangent * dJt;
+		
+		tangentialImpulses.push_back(Jt);
+
+		//ESM_LOG("tangent", tangent, "tangential impulse", Jt);
+	}
+
+	for (int i = 0; i < m_numContacts; i++)
+	{
+		Contact* c = m_contacts + i;
+		Vec2 Jt = tangentialImpulses[i];
 		b1->m_velocity -= Jt * b1->m_invMass;
 		b1->m_angularVelocity -= Cross(c->m_r1, Jt) * b1->m_invMass;
 		b2->m_velocity += Jt * b2->m_invMass;
 		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invMass;
-
-	//	ESM_LOG("tangent", tangent, "tangential impulse", dJt);
-
-	//	ESM_LOG("new velocities: ", b1->m_velocity, b2->m_velocity);
-
 	}
 }

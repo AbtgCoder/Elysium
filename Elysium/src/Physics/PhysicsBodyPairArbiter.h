@@ -28,14 +28,14 @@ struct Contact
 {
 	Contact() {}
 
-	Vec2 m_position;
-	Vec2 m_normal;
-	Vec2 m_r1, m_r2;
-	float m_separation;
+	Vec2 m_position = {0.0f, 0.0f};
+	Vec2 m_normal = {0.0f, 0.0f};
+	Vec2 m_r1 = { 0.0f, 0.0f }, m_r2 = { 0.0f, 0.0f };
+	float m_separation = 0.0f;
 	float m_Jn = 0.0f; // accumulated normal impulse
 	float m_Jt = 0.0f; // accumulated tangent impulse
 	float m_Jnb = 0.0f; // accumulated normal impulse for position bias
-	float m_massNormal, m_massTangent;
+	float m_massNormal = 0.0f, m_massTangent = 0.0f;
 	float m_bias = 2.0f;
 	// TODO: contact ID
 	ContactID m_id;

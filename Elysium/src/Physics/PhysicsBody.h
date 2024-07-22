@@ -7,7 +7,7 @@
 #include "PhysicsPolygonShape.h"
 
 
-// TODO:  bodydef, fixturedef, fixtures ?? , drag ?? 
+// TODO:  bodydef, fixturedef, fixtures ?? , drag ?? , NEED DEFS BECAUSE WHO OWNS POINTERS ??, THEIR CREATION AND THEIR DELETION, THIS ALL SHOULD BE HANDLED BE ENGINE USING EFFICIENT MEMORY ALLOCATION
 
 //TODO: kinematic body ??
 enum PhysicsBodyType

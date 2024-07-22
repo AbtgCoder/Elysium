@@ -11,51 +11,54 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Position: [218, 765]
+      Position: [-18, 257]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [0, 0]
+      Velocity: [4.19999981, 0]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
+      Color: [141, 19, 156, 255]
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 0.5
+      Friction: 1
     Rigidbody2D:
       BodyType: Dynamic
   - Entity: 5792722074902989541
     Tag:
       Tag: Circle2
     Transform:
-      Position: [418, 764.017761]
+      Position: [537, 328.017761]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
+      Color: [175, 59, 251, 255]
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 0.300000012
+      Friction: 0.200000003
     Rigidbody2D:
       BodyType: Dynamic
   - Entity: 16897073082553704844
     Tag:
       Tag: Rectangle_bottom
     Transform:
-      Position: [440, 840]
+      Position: [422.399994, 840]
       Scale: [1.00000203, 1]
       Angle: 0
-      Velocity: [0, 1.10000002]
+      Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
       Size: [1500, 50]
+      Color: [189, 181, 109, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
@@ -69,13 +72,14 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [238, 326]
+      Position: [741, 608]
       Scale: [1, 1]
-      Angle: 35.7000008
-      Velocity: [0, -18.8999996]
-      AngularVelocity: 10.5
+      Angle: 13.6000004
+      Velocity: [0, 0]
+      AngularVelocity: -4.69999981
     RectangleShape:
       Size: [70, 50]
+      Color: [76, 76, 228, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
@@ -89,20 +93,21 @@ Entities:
     Tag:
       Tag: rectangle_left
     Transform:
-      Position: [-89, 314]
+      Position: [-392, 314]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
       Size: [50, 1200]
+      Color: [255, 255, 255, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
       Friction: 0.0199999996
     AABB:
       Offset: [0, 0]
-      Size: [50, 1200]
+      Size: [200, 1200]
     Rigidbody2D:
       BodyType: Static
   - Entity: 10192590508296581223
@@ -116,6 +121,7 @@ Entities:
       AngularVelocity: 0
     RectangleShape:
       Size: [50, 1200]
+      Color: [105, 205, 4, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
@@ -129,39 +135,79 @@ Entities:
     Tag:
       Tag: rectangle_top
     Transform:
-      Position: [500, 157]
+      Position: [461, -61]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
       Size: [1500, 50]
+      Color: [255, 255, 255, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
       Friction: 0
     AABB:
       Offset: [0, 0]
-      Size: [1500, 50]
+      Size: [1500, 200]
     Rigidbody2D:
       BodyType: Static
   - Entity: 15843805253312547488
     Tag:
       Tag: rectangle_tabele_top
     Transform:
-      Position: [332, 633]
+      Position: [248, 556]
       Scale: [1, 1]
-      Angle: 153.600006
-      Velocity: [-2.79999995, 0]
+      Angle: 155.199997
+      Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
-      Size: [400, 50]
+      Size: [400, 20]
+      Color: [31, 12, 12, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 0.419999987
+      Friction: 0.200000003
     AABB:
       Offset: [0, 0]
-      Size: [400, 50]
+      Size: [400, 20]
     Rigidbody2D:
       BodyType: Static
+  - Entity: 13215311034305366432
+    Tag:
+      Tag: rectangle
+    Transform:
+      Position: [671, 462]
+      Scale: [1, 1]
+      Angle: 32.7999992
+      Velocity: [0, 0]
+      AngularVelocity: 0
+    RectangleShape:
+      Size: [350, 50]
+      Color: [38, 12, 12, 255]
+    AABB:
+      Offset: [0, 0]
+      Size: [350, 20]
+    Rigidbody2D:
+      BodyType: Static
+  - Entity: 18396040561802327575
+    Tag:
+      Tag: polygon
+    Transform:
+      Position: [245, 325]
+      Scale: [1, 1]
+      Angle: 173.5
+      Velocity: [0, 0]
+      AngularVelocity: -5.4000001
+    PolygonShape:
+      Sides: 5
+      Size: 50
+      Color: [47, 155, 47, 255]
+    PolygonCollider:
+      Offset: [0, 0]
+      TexSize: [0, 0]
+      Points:
+        Size: 5
+        Elements: [[0, -50], [47.5429726, -15.4811382], [29.4407749, 40.413372], [-29.3118954, 40.5069466], [-47.592041, -15.3296309]]
+    Rigidbody2D:
+      BodyType: Dynamic

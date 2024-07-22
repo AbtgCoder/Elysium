@@ -97,6 +97,16 @@ public:
 	CCircle(CCircle& other) = default;
 };
 
+class CPolygon : public Component
+{
+public:
+	int sides = 3; // this must be >= 3
+	float size = 50.0f;
+	sf::Color color = { 255, 255, 255, 255 };
+	CPolygon() = default;
+	CPolygon(const CPolygon&) = default;
+};
+
 class CLifespan : public Component
 {
 public:

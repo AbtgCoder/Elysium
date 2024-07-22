@@ -53,6 +53,7 @@ void PhysicsBody::ResetMassData(float density)
 		m_I = 0.0f;
 		m_invI = 0.0f;
 	}
+
 }
 
 void PhysicsBody::AddForce(const Vec2& f)

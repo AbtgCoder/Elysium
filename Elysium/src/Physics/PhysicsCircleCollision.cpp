@@ -12,7 +12,7 @@ int PhysicsCircleCircleCollision(Contact* contacts, PhysicsBody* body1, PhysicsB
 	Vec2 pA = body1->m_position;
 	Vec2 pB = body2->m_position;
 	
-	Vec2 d = pA - pB;
+	Vec2 d = pB - pA;
 	float distSqr = d.dot(d);
 	float radius = circleA->m_radius + circleB->m_radius;
 	if (distSqr > radius * radius)
@@ -22,8 +22,8 @@ int PhysicsCircleCircleCollision(Contact* contacts, PhysicsBody* body1, PhysicsB
 
 	contacts[numContacts].m_separation = d.length() - radius;
 	contacts[numContacts].m_normal = d.normalize();
-	contacts[numContacts].m_position = pA - contacts[numContacts].m_normal * circleA->m_radius;
-	contacts[numContacts].m_id.key = 0; // does this work or nah
+	contacts[numContacts].m_position = pA + contacts[numContacts].m_normal * circleA->m_radius;
+	contacts[numContacts].m_id.key = 0;
 	numContacts += 1;
 	return numContacts;
 }
@@ -140,16 +140,16 @@ int PhysicsCirclePolygonCollision(Contact* contacts, PhysicsBody* body1, Physics
 		}
 	}
 
-	Vec2 direction = flip ? polyPos - circlePos : circlePos - polyPos;
+	Vec2 direction = flip ? circlePos - polyPos : polyPos - circlePos;
 	if (direction.dot(collisionNormal) < 0.0f)
 	{
 		collisionNormal = collisionNormal * -1; 
 	}
-	ESM_LOG("collision normal", collisionNormal, "collision depth", collisionDepth);
+	//ESM_LOG("collision normal", collisionNormal, "collision depth", collisionDepth);
 
 	contacts[0].m_separation = collisionDepth;
 	contacts[0].m_normal = collisionNormal;
-	contacts[0].m_position = flip ? circlePos + collisionNormal * circleRadius : circlePos - collisionNormal * circleRadius; // TODO: check if this works in every case
+	contacts[0].m_position = flip ? circlePos - collisionNormal * circleRadius :  circlePos + collisionNormal * circleRadius; // TODO: check if this works in every case
 	contacts[0].m_id.key = 0;
 	return 1;
 }

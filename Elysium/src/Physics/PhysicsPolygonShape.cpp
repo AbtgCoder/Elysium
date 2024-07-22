@@ -64,6 +64,6 @@ void PhysicsPolygonShape::SetAsBox(float hx, float hy, const Vec2& center, float
 void PhysicsPolygonShape::ComputeMass(PhysicsMassData* massData, float density) const
 {
 	//TODO: mass and moment of inertia calculation for polygons
-	massData->mass = 1.0f;
-	massData->I = 1.0f;
+	massData->mass = 50.0f;
+	massData->I = 50.0f;
 }

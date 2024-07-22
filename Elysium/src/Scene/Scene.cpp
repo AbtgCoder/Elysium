@@ -72,6 +72,10 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 		{
 			runtimeEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
 		}
+		else if (e.hasComponent<CPolygon>())
+		{
+			runtimeEntity.addComponent<CPolygon>(e.getComponent<CPolygon>());
+		}
 
 		if (e.hasComponent<CCircleCollider>())
 		{
@@ -149,6 +153,10 @@ Entity Scene::DuplicateEntity(Entity e)
 	else if (e.hasComponent<CRectangle>())
 	{
 		duplicateEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
+	}
+	else if (e.hasComponent<CPolygon>())
+	{
+		duplicateEntity.addComponent<CPolygon>(e.getComponent<CPolygon>());
 	}
 
 	if (e.hasComponent<CCircleCollider>())
@@ -284,7 +292,7 @@ void Scene::OnRuntimeStart()
 	}
 
 	// Physics world initialization
-	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.0f}, 10);
+	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.8f}, 10);
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.hasComponent<CRigidBody>())
@@ -311,12 +319,11 @@ void Scene::OnRuntimeStart()
 			{
 				auto& pc2d = e.getComponent<CPolygonCollider>();
 				std::vector<Vec2> vertices = pc2d.colliderVertices;
-				Vec2 eSize = e.getComponent<CPolygonCollider>().size;
 				std::vector<Vec2> points;
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
-					Vec2 point = (Vec2(transform.pos.x - eSize.x / 2 + vertices[i].x, transform.pos.y + eSize.y / 2 - vertices[i].y) - transform.pos);
-					points.push_back({point.x / PPM, -1 * point.y / PPM});
+					Vec2 point = vertices[i];
+					points.push_back({ point.x / PPM, -1 * point.y / PPM});
 				}
 				PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
 				polyShape->Set(points);
@@ -334,11 +341,11 @@ void Scene::OnRuntimeStart()
 			{
 				auto& pm = e.getComponent<CPhysicsMaterial>();
 				body->m_friction = pm.friction;
-				body->ResetMassData(1.0f);
+				body->ResetMassData(5.7f);
 			}
 			else
 			{
-				body->ResetMassData(1.0f);
+				body->ResetMassData(5.7f);
 			}
 
 			m_PhysicsWorld->AddBody(body);
@@ -373,6 +380,8 @@ void Scene::OnRuntimeStop()
 
 	// Physics world deletion
 	delete m_PhysicsWorld;
+	if (m_bomb)
+		m_bomb.destroy();
 }
 
 void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
@@ -460,10 +469,14 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 				if (e.hasComponent<CRigidBody>())
 				{
 					auto& rb2d = e.getComponent<CRigidBody>();
-					PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-					e.getComponent<CTransform>().velocity = body->m_velocity;
-					e.getComponent<CTransform>().pos = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
-					e.getComponent<CTransform>().angle = body->m_rotation * DEG_PER_RAD;
+					if (rb2d.runtimeBody)
+					{
+						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+						e.getComponent<CTransform>().velocity = body->m_velocity;
+						e.getComponent<CTransform>().pos = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
+						e.getComponent<CTransform>().angle = body->m_rotation * DEG_PER_RAD;
+						e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
+					}
 				}
 			}
 
@@ -621,6 +634,51 @@ void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
 
 void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 {
+	if (!m_bomb)
+	{
+		m_bomb = AddEntity("runtime_bomb");
+		auto& rb2d = m_bomb.addComponent<CRigidBody>();
+		auto& transform = m_bomb.getComponent<CTransform>();
+		int xmin = 100, xmax = 1000, ymin = 200, ymax = 800;
+		transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
+		transform.angle = rand() % (360 + 1);
+		int vmin = -6, vmax = 6;
+		transform.velocity = Vec2(rand() % (vmax - vmin + 1) +vmin, rand() % (vmax - vmin + 1) + vmin);
+		transform.angularVelocity = rand() % (vmax*2 - vmin*2 + 1) + vmin*2;
+		auto& rectangle = m_bomb.addComponent<CRectangle>();
+		rectangle.color = sf::Color(0, 255, 0, 255);
+		auto& bb2d = m_bomb.addComponent<CBoundingBox>(rectangle.size);
+		
+		PhysicsBody* body = new PhysicsBody();
+		body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
+		body->m_rotation = transform.angle / DEG_PER_RAD;
+		body->m_velocity = transform.velocity;
+		body->m_angularVelocity = transform.angularVelocity;
+		body->m_type = PhysicsBodyType::dynamicBody;
+		rb2d.runtimeBody = body;
+
+		PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
+		boxShape->SetAsBox(bb2d.halfSize.x * transform.scale.x / PPM, bb2d.halfSize.y * transform.scale.y / PPM, bb2d.offset / PPM, 0.0f);
+		body->m_shape = boxShape;
+		body->ResetMassData(5.7f);
+
+		m_PhysicsWorld->AddBody(body);
+		return;
+	}
+	auto& transform = m_bomb.getComponent<CTransform>();
+	int xmin = 100, xmax = 1000, ymin = 200, ymax = 800;
+	transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
+	transform.angle = rand() % (360 + 1);
+	int vmin = -6, vmax = 6;
+	transform.velocity = Vec2(rand() % (vmax - vmin + 1) + vmin, rand() % (vmax - vmin + 1) + vmin);
+	transform.angularVelocity = rand() % (vmax * 2 - vmin * 2 + 1) + vmin * 2;
+	auto& rb2d = m_bomb.getComponent<CRigidBody>();
+	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+	body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
+	body->m_rotation = transform.angle / DEG_PER_RAD;
+	body->m_velocity = transform.velocity;
+	body->m_angularVelocity = transform.angularVelocity;
+	
 }
 
 void Scene::Step(int frames)
@@ -639,6 +697,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		{
 			if (e.hasComponent<CCircleCollider>())
 			{
+				m_CircleShape.setPointCount(30);
 				m_CircleShape.setRadius(e.getComponent<CCircleCollider>().radius);
 				m_CircleShape.setOrigin(e.getComponent<CCircleCollider>().radius, e.getComponent<CCircleCollider>().radius);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
@@ -664,10 +723,9 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
 				m_PhysicsPoly.setPointCount(vertices.size());
 				Vec2 ePos = e.getComponent<CTransform>().pos;
-				Vec2 eSize = e.getComponent<CPolygonCollider>().size;
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
-					Vec2 rotatedPoint = ePos + (Vec2( ePos.x - eSize.x / 2 + vertices[i].x, ePos.y + eSize.y / 2 - vertices[i].y ) - ePos).rotate(-1 * e.getComponent<CTransform>().angle);
+					Vec2 rotatedPoint = ePos + vertices[i].rotate(-1 * e.getComponent<CTransform>().angle / DEG_PER_RAD);
 					m_PhysicsPoly.setPoint(i, sf::Vector2f(rotatedPoint.x, rotatedPoint.y));
 				}
 				renderTexture.draw(m_PhysicsPoly);
@@ -690,6 +748,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			}
 			else if (e.hasComponent<CCircle>())
 			{
+				m_CircleShape.setPointCount(30);
 				m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
 				m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
@@ -704,6 +763,17 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 				m_RectangleShape.setFillColor(e.getComponent<CRectangle>().color);
 				renderTexture.draw(m_RectangleShape);
+			}
+			else if (e.hasComponent<CPolygon>())
+			{
+				m_CircleShape.setPointCount(e.getComponent<CPolygon>().sides);
+				m_CircleShape.setRadius(e.getComponent<CPolygon>().size);
+				m_CircleShape.setOrigin(e.getComponent<CPolygon>().size, e.getComponent<CPolygon>().size);
+				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+				m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+				m_CircleShape.setFillColor(e.getComponent<CPolygon>().color);
+				m_CircleShape.setOutlineColor(e.getComponent<CPolygon>().color);
+				renderTexture.draw(m_CircleShape);
 			}
 
 			//TODO:  only if entity is selected
@@ -724,10 +794,10 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 	{
 		for (auto p : m_contactPoints)
 		{
+			m_CircleShape.setPointCount(30);
 			m_CircleShape.setRadius(3.0f);
 			m_CircleShape.setOrigin(3.0f, 3.0f);
-			//m_CircleShape.setPosition(p.x * PPM, -1 * p.y * PPM);
-			m_CircleShape.setPosition(p.x, p.y);
+			m_CircleShape.setPosition(p.x * PPM, -1 * p.y * PPM);
 			m_CircleShape.setFillColor(sf::Color(255, 0, 0));
 			renderTexture.draw(m_CircleShape);
 		}

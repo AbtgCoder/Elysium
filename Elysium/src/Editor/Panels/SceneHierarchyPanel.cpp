@@ -122,15 +122,29 @@ std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity 
 	// TODO: more algs :  jarvis march, chan's algorithm etc
 	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
 
-	//std::vector<Vec2> colliderVertices;
-	//Vec2 ePos = e.getComponent<CTransform>().pos; 
-	//Vec2 eSize(tex.getSize().x, tex.getSize().y);
-	//for (auto p : convexHull)
-	//{
-	//	colliderVertices.push_back(Vec2(ePos.x - eSize.x / 2 + p.x, ePos.y + eSize.y / 2 - p.y));
-	//}
-	//return colliderVertices;
-	return convexHull;
+	std::vector<Vec2> colliderVertices;
+	Vec2 eSize(tex.getSize().x, tex.getSize().y);
+	for (auto p : convexHull)
+	{
+		colliderVertices.push_back(Vec2(- eSize.x / 2 + p.x, eSize.y / 2 - p.y));
+	}
+	return colliderVertices;
+	
+}
+
+std::vector<Vec2> generatePolygonColliderVertices(int numSides, float radius)
+{
+	std::vector<Vec2> vertices;
+	vertices.reserve(numSides);
+
+	for (int i = 0; i < numSides; i++)
+	{
+		float theta = 2.0f * 3.14 * i / numSides;
+		float x = radius * std::sin(theta);
+		float y = -1 * radius * std::cos(theta);
+		vertices.emplace_back(Vec2(x, y));
+	}
+	return vertices;
 }
 
 void SceneHierarchyPanel::OnImGuiRender()
@@ -178,6 +192,11 @@ void SceneHierarchyPanel::OnImGuiRender()
 				auto entity = m_Scene->AddEntity("rectangle");
 				entity.addComponent<CRectangle>();
 			}
+			if (ImGui::MenuItem("Create Polygon Entity"))
+			{
+				auto entity = m_Scene->AddEntity("polygon");
+				entity.addComponent<CPolygon>();
+			}
 			ImGui::EndPopup();
 		}
 		ImGui::End();
@@ -224,10 +243,15 @@ void SceneHierarchyPanel::OnImGuiRender()
 			{
 				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", m_InspectedEntity.getComponent<CRectangle>().size);
 			}
+			else if (m_InspectedEntity.hasComponent<CPolygon>())
+			{
+				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", generatePolygonColliderVertices(m_InspectedEntity.getComponent<CPolygon>().sides, m_InspectedEntity.getComponent<CPolygon>().size)); // TODO : generate polygon collider vertices from no of sides
+			}
 			else
 			{
 				DisplayAddComponentEntry<CCircle>("Circle Shape");
 				DisplayAddComponentEntry<CRectangle>("Rectangle Shape");
+				DisplayAddComponentEntry<CPolygon>("Polygon Shape");
 				DisplayAddComponentEntry<CCircleCollider>("Circle Collider 2D");
 				DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D");
 				DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D");
@@ -292,6 +316,26 @@ void SceneHierarchyPanel::OnImGuiRender()
 					);
 				}
 				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
+			});
+
+		DrawComponentGUI<CPolygon>("Polygon Shape", m_InspectedEntity, [](auto& component)
+			{
+				float colorArray[4];
+				colorArray[0] = component.color.r / 255.0f;
+				colorArray[1] = component.color.g / 255.0f;
+				colorArray[2] = component.color.b / 255.0f;
+				colorArray[3] = component.color.a / 255.0f;
+				if (ImGui::ColorEdit4("Color", colorArray))
+				{
+					component.color = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0] * 255),
+						static_cast<sf::Uint8>(colorArray[1] * 255),
+						static_cast<sf::Uint8>(colorArray[2] * 255),
+						static_cast<sf::Uint8>(colorArray[3] * 255)
+					);
+				}
+				DrawIntControl("Sides", component.sides, 3, 10);
+				DrawFloatControl("Size", component.size, 0.0f, 200.0f);
 			});
 
 		DrawComponentGUI<CCircleCollider>("Circle Collider 2D", m_InspectedEntity, [](auto& component)

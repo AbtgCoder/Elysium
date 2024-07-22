@@ -90,6 +90,8 @@ void PhysicsWorld::Step(float dt)
 
 	}
 
+	
+
 	// perform pre-steps
 	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
 	{
@@ -104,11 +106,6 @@ void PhysicsWorld::Step(float dt)
 		}
 	}
 
-	float linearDamping = 0.99f;
-	float angularDamping = 0.99f;
-	float sleepThreshold = 1.0f;
-
-
 	// integrate velocities
 	for (int i = 0; i < (int)m_bodies.size(); i++)
 	{
@@ -116,14 +113,6 @@ void PhysicsWorld::Step(float dt)
 		if (b->m_type == PhysicsBodyType::staticBody)
 			continue;
 
-		
-		b->m_velocity *= linearDamping;
-		b->m_angularVelocity *= angularDamping;
-
-		if (b->m_velocity.length() < sleepThreshold && std::abs(b->m_angularVelocity) < sleepThreshold) {
-			b->m_velocity.Set(0.0f, 0.0f);
-			b->m_angularVelocity = 0;
-		}
 
 		b->m_position += b->m_velocity * dt;
 		b->m_rotation += b->m_angularVelocity * dt;
@@ -131,6 +120,8 @@ void PhysicsWorld::Step(float dt)
 		b->m_force.Set(0.0f, 0.0f);
 		b->m_torque = 0.0f;
 	}
+
+	
 }
 
 
