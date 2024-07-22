@@ -21,6 +21,7 @@ public:
 	Entity AddEntity(const std::string& name);
 	Entity AddEntityWithUUID(Elysium::UUID uuid, const std::string& name);
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
+	Entity DuplicateEntity(Entity entity);
 	Entity GetEntityIfClicked(Vec2 mousePos);
 	Entity GetEntityByUUID(Elysium::UUID id);
 	void DestroyEntity(Entity entity);
@@ -75,6 +76,7 @@ private:
 	bool m_drawPhysicsColliders = false;
 	bool m_KDTreeBroadPhaseCollision = false;
 	std::vector<Vec2> m_contactPoints;
+	Entity m_bomb;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 

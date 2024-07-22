@@ -134,6 +134,53 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	return entity;
 }
 
+Entity Scene::DuplicateEntity(Entity e)
+{
+	auto duplicateEntity = AddEntity(e.getComponent<CTag>().tag);
+	duplicateEntity.addComponent<CTransform>(e.getComponent<CTransform>());
+	if (e.hasComponent<CSpriteRenderer>())
+	{
+		duplicateEntity.addComponent<CSpriteRenderer>(e.getComponent<CSpriteRenderer>());
+	}
+	else if (e.hasComponent<CCircle>())
+	{
+		duplicateEntity.addComponent<CCircle>(e.getComponent<CCircle>());
+	}
+	else if (e.hasComponent<CRectangle>())
+	{
+		duplicateEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
+	}
+
+	if (e.hasComponent<CCircleCollider>())
+	{
+		duplicateEntity.addComponent<CCircleCollider>(e.getComponent<CCircleCollider>());
+	}
+	else if (e.hasComponent<CBoundingBox>())
+	{
+		duplicateEntity.addComponent<CBoundingBox>(e.getComponent<CBoundingBox>());
+	}
+	else if (e.hasComponent<CPolygonCollider>())
+	{
+		duplicateEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
+	}
+
+	if (e.hasComponent<CRigidBody>())
+	{
+		duplicateEntity.addComponent<CRigidBody>(e.getComponent<CRigidBody>());
+	}
+	if (e.hasComponent<CPhysicsMaterial>())
+	{
+		duplicateEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
+	}
+
+	if (e.hasComponent<CNativeScriptComponent>())
+	{
+		duplicateEntity.addComponent<CNativeScriptComponent>().Bind<RotateEntity>();
+	}
+	m_entityManager.update();
+	return duplicateEntity;
+}
+
 static bool IsInside(Vec2 pos, Entity e)
 {
 	sf::Vector2u s;

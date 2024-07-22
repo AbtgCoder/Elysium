@@ -763,12 +763,15 @@ void EditorLayer::sDoAction(const Action& action)
 		}
 		else if (action.name() == "DUPLICATE")
 		{
-			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-			if (inspectedEntity)
+			if (m_SceneState == SceneState::Edit)
 			{
-				//TODO: implement duplicate entity
-				/*Entity newEntity = m_ActiveScene->AddEntity(inspectedEntity);
-				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);*/
+				Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+				if (inspectedEntity)
+				{
+					//TODO: implement duplicate entity
+					Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
+					m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+				}
 			}
 		}
 		else if (action.name() == "LEFT_CLICK")
@@ -816,7 +819,10 @@ void EditorLayer::sDoAction(const Action& action)
 	{
 		if (action.name() == "LAUNCH_BOMB")
 		{
-			m_ActiveScene->LaunchBomb(m_rt);
+			if (m_SceneState == SceneState::Play)
+			{
+				m_ActiveScene->LaunchBomb(m_rt);
+			}
 		}
 		if (action.name() == "ALT")
 		{
