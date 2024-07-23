@@ -407,48 +407,6 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 		// Physics
 		{
-			/*for (auto e : m_entityManager.GetEntities())
-			{
-				e.getComponent<CTransform>().pos += e.getComponent<CTransform>().velocity;
-
-			}
-			for (size_t i = 0; i < runtimeEntities.size(); i++)
-			{
-				for (size_t j = i + 1; j < runtimeEntities.size(); j++)
-				{
-					if (runtimeEntities[i].hasComponent<CCircleCollider>() && runtimeEntities[j].hasComponent<CCircleCollider>())
-					{
-						if (Physics::CircleCircleCollision(runtimeEntities[i], runtimeEntities[j]))
-						{
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
-						}
-					}
-					else if (runtimeEntities[i].hasComponent<CBoundingBox>() && runtimeEntities[j].hasComponent<CBoundingBox>())
-					{
-						auto cp = Physics::AABBCollision(runtimeEntities[i], runtimeEntities[j]);
-						if (cp.size() > 0)
-						{
-							for (auto p : cp)
-							{
-								m_contactPoints.push_back(p);
-							}
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
-						}
-					}
-					else if (runtimeEntities[i].hasComponent<CPolygonCollider>() && runtimeEntities[j].hasComponent<CPolygonCollider>())
-					{
-						auto cp = Physics::SAT(runtimeEntities[i], runtimeEntities[j]);
-						if (cp.size() > 0)
-						{
-							for (auto p : cp)
-							{
-								m_contactPoints.push_back(p);
-							}
-							std::cout << runtimeEntities[i].getComponent<CTag>().tag << " collided with " << runtimeEntities[j].getComponent<CTag>().tag << "\n";
-						}
-					}
-				}
-			}*/
 
 			m_PhysicsWorld->Step(dt);
 
@@ -740,7 +698,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					// highly inefficient drawing
 					sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 					sf::Sprite sprite = sf::Sprite(tex);
-					sprite.setOrigin(tex.getSize().x / 2, tex.getSize().y / 2);
+					sprite.setOrigin(tex.getSize().x / 2.0f, tex.getSize().y / 2.0f);
 					sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
 					sprite.setRotation(-1 * e.getComponent<CTransform>().angle);
 					renderTexture.draw(sprite);
@@ -799,6 +757,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			m_CircleShape.setOrigin(3.0f, 3.0f);
 			m_CircleShape.setPosition(p.x * PPM, -1 * p.y * PPM);
 			m_CircleShape.setFillColor(sf::Color(255, 0, 0));
+			m_CircleShape.setOutlineColor(sf::Color(255, 0, 0));
 			renderTexture.draw(m_CircleShape);
 		}
 	}

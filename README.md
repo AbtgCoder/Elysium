@@ -6,7 +6,7 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 1. Clone this repository
 2. Open the `Scripts/` directory and run the appropriate `Setup` script to generate projects files. You can edit the setup script to change the type of project that is generated - out of the box it is set to Visual Studio 2022 for Windows.
 
-### Current Features
+## Current Features
 - [X] Entity Drag and Drop
 - [X] Entity Inspector and Attach Components to Entities. 
 - [X] Save and load Entity component data. 
@@ -16,12 +16,12 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [X] Circle collider
 - [X] SAT for narrow phase detection
 - [X] Broad Phase Collision detection (using KD trees) 
+- [X] Basic 2D Rigidbody physics
 - [X] Rendering layers (demonstrate using parallax)
 - [X] basic Asset Management system
   
 ### Features currently in development
 - [ ] Select and Manipulate multiple entities
-- [ ] Basic 2D Rigidbody physics
 - [ ] Native Scripting via C++
 - [ ] Editor Improvements
 

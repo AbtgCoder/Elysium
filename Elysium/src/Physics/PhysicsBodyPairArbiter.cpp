@@ -78,7 +78,7 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 void Arbiter::PreStep(float inv_dt)
 {
 	
-	/*Contact* c = m_contacts;
+	Contact* c = m_contacts;
 	Vec2 mtv = c->m_normal * c->m_separation;
 	if (m_body1->m_type == PhysicsBodyType::staticBody)
 	{
@@ -92,7 +92,7 @@ void Arbiter::PreStep(float inv_dt)
 	{
 		m_body1->m_position -= mtv / 2.0f;
 		m_body2->m_position += mtv / 2.0f;
-	}*/
+	}
 
 	const float k_allowedPenetration = 0.01f;
 	float k_biasFactor = 0.2f; 

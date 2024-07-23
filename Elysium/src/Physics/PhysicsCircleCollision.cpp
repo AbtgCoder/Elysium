@@ -20,7 +20,7 @@ int PhysicsCircleCircleCollision(Contact* contacts, PhysicsBody* body1, PhysicsB
 		return numContacts;
 	}
 
-	contacts[numContacts].m_separation = d.length() - radius;
+	contacts[numContacts].m_separation = radius - d.length();
 	contacts[numContacts].m_normal = d.normalize();
 	contacts[numContacts].m_position = pA + contacts[numContacts].m_normal * circleA->m_radius;
 	contacts[numContacts].m_id.key = 0;
@@ -145,6 +145,7 @@ int PhysicsCirclePolygonCollision(Contact* contacts, PhysicsBody* body1, Physics
 	{
 		collisionNormal = collisionNormal * -1; 
 	}
+
 	//ESM_LOG("collision normal", collisionNormal, "collision depth", collisionDepth);
 
 	contacts[0].m_separation = collisionDepth;

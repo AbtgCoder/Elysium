@@ -334,7 +334,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 		float separation = refn.dot(clipPoints2[i].v) - refn.dot(ref->v);
 		if (separation <= 0.002)
 		{
-			contacts[numContacts].m_separation = separation;
+			contacts[numContacts].m_separation = collisionDepth; // separation;
 			contacts[numContacts].m_normal = collisionNormal;
 			contacts[numContacts].m_position = clipPoints2[i].v;
 			contacts[numContacts].m_id = clipPoints2[i].id;

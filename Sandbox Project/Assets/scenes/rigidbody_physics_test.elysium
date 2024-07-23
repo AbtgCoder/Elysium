@@ -4,17 +4,17 @@ PhysicsConfig:
   ExternalForce: [0, 0]
   VelocityIterations: 1
   PositionIterations: 1
-  PhysicsColliders: false
+  PhysicsColliders: true
   BroadphaseCollision: false
 Entities:
   - Entity: 2904498414818527765
     Tag:
       Tag: Circle
     Transform:
-      Position: [-18, 257]
+      Position: [821, 257]
       Scale: [1, 1]
       Angle: 0
-      Velocity: [4.19999981, 0]
+      Velocity: [0, -7.4000001]
       AngularVelocity: 0
     CircleShape:
       Radius: 50
@@ -24,14 +24,14 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      Friction: 1
+      Friction: 0
     Rigidbody2D:
       BodyType: Dynamic
   - Entity: 5792722074902989541
     Tag:
       Tag: Circle2
     Transform:
-      Position: [537, 328.017761]
+      Position: [827, 479.017761]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -72,7 +72,7 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [741, 608]
+      Position: [440, 733]
       Scale: [1, 1]
       Angle: 13.6000004
       Velocity: [0, 0]
@@ -177,7 +177,7 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Position: [671, 462]
+      Position: [103, 691]
       Scale: [1, 1]
       Angle: 32.7999992
       Velocity: [0, 0]
