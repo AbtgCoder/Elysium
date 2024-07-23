@@ -24,6 +24,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0
     Rigidbody2D:
       BodyType: Dynamic
@@ -44,6 +45,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0.200000003
     Rigidbody2D:
       BodyType: Dynamic
@@ -62,6 +64,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0.400000006
     AABB:
       Offset: [0, 0]
@@ -72,7 +75,7 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [440, 733]
+      Position: [440, 728]
       Scale: [1, 1]
       Angle: 13.6000004
       Velocity: [0, 0]
@@ -82,7 +85,8 @@ Entities:
       Color: [76, 76, 228, 255]
     PhysicsMaterial:
       Mass: 1
-      RestitutionCoefficient: 1
+      RestitutionCoefficient: 0.400000006
+      RestitutionThreshold: 0.5
       Friction: 0.200000003
     AABB:
       Offset: [0, 0]
@@ -104,6 +108,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0.0199999996
     AABB:
       Offset: [0, 0]
@@ -125,6 +130,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0.100000001
     AABB:
       Offset: [0, 0]
@@ -146,6 +152,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0
     AABB:
       Offset: [0, 0]
@@ -167,6 +174,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0.200000003
     AABB:
       Offset: [0, 0]
@@ -177,7 +185,7 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Position: [103, 691]
+      Position: [726, 435]
       Scale: [1, 1]
       Angle: 32.7999992
       Velocity: [0, 0]

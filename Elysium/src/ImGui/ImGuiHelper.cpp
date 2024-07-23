@@ -58,7 +58,7 @@ void DrawFloatControl(const std::string& label, float& value, float vMin, float 
 	ImGui::SetCursorPos(contentPos);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 5, 5 });
-	ImGui::DragFloat("##val", &value, 0.1f, vMin, vMax, "%.2f");
+	ImGui::DragFloat("##val", &value, 0.01f, vMin, vMax, "%.2f");
 	ImGui::PopStyleVar();
 
 	ImGui::Columns(1);

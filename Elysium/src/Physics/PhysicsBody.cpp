@@ -4,7 +4,7 @@
 
 PhysicsBody::PhysicsBody()
 	: m_position(0.0f, 0.0f), m_rotation(0.0f), m_velocity(0.0f, 0.0f), m_angularVelocity(0.0f), m_type(PhysicsBodyType::staticBody),
-	  m_force(0.0f, 0.0f), m_torque(0.0f), m_friction(0.2f), m_density(1.0f), m_mass(FLT_MAX), m_invMass(0.0f), m_I(FLT_MAX), m_invI(0.0f)
+	m_force(0.0f, 0.0f), m_torque(0.0f), m_friction(0.2f), m_restitution(0.5f), m_restitutionThreshold(0.5f), m_density(1.0f), m_mass(FLT_MAX), m_invMass(0.0f), m_I(FLT_MAX), m_invI(0.0f)
 {
 
 }

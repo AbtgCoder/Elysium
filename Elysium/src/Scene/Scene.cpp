@@ -344,6 +344,7 @@ void Scene::OnRuntimeStart()
 			{
 				auto& pm = e.getComponent<CPhysicsMaterial>();
 				body->m_friction = pm.friction;
+				body->m_restitution = pm.restitutionCoefficient;
 				body->ResetMassData(5.7f);
 			}
 			else
@@ -793,27 +794,25 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				Mat22 R1(e.getComponent<CTransform>().angle / DEG_PER_RAD);
 				Mat22 R2(entity2.getComponent<CTransform>().angle / DEG_PER_RAD);
 
-				Vec2 anchorPos1 = p1 + R1 * joint->m_localAnchor1;
-				Vec2 anchorPos2 = p2 + R2 * joint->m_localAnchor2;
+				Vec2 rotatedAnchorPos1 = R1 * joint->m_localAnchor1;
+				Vec2 anchorPos1 = p1 + Vec2(rotatedAnchorPos1.x * PPM, - rotatedAnchorPos1.y * PPM);
+				Vec2 rotatedAnchorPos2 = R2 * joint->m_localAnchor2;
+				Vec2 anchorPos2 = p2 + Vec2(rotatedAnchorPos2.x * PPM, -rotatedAnchorPos2.y * PPM);
 
-				sf::Vertex line1[] =
-				{
-					sf::Vertex(sf::Vector2f(p1.x, p1.y)),
-					sf::Vertex(sf::Vector2f(anchorPos1.x, anchorPos1.y)),
-				};
-				renderTexture.draw(line1, 2, sf::Lines);
-				sf::Vertex line2[] =
-				{
-					sf::Vertex(sf::Vector2f(anchorPos1.x, anchorPos1.y)),
-					sf::Vertex(sf::Vector2f(p2.x, p2.y)),
-				};
-				renderTexture.draw(line2, 2, sf::Lines);
-				sf::Vertex line3[] =
-				{
-					sf::Vertex(sf::Vector2f(p2.x, p2.y)),
-					sf::Vertex(sf::Vector2f(anchorPos2.x, anchorPos2.y)),
-				};
-				renderTexture.draw(line3, 2, sf::Lines);
+				sf::VertexArray lines(sf::Lines, 4);
+				lines[0].position = sf::Vector2f(p1.x, p1.y);
+				lines[0].color = sf::Color(128, 128, 204); 
+
+				lines[1].position = sf::Vector2f(anchorPos1.x, anchorPos1.y);
+				lines[1].color = sf::Color(128, 128, 204); 
+
+				// Line 2
+				lines[2].position = sf::Vector2f(p2.x, p2.y);
+				lines[2].color = sf::Color(128, 128, 204); 
+
+				lines[3].position = sf::Vector2f(anchorPos2.x, anchorPos2.y);
+				lines[3].color = sf::Color(128, 128, 204);
+				renderTexture.draw(lines);
 			}
 		}
 	}

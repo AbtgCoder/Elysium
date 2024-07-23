@@ -4,7 +4,7 @@ PhysicsConfig:
   ExternalForce: [5, 0]
   VelocityIterations: 6
   PositionIterations: 3
-  PhysicsColliders: false
+  PhysicsColliders: true
   BroadphaseCollision: false
 Entities:
   - Entity: 5191361115777846691
@@ -49,7 +49,7 @@ Entities:
     Tag:
       Tag: rectangle_groun
     Transform:
-      Position: [1350, 706]
+      Position: [1350, 700]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -65,7 +65,7 @@ Entities:
     Joint:
       Entity1ID: 9854374558274351569
       Entity2ID: 17579962328431302361
-      AnchorPosition: [0, -406]
+      AnchorPosition: [0, -400]
   - Entity: 17579962328431302361
     Tag:
       Tag: rectangle

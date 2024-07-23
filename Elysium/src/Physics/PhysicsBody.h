@@ -41,6 +41,8 @@ public:
 	PhysicsShape* m_shape;
 
 	float m_friction;
+	float m_restitution;
+	float m_restitutionThreshold;
 	float m_density;
 
 	float m_mass, m_invMass;

@@ -78,6 +78,8 @@ struct Arbiter
 
 	// combined friction: root(f1*f2)
 	float m_friction;
+	float m_restitution; // combined restitution: max of e1,e2
+	float m_restitionThreshold; // combined restitution threshold: min of threshold1 & threshold2
 };
 
 inline bool operator < (const ArbiterKey& a1, const ArbiterKey& a2)

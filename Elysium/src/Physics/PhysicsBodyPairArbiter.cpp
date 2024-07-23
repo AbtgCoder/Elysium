@@ -21,6 +21,8 @@ Arbiter::Arbiter(PhysicsBody* b1, PhysicsBody* b2)
 	m_numContacts = Collide(m_contacts, m_body1, m_body2);
 
 	m_friction = sqrtf(m_body1->m_friction * m_body2->m_friction);
+	m_restitution = std::max(m_body1->m_restitution, m_body2->m_restitution);
+	m_restitionThreshold = std::min(m_body1->m_restitutionThreshold, m_body2->m_restitutionThreshold);
 }
 
 void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
@@ -120,9 +122,13 @@ void Arbiter::PreStep(float inv_dt)
 		c->m_massTangent = 1.0f / kTangent;
 
 		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
-		c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
+		//c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
 		//ESM_LOG("bias", c->m_bias);
-		
+		float vRel = c->m_normal.dot(m_body2->m_velocity + Cross(m_body2->m_angularVelocity, c->m_r2) - m_body1->m_velocity - Cross(m_body1->m_angularVelocity, c->m_r1));
+		if (vRel < -m_restitionThreshold) 
+		{
+			c->m_bias = -m_restitution * vRel;
+		}
 		//if accumulate impulses then:
 		{
 			// Apply normal + frictional impulse
