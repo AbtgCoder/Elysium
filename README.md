@@ -12,13 +12,17 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [X] Save and load Entity component data. 
 - [X] Make a Play Test Scene, where the created level and its systems(collision, animation, etc) can be tested.
 - [X] World view/camera to make bigger levels
+- [X] Rendering layers (demonstrate using parallax)
+- [X] basic Asset Management system
+
+### Physics Features
 - [X] Polygon Collider
 - [X] Circle collider
 - [X] SAT for narrow phase detection
 - [X] Broad Phase Collision detection (using KD trees) 
 - [X] Basic 2D Rigidbody physics
-- [X] Rendering layers (demonstrate using parallax)
-- [X] basic Asset Management system
+- [X] Hinge Joint
+
   
 ### Features currently in development
 - [ ] Select and Manipulate multiple entities

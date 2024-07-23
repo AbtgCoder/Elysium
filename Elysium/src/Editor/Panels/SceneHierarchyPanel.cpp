@@ -389,8 +389,9 @@ void SceneHierarchyPanel::OnImGuiRender()
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 					{
 						Elysium::UUID entityId = *(Elysium::UUID*)payload->Data;
-						//TODO: check if entity id valid && only if ENTITY HAS RIGIDBODY component
-						component.entity2Id = entityId;
+						auto e = m_Scene->GetEntityByUUID(entityId);
+						if (e.hasComponent<CRigidBody>())
+							component.entity2Id = entityId;
 					}
 					ImGui::EndDragDropTarget();
 				}

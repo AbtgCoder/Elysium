@@ -26,12 +26,23 @@ void PhysicsWorld::AddBody(PhysicsBody* body)
 	m_bodies.push_back(body);
 }
 
+void PhysicsWorld::AddJoint(PhysicsHingeJoint* joint)
+{
+	m_joints.push_back(joint);
+}
+
 void PhysicsWorld::Clear()
 {
 	for (auto body : m_bodies) {
 		delete body;
 	}
 	m_bodies.clear();
+	
+	for (auto joint : m_joints) {
+		delete joint;
+	}
+	m_joints.clear();
+	
 	m_arbiters.clear();
 }
 
@@ -97,12 +108,24 @@ void PhysicsWorld::Step(float dt)
 	{
 		arb->second.PreStep(inv_dt);
 	}
+
+	for (int i = 0; i < (int)m_joints.size(); i++)
+	{
+		m_joints[i]->PreStep(inv_dt);
+	}
+
+
 	// perform Sequential Impulse
 	for (int i = 0; i < m_ImpulseIterations; ++i)
 	{
 		for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
 		{
 			arb->second.ApplyImpulse();
+		}
+
+		for (int i = 0; i < (int)m_joints.size(); i++)
+		{
+			m_joints[i]->ApplyImpulse();
 		}
 	}
 

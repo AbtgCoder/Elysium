@@ -217,6 +217,9 @@ public:
 	Elysium::UUID entity2Id; // TODO: only works if this is a valid entityID)
 	Vec2 anchorPos; // NOTE: this is relative to entity1 pos
 
+	// storage for runtime
+	void* runtimeJoint = nullptr;
+
 	CJoint() = default;
 	CJoint(Elysium::UUID id)
 		: entity1Id(id) {}

@@ -89,7 +89,6 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 		{
 			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
 		}
-
 		if (e.hasComponent<CRigidBody>())
 		{
 			runtimeEntity.addComponent<CRigidBody>(e.getComponent<CRigidBody>());
@@ -97,6 +96,10 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 		if (e.hasComponent<CPhysicsMaterial>())
 		{
 			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
+		}
+		if (e.hasComponent<CJoint>())
+		{
+			runtimeEntity.addComponent<CJoint>(e.getComponent<CJoint>());
 		}
 
 		if (e.hasComponent<CNativeScriptComponent>())
@@ -301,7 +304,7 @@ void Scene::OnRuntimeStart()
 			auto& rb2d = e.getComponent<CRigidBody>();
 
 			PhysicsBody* body = new PhysicsBody();
-			body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM};
+			body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
 			body->m_rotation = transform.angle / DEG_PER_RAD;
 			body->m_velocity = transform.velocity;
 			body->m_angularVelocity = transform.angularVelocity;
@@ -323,7 +326,7 @@ void Scene::OnRuntimeStart()
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
 					Vec2 point = vertices[i];
-					points.push_back({ point.x / PPM, -1 * point.y / PPM});
+					points.push_back({ point.x / PPM, -1 * point.y / PPM });
 				}
 				PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
 				polyShape->Set(points);
@@ -334,7 +337,7 @@ void Scene::OnRuntimeStart()
 				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
 				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
 				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().scale.x / PPM;
-				body->m_shape = circleShape;	
+				body->m_shape = circleShape;
 			}
 
 			if (e.hasComponent<CPhysicsMaterial>())
@@ -352,13 +355,33 @@ void Scene::OnRuntimeStart()
 		}
 		
 
+	}
+	
+	for (auto e : m_entityManager.GetEntities())
+	{
 		if (e.hasComponent<CJoint>())
 		{
-			auto& joint = e.getComponent<CJoint>();
-			if (joint.entity2Id > -1) //TODO: check if both entity id's are valid ??, and first id should be equal to entitie's id
+			auto& jointComponent = e.getComponent<CJoint>();
+			if (!IsEntityUUIDValid(jointComponent.entity2Id))
 			{
-				std::cout << "joint info: " << joint.entity1Id << " " << joint.entity2Id << " " << joint.anchorPos << "\n";
+				continue;
 			}
+			auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
+			if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>())) //TODO: should we be doing these checks here ??
+			{
+				continue;
+			}
+			PhysicsBody* body1 = (PhysicsBody*)(e.getComponent<CRigidBody>().runtimeBody);
+			PhysicsBody* body2 = (PhysicsBody*)(entity2.getComponent<CRigidBody>().runtimeBody);
+			if (body1->m_type == PhysicsBodyType::staticBody && body2->m_type == PhysicsBodyType::staticBody)
+			{
+				continue;
+			}
+			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().pos;
+			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
+			joint->Set(body1, body2, Vec2(anchorWorldPos.x / PPM, - anchorWorldPos.y / PPM));
+			jointComponent.runtimeJoint = joint;
+			m_PhysicsWorld->AddJoint(joint);
 		}
 	}
 }
@@ -733,19 +756,66 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				m_CircleShape.setOutlineColor(e.getComponent<CPolygon>().color);
 				renderTexture.draw(m_CircleShape);
 			}
-
-			//TODO:  only if entity is selected
-		/*	if (e.hasComponent<CJoint>())
+		}
+		
+		if (e.hasComponent<CJoint>())
+		{
+			if (!m_IsRunning)
 			{
+				//TODO:  only if entity is selected
+				/*m_CircleShape.setPointCount(30);
 				m_CircleShape.setRadius(30.0f);
 				m_CircleShape.setOrigin(30.0f, 30.0f);
 				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CJoint>().anchorPos.x, e.getComponent<CTransform>().pos.y + e.getComponent<CJoint>().anchorPos.y);
 				m_CircleShape.setFillColor(sf::Color(221, 255, 221, 120));
 				m_CircleShape.setOutlineColor(sf::Color(221, 255, 221, 255));
-				renderTexture.draw(m_CircleShape);
-			}*/
-		}
+				renderTexture.draw(m_CircleShape);*/
+				continue;
+			}
+			
+			auto& jointComponent = e.getComponent<CJoint>();
+			if (!IsEntityUUIDValid(jointComponent.entity2Id))
+			{
+				continue;
+			}
+			auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
+			if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>()))
+			{
+				continue;
+			}
 
+			if (e.getComponent<CJoint>().runtimeJoint)
+			{
+				PhysicsHingeJoint* joint = (PhysicsHingeJoint*)e.getComponent<CJoint>().runtimeJoint;
+
+				Vec2 p1 = e.getComponent<CTransform>().pos;
+				Vec2 p2 = entity2.getComponent<CTransform>().pos;
+				Mat22 R1(e.getComponent<CTransform>().angle / DEG_PER_RAD);
+				Mat22 R2(entity2.getComponent<CTransform>().angle / DEG_PER_RAD);
+
+				Vec2 anchorPos1 = p1 + R1 * joint->m_localAnchor1;
+				Vec2 anchorPos2 = p2 + R2 * joint->m_localAnchor2;
+
+				sf::Vertex line1[] =
+				{
+					sf::Vertex(sf::Vector2f(p1.x, p1.y)),
+					sf::Vertex(sf::Vector2f(anchorPos1.x, anchorPos1.y)),
+				};
+				renderTexture.draw(line1, 2, sf::Lines);
+				sf::Vertex line2[] =
+				{
+					sf::Vertex(sf::Vector2f(anchorPos1.x, anchorPos1.y)),
+					sf::Vertex(sf::Vector2f(p2.x, p2.y)),
+				};
+				renderTexture.draw(line2, 2, sf::Lines);
+				sf::Vertex line3[] =
+				{
+					sf::Vertex(sf::Vector2f(p2.x, p2.y)),
+					sf::Vertex(sf::Vector2f(anchorPos2.x, anchorPos2.y)),
+				};
+				renderTexture.draw(line3, 2, sf::Lines);
+			}
+		}
 	}
 
 	if (m_IsRunning)

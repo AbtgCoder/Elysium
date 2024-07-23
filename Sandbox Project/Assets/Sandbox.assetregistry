@@ -29,3 +29,6 @@ AssetRegistry:
   - Handle: 14821175808918881695
     FilePath: scenes/physics_test_scene.elysium
     Type: AssetType::Scene
+  - Handle: 16098100752798027042
+    FilePath: scenes/joint_physics_test.elysium
+    Type: AssetType::Scene
