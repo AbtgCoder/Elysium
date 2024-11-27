@@ -4,7 +4,7 @@ PhysicsConfig:
   ExternalForce: [0, 0]
   VelocityIterations: 1
   PositionIterations: 1
-  PhysicsColliders: true
+  PhysicsColliders: false
   BroadphaseCollision: false
 Entities:
   - Entity: 2904498414818527765
@@ -23,8 +23,8 @@ Entities:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
-      RestitutionCoefficient: 1
-      RestitutionThreshold: 0.5
+      RestitutionCoefficient: 0.800000012
+      RestitutionThreshold: 0.300000012
       Friction: 0
     Rigidbody2D:
       BodyType: Dynamic
@@ -44,7 +44,7 @@ Entities:
       Radius: 50
     PhysicsMaterial:
       Mass: 1
-      RestitutionCoefficient: 1
+      RestitutionCoefficient: 0.200000003
       RestitutionThreshold: 0.5
       Friction: 0.200000003
     Rigidbody2D:
@@ -64,7 +64,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      RestitutionThreshold: 0.5
+      RestitutionThreshold: 0
       Friction: 0.400000006
     AABB:
       Offset: [0, 0]
@@ -75,7 +75,7 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [440, 728]
+      Position: [341, 728]
       Scale: [1, 1]
       Angle: 13.6000004
       Velocity: [0, 0]
@@ -86,8 +86,8 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 0.400000006
-      RestitutionThreshold: 0.5
-      Friction: 0.200000003
+      RestitutionThreshold: 1
+      Friction: 0.239999995
     AABB:
       Offset: [0, 0]
       Size: [70, 50]
@@ -103,7 +103,7 @@ Entities:
       Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
-      Size: [50, 1200]
+      Size: [200, 1200]
       Color: [255, 255, 255, 255]
     PhysicsMaterial:
       Mass: 1
@@ -163,7 +163,7 @@ Entities:
     Tag:
       Tag: rectangle_tabele_top
     Transform:
-      Position: [248, 556]
+      Position: [241, 556]
       Scale: [1, 1]
       Angle: 155.199997
       Velocity: [0, 0]
@@ -174,7 +174,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
-      RestitutionThreshold: 0.5
+      RestitutionThreshold: 0
       Friction: 0.200000003
     AABB:
       Offset: [0, 0]
@@ -185,13 +185,13 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Position: [726, 435]
+      Position: [740, 451]
       Scale: [1, 1]
-      Angle: 32.7999992
+      Angle: 46.7933922
       Velocity: [0, 0]
       AngularVelocity: 0
     RectangleShape:
-      Size: [350, 50]
+      Size: [350, 20]
       Color: [38, 12, 12, 255]
     AABB:
       Offset: [0, 0]
@@ -206,11 +206,16 @@ Entities:
       Scale: [1, 1]
       Angle: 173.5
       Velocity: [0, 0]
-      AngularVelocity: -5.4000001
+      AngularVelocity: 0
     PolygonShape:
       Sides: 5
       Size: 50
       Color: [47, 155, 47, 255]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0.200000003
+      RestitutionThreshold: 0
+      Friction: 0.0199999996
     PolygonCollider:
       Offset: [0, 0]
       TexSize: [0, 0]
@@ -219,3 +224,17 @@ Entities:
         Elements: [[0, -50], [47.5429726, -15.4811382], [29.4407749, 40.413372], [-29.3118954, 40.5069466], [-47.592041, -15.3296309]]
     Rigidbody2D:
       BodyType: Dynamic
+  - Entity: 18396040561802327576
+    Tag:
+      Tag: Main Camera
+    Transform:
+      Position: [324, 471.700012]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+      AngularVelocity: 0
+    Camera:
+      Size: [770, 779.900024]
+      Zoom: 1
+      Primary: true
+      BackgroundColor: [49, 77, 121, 255]

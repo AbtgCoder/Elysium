@@ -276,6 +276,28 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
 			});
 
+		DrawComponentGUI<CCamera>("Camera", m_InspectedEntity, [](auto& component)
+			{
+				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
+				DrawFloatControl("Zoom", component.zoom, 0.5f, 2.0f);
+				ImGui::Checkbox("Primary", &component.primary);
+
+				float colorArray[4];
+				colorArray[0] = component.backgroundColor.r / 255.0f;
+				colorArray[1] = component.backgroundColor.g / 255.0f;
+				colorArray[2] = component.backgroundColor.b / 255.0f;
+				colorArray[3] = component.backgroundColor.a / 255.0f;
+				if (ImGui::ColorEdit4("Color", colorArray))
+				{
+					component.backgroundColor = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0] * 255),
+						static_cast<sf::Uint8>(colorArray[1] * 255),
+						static_cast<sf::Uint8>(colorArray[2] * 255),
+						static_cast<sf::Uint8>(colorArray[3] * 255)
+					);
+				}
+			});
+
 		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 
 			{
 			});
@@ -497,9 +519,9 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 {
 	auto& tag = entity.getComponent<CTag>().tag;
 
-	ImGuiTreeNodeFlags flags = ((m_InspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+	ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-	bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(entity.id()), flags, tag.c_str());
+	bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(entity.getComponent<CId>().id), flags, tag.c_str());
 
 	if (ImGui::IsItemHovered())
 	{
@@ -535,7 +557,7 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 
 	if (opened)
 	{
-		// TODO: add entity info  ?? (id, pos, etc)
+		// TODO: children entities
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 		bool opened = ImGui::TreeNodeEx((void*)9817239, flags, tag.c_str());
 		if (opened)

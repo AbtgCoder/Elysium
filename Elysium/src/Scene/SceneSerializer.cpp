@@ -112,6 +112,22 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		out << YAML::EndMap; // TransformComponent
 	}
+	if (entity.hasComponent<CCamera>())
+	{
+		out << YAML::Key << "Camera";
+		out << YAML::BeginMap;
+		auto& camera = entity.getComponent<CCamera>();
+		out << YAML::Key << "Size" << YAML::Value << camera.size;
+		out << YAML::Key << "Zoom" << YAML::Value << camera.zoom;
+		out << YAML::Key << "Primary" << YAML::Value << camera.primary;
+		out << YAML::Key << "BackgroundColor" << YAML::Value << YAML::Flow;
+		out << YAML::BeginSeq;
+		out << (float)camera.backgroundColor.r;
+		out << (float)camera.backgroundColor.g;
+		out << (float)camera.backgroundColor.b;
+		out << (float)camera.backgroundColor.a;
+		out << YAML::EndSeq;
+	}
 	if (entity.hasComponent<CCircle>())
 	{
 		out << YAML::Key << "CircleShape";
@@ -342,6 +358,25 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				tc.angle = transformComponent["Angle"].as<float>();
 				tc.velocity = transformComponent["Velocity"].as<Vec2>();
 				tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
+			}
+
+			auto cameraComponent = entity["Camera"];
+			if (cameraComponent)
+			{
+				auto& camera = deserializedEntity.addComponent<CCamera>();
+				camera.size = cameraComponent["Size"].as<Vec2>();
+				camera.zoom = cameraComponent["Zoom"].as<float>();
+				camera.primary = cameraComponent["Primary"].as<bool>();
+				auto colorArray = cameraComponent["BackgroundColor"];
+				if (colorArray)
+				{
+					camera.backgroundColor = sf::Color(
+						static_cast<sf::Uint8>(colorArray[0].as<float>()),
+						static_cast<sf::Uint8>(colorArray[1].as<float>()),
+						static_cast<sf::Uint8>(colorArray[2].as<float>()),
+						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					);
+				}
 			}
 
 			auto spriteRendererComponent = entity["SpriteRenderer"];

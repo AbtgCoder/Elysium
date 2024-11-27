@@ -22,7 +22,8 @@ typedef std::tuple <
 	std::vector<CCircleCollider>,
 	std::vector<CPhysicsMaterial>,
 	std::vector<CJoint>,
-	std::vector<CNativeScriptComponent>
+	std::vector<CNativeScriptComponent>,
+	std::vector<CCamera>
 > EntityComponentVectorTuple;
 
 static size_t MAX_ENTITIES = 100000;
@@ -103,5 +104,5 @@ private:
 	EntityComponentVectorTuple m_pool;
 	std::vector<bool> m_active;
 	EntityMemoryPool(size_t maxEntities)
-		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
+		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
 };

@@ -118,16 +118,17 @@ void Arbiter::PreStep(float inv_dt)
 		float rt1 = r1.dot(tangent);
 		float rt2 = r2.dot(tangent);
 		float kTangent = m_body1->m_invMass + m_body2->m_invMass;
-		kTangent += m_body1->m_invI * (r1.dot(r1) - rt1 * rt1) + m_body2->m_invI * (r2.dot(r2) - rt2 * rt2); //NOTE: this only works if c->normal is a unit vector
+		kTangent += m_body1->m_invI * (r1.dot(r1) - rt1 * rt1) + m_body2->m_invI * (r2.dot(r2) - rt2 * rt2); 
 		c->m_massTangent = 1.0f / kTangent;
 
 		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
 		//c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
 		//ESM_LOG("bias", c->m_bias);
+		c->m_bias = 0.0f;
 		float vRel = c->m_normal.dot(m_body2->m_velocity + Cross(m_body2->m_angularVelocity, c->m_r2) - m_body1->m_velocity - Cross(m_body1->m_angularVelocity, c->m_r1));
 		if (vRel < -m_restitionThreshold) 
 		{
-			c->m_bias = -m_restitution * vRel;
+			//c->m_bias = -m_restitution * vRel;
 		}
 		//if accumulate impulses then:
 		{
@@ -141,6 +142,28 @@ void Arbiter::PreStep(float inv_dt)
 			m_body2->m_angularVelocity += (r2.x * J.y - r2.y * J.x) * m_body2->m_invMass;
 		}
 	}
+
+	//TODO: block solver
+	if (m_numContacts == 2)
+	{
+		Contact* c1 = m_contacts;
+		Contact* c2 = m_contacts + 1;
+		Vec2 r1A = c1->m_position - m_body1->m_position;
+		Vec2 r1B = c1->m_position - m_body2->m_position;
+		Vec2 r2A = c2->m_position - m_body1->m_position;
+		Vec2 r2B = c2->m_position - m_body2->m_position;
+		float rn1A = Cross(r1A, c1->m_normal);
+		float rn1B = Cross(r1B, c1->m_normal);
+		float rn2A = Cross(r2A, c1->m_normal);
+		float rn2B = Cross(r2B, c1->m_normal);
+
+		float k11;
+		float k22;
+		float k12;
+
+	}
+
+	//TODO: do warm starting later ??
 }
 
 void Arbiter::ApplyImpulse()

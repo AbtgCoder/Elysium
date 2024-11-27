@@ -7,162 +7,176 @@ PhysicsConfig:
   PhysicsColliders: true
   BroadphaseCollision: false
 Entities:
-  - Entity: 5191361115777846691
+  - Entity: 5191361115777846692
     Tag:
-      Tag: rectangle_groun
+      Tag: Main Camera
     Transform:
-      Position: [372, 713]
+      Position: [375, 471.700012]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
       AngularVelocity: 0
-    RectangleShape:
-      Size: [500, 50]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [500, 50]
-    Rigidbody2D:
-      BodyType: Static
-    Joint:
-      Entity1ID: 5191361115777846691
-      Entity2ID: 6680003310019046679
-      AnchorPosition: [0, -491.700012]
-  - Entity: 6680003310019046679
-    Tag:
-      Tag: rectangle_2
-    Transform:
-      Position: [704, 376]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [50, 50]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [50, 50]
-    Rigidbody2D:
-      BodyType: Dynamic
-  - Entity: 9854374558274351569
-    Tag:
-      Tag: rectangle_groun
-    Transform:
-      Position: [1350, 700]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [500, 50]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [500, 50]
-    Rigidbody2D:
-      BodyType: Static
-    Joint:
-      Entity1ID: 9854374558274351569
-      Entity2ID: 17579962328431302361
-      AnchorPosition: [0, -400]
-  - Entity: 17579962328431302361
-    Tag:
-      Tag: rectangle
-    Transform:
-      Position: [1421, 300]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [50, 10]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [50, 10]
-    Rigidbody2D:
-      BodyType: Dynamic
-    Joint:
-      Entity1ID: 17579962328431302361
-      Entity2ID: 12274137803358864989
-      AnchorPosition: [27.2000008, 0]
-  - Entity: 12274137803358864989
-    Tag:
-      Tag: rectangle
-    Transform:
-      Position: [1480, 300]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [50, 10]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [50, 10]
-    Rigidbody2D:
-      BodyType: Dynamic
-    Joint:
-      Entity1ID: 12274137803358864989
-      Entity2ID: 12997829970634072589
-      AnchorPosition: [27.2000008, 0]
-  - Entity: 12997829970634072589
-    Tag:
-      Tag: rectangle
-    Transform:
-      Position: [1539, 300]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [50, 10]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [50, 10]
-    Rigidbody2D:
-      BodyType: Dynamic
-    Joint:
-      Entity1ID: 12997829970634072589
-      Entity2ID: 1644459187855079587
-      AnchorPosition: [27.2000008, 0]
-  - Entity: 1644459187855079587
-    Tag:
-      Tag: rectangle
-    Transform:
-      Position: [1597, 300]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    RectangleShape:
-      Size: [50, 10]
-      Color: [255, 255, 255, 255]
-    AABB:
-      Offset: [0, 0]
-      Size: [50, 10]
-    Rigidbody2D:
-      BodyType: Dynamic
-    Joint:
-      Entity1ID: 1644459187855079587
-      Entity2ID: 5087886777015025829
-      AnchorPosition: [27.2000008, 0]
-  - Entity: 5087886777015025829
-    Tag:
-      Tag: Circle
-    Transform:
-      Position: [1649, 300]
-      Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
-    CircleShape:
-      Radius: 20
-      Color: [255, 255, 255, 255]
-    CircleCollider:
-      Radius: 20
-    Rigidbody2D:
-      BodyType: Dynamic
+    Camera:
+      Size: [890.599976, 560.799988]
+      Zoom: 1
+      Primary: true
+      BackgroundColor: [49, 77, 121, 255]
+    ? Entity: 5191361115777846691
+      Tag:
+        Tag: rectangle_groun
+      Transform:
+        Position: [372, 713]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [500, 50]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [500, 50]
+      Rigidbody2D:
+        BodyType: Static
+      Joint:
+        Entity1ID: 5191361115777846691
+        Entity2ID: 6680003310019046679
+        AnchorPosition: [0, -491.700012]
+    : Entity: 6680003310019046679
+      Tag:
+        Tag: rectangle_2
+      Transform:
+        Position: [704, 376]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [50, 50]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [50, 50]
+      Rigidbody2D:
+        BodyType: Dynamic
+    ? Entity: 9854374558274351569
+      Tag:
+        Tag: rectangle_groun
+      Transform:
+        Position: [1350, 700]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [500, 50]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [500, 50]
+      Rigidbody2D:
+        BodyType: Static
+      Joint:
+        Entity1ID: 9854374558274351569
+        Entity2ID: 17579962328431302361
+        AnchorPosition: [0, -400]
+    : Entity: 17579962328431302361
+      Tag:
+        Tag: rectangle
+      Transform:
+        Position: [1421, 300]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [50, 10]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [50, 10]
+      Rigidbody2D:
+        BodyType: Dynamic
+      Joint:
+        Entity1ID: 17579962328431302361
+        Entity2ID: 12274137803358864989
+        AnchorPosition: [27.2000008, 0]
+    ? Entity: 12274137803358864989
+      Tag:
+        Tag: rectangle
+      Transform:
+        Position: [1480, 300]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [50, 10]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [50, 10]
+      Rigidbody2D:
+        BodyType: Dynamic
+      Joint:
+        Entity1ID: 12274137803358864989
+        Entity2ID: 12997829970634072589
+        AnchorPosition: [27.2000008, 0]
+    : Entity: 12997829970634072589
+      Tag:
+        Tag: rectangle
+      Transform:
+        Position: [1539, 300]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [50, 10]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [50, 10]
+      Rigidbody2D:
+        BodyType: Dynamic
+      Joint:
+        Entity1ID: 12997829970634072589
+        Entity2ID: 1644459187855079587
+        AnchorPosition: [27.2000008, 0]
+    ? Entity: 1644459187855079587
+      Tag:
+        Tag: rectangle
+      Transform:
+        Position: [1597, 300]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      RectangleShape:
+        Size: [50, 10]
+        Color: [255, 255, 255, 255]
+      AABB:
+        Offset: [0, 0]
+        Size: [50, 10]
+      Rigidbody2D:
+        BodyType: Dynamic
+      Joint:
+        Entity1ID: 1644459187855079587
+        Entity2ID: 5087886777015025829
+        AnchorPosition: [27.2000008, 0]
+    : Entity: 5087886777015025829
+      Tag:
+        Tag: Circle
+      Transform:
+        Position: [1649, 300]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      CircleShape:
+        Radius: 20
+        Color: [255, 255, 255, 255]
+      CircleCollider:
+        Radius: 20
+      Rigidbody2D:
+        BodyType: Dynamic

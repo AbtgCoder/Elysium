@@ -4,14 +4,14 @@ PhysicsConfig:
   ExternalForce: [0, 0]
   VelocityIterations: 6
   PositionIterations: 3
-  PhysicsColliders: true
+  PhysicsColliders: false
   BroadphaseCollision: false
 Entities:
   - Entity: 3835143888492085499
     Tag:
       Tag: Big Pipe
     Transform:
-      Position: [593, 564]
+      Position: [593, 571]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -34,7 +34,7 @@ Entities:
     Tag:
       Tag: Tile1
     Transform:
-      Position: [130.5, 336.5]
+      Position: [342.5, 531.5]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, -4.5999999]
@@ -45,6 +45,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0
     PolygonCollider:
       Offset: [0, 0]
@@ -77,7 +78,7 @@ Entities:
     Tag:
       Tag: Tile2
     Transform:
-      Position: [83.5, 445.5]
+      Position: [81.5, 445.5]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, 0]
@@ -97,7 +98,7 @@ Entities:
     Tag:
       Tag: Tile
     Transform:
-      Position: [132.999939, 639.499878]
+      Position: [912.999939, 639.499878]
       Scale: [1, 1]
       Angle: 0
       Velocity: [11.8999996, 0]
@@ -108,6 +109,7 @@ Entities:
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
       Friction: 0
     PolygonCollider:
       Offset: [0, 0]
@@ -121,7 +123,7 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Position: [516, 362]
+      Position: [469, 328]
       Scale: [1, 1]
       Angle: 0
       Velocity: [2.29999995, 0]
@@ -134,3 +136,42 @@ Entities:
       Size: [50, 50]
     Rigidbody2D:
       BodyType: Dynamic
+  - Entity: 7107834057540535859
+    Tag:
+      Tag: Tile
+    Transform:
+      Position: [132.999939, 639.499878]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [11.8999996, 0]
+      AngularVelocity: 0
+    SpriteRenderer:
+      TextureHandle: 4518961158634738713
+      Layer: 0
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 1
+      RestitutionThreshold: 0.5
+      Friction: 0
+    PolygonCollider:
+      Offset: [0, 0]
+      TexSize: [250, 150]
+      Points:
+        Size: 10
+        Elements: [[-122, 74], [123, 74], [77, 26], [30, -21], [20, -27], [10, -29], [-9, -29], [-19, -27], [-29, -21], [-76, 26]]
+    Rigidbody2D:
+      BodyType: Static
+  - Entity: 7107834057540535860
+    Tag:
+      Tag: Main Camera
+    Transform:
+      Position: [324, 471.700012]
+      Scale: [1, 1]
+      Angle: 0
+      Velocity: [0, 0]
+      AngularVelocity: 0
+    Camera:
+      Size: [704.799988, 500]
+      Zoom: 1
+      Primary: true
+      BackgroundColor: [49, 77, 121, 255]

@@ -41,8 +41,7 @@ void EditorLayer::init()
 	m_IconPause = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
 	m_IconStep = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
 	m_IconStop = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
-
-
+	
 
 	// Set ImGui Styles
 	setImGuiStyle();
@@ -55,7 +54,10 @@ void EditorLayer::init()
 	m_gridRect.setOutlineThickness(1);
 
 
-	OpenProject();
+	//OpenProject();
+	OpenProject("D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox.eproject");
+
+	m_SceneView.setCenter(0.0f, 0.0f);
 }
 
 void EditorLayer::setImGuiStyle()
@@ -150,20 +152,22 @@ void EditorLayer::update(float ts)
 {
 	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_rt.create(m_viewportSize.x, m_viewportSize.y);
-	m_SceneView.setSize(m_viewportSize.x, m_viewportSize.y);
-	m_SceneView.zoom(m_SceneViewZoom);
-	m_rt.setView(m_SceneView);
 	
 	switch (m_SceneState)
 	{
 	case SceneState::Edit:
 	{
+		m_SceneView.setSize(m_viewportSize.x, m_viewportSize.y);
+		m_SceneView.zoom(m_SceneViewZoom);
+		m_rt.setView(m_SceneView);
+		m_rt.clear();
 		if (m_ActiveScene)
 			m_ActiveScene->OnUpdateEditor(m_rt);
 		break;
 	}
 	case SceneState::Play:
 	{
+		m_rt.clear();
 		if (m_ActiveScene)
 			m_ActiveScene->OnUpdateRuntime(m_rt, ts);
 		break;
@@ -221,6 +225,10 @@ void EditorLayer::NewScene()
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
 		std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+		// Add Main Camera
+		auto camera = scene->AddEntity("Main Camera");
+		camera.addComponent<CCamera>();
+
 		SceneImporter::SaveScene(scene, relativePath);
 		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
 		// refresh content browser
@@ -370,6 +378,7 @@ void EditorLayer::sGUI()
 	m_ContentBrowserPanel->OnImGuiRender();
 	m_PhysicsConfigPanel.OnImGuiRender();
 
+	// Viewport s
 	ImGui::Begin("Viewport");
 	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
@@ -768,7 +777,6 @@ void EditorLayer::sDoAction(const Action& action)
 				Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 				if (inspectedEntity)
 				{
-					//TODO: implement duplicate entity
 					Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
 					m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 				}
@@ -867,5 +875,6 @@ void EditorLayer::sDoAction(const Action& action)
 
 void EditorLayer::onEnd()
 {
+	//TODO: Save editor settings: viewport size , zoom etc ig...
 	m_game->quit();
 }

@@ -4,6 +4,7 @@
 
 #include "Asset/AssetManager.h"
 #include "Core/Texture.h"
+#include "Asset/TextureImporter.h"
 
 #include "Scripts/RotateEntity.h"
 
@@ -12,6 +13,10 @@
 #define PPM 30.0F
 // SFML uses degrees for angles while Box2D uses radians
 #define DEG_PER_RAD 57.2957795F
+
+
+sf::Texture g_cameraIconTexture = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/CameraIcon2.png")->GetSFMLTexture();
+sf::Sprite g_cameraIconSprite = sf::Sprite(g_cameraIconTexture);
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -106,6 +111,11 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 		{
 			runtimeEntity.addComponent<CNativeScriptComponent>().Bind<RotateEntity>();
 		}
+
+		if (e.hasComponent<CCamera>())
+		{
+			runtimeEntity.addComponent<CCamera>(e.getComponent<CCamera>());
+		}
 	}
 
 	scene->m_entityManager.update();
@@ -125,7 +135,7 @@ Entity Scene::AddEntityWithUUID(Elysium::UUID uuid, const std::string& name)
 	e.addComponent<CTransform>();
 	auto& tag = e.addComponent<CTag>();
 	tag.tag = name.empty() ? "Entity" : name;
-
+	m_entityManager.update();
 	return e;
 }
 
@@ -141,6 +151,7 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	return entity;
 }
 
+//TODO: improve "Duplication" functionality
 Entity Scene::DuplicateEntity(Entity e)
 {
 	auto duplicateEntity = AddEntity(e.getComponent<CTag>().tag);
@@ -183,6 +194,10 @@ Entity Scene::DuplicateEntity(Entity e)
 	{
 		duplicateEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
 	}
+	if (e.hasComponent<CJoint>())
+	{
+		duplicateEntity.addComponent<CJoint>(e.getComponent<CJoint>());
+	}
 
 	if (e.hasComponent<CNativeScriptComponent>())
 	{
@@ -209,6 +224,10 @@ static bool IsInside(Vec2 pos, Entity e)
 		s.x = e.getComponent<CRectangle>().size.x;
 		s.y = e.getComponent<CRectangle>().size.y;
 	}
+	else if (e.hasComponent<CCamera>())
+	{
+		s = g_cameraIconTexture.getSize() + sf::Vector2u(10.0f, 10.0f);
+	}
 	Vec2 ePos = e.getComponent<CTransform>().pos;
 	if (pos.x > ePos.x - s.x / 2 &&
 		pos.x < ePos.x + s.x / 2 &&
@@ -217,7 +236,6 @@ static bool IsInside(Vec2 pos, Entity e)
 	{
 		return true;
 	}
-	return false;
 	return false;
 }
 
@@ -381,6 +399,9 @@ void Scene::OnRuntimeStart()
 			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().pos;
 			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
 			joint->Set(body1, body2, Vec2(anchorWorldPos.x / PPM, - anchorWorldPos.y / PPM));
+			// TODO: add softness & bias to the joint component ??
+			joint->m_softness = 0.00098884f;
+			joint->m_biasFactor = 0.130132;
 			jointComponent.runtimeJoint = joint;
 			m_PhysicsWorld->AddJoint(joint);
 		}
@@ -605,7 +626,36 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 
 	// Rendering
-	RenderScene(renderTexture);
+	CCamera* mainCamera = nullptr;
+	CTransform cameraTransform;
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto camera = e.getComponent<CCamera>();
+			if (camera.primary)
+			{
+				mainCamera = &camera;
+				cameraTransform = e.getComponent<CTransform>();
+				break;
+			}
+		}
+	}
+
+	if (mainCamera)
+	{
+		m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
+		m_cameraView.setCenter(cameraTransform.pos.x, cameraTransform.pos.y);
+		m_cameraView.zoom(mainCamera->zoom);
+		m_cameraView.setRotation(cameraTransform.angle);
+		renderTexture.setView(m_cameraView);
+		renderTexture.clear(mainCamera->backgroundColor);
+
+		RenderScene(renderTexture);
+
+	}
+
+	
 }
 
 void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
@@ -621,7 +671,7 @@ void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 		m_bomb = AddEntity("runtime_bomb");
 		auto& rb2d = m_bomb.addComponent<CRigidBody>();
 		auto& transform = m_bomb.getComponent<CTransform>();
-		int xmin = 100, xmax = 1000, ymin = 200, ymax = 800;
+		int xmin = 900, xmax = 1500, ymin = 100, ymax = 400;
 		transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
 		transform.angle = rand() % (360 + 1);
 		int vmin = -6, vmax = 6;
@@ -670,152 +720,199 @@ void Scene::Step(int frames)
 
 void Scene::RenderScene(sf::RenderTexture& renderTexture)
 {
-	//renderTexture.clear(sf::Color::Blue);
-	renderTexture.clear();
 
+	CCamera* mainCamera = nullptr;
+	CTransform cameraTransform;
 	for (auto e : m_entityManager.GetEntities())
 	{
-		if (m_drawPhysicsColliders)
+		if (e.hasComponent<CCamera>())
 		{
-			if (e.hasComponent<CCircleCollider>())
+			auto camera = e.getComponent<CCamera>();
+			if (camera.primary)
 			{
-				m_CircleShape.setPointCount(30);
-				m_CircleShape.setRadius(e.getComponent<CCircleCollider>().radius);
-				m_CircleShape.setOrigin(e.getComponent<CCircleCollider>().radius, e.getComponent<CCircleCollider>().radius);
-				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-				m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
-				m_CircleShape.setFillColor(sf::Color::Transparent);
-				m_CircleShape.setOutlineColor(e.getComponent<CCircle>().color);
-				m_CircleShape.setOutlineThickness(1.0f);
-				renderTexture.draw(m_CircleShape);
-			}
-			else if (e.hasComponent<CBoundingBox>())
-			{
-				Vec2 rectSize = e.getComponent<CBoundingBox>().size;
-				m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
-				m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-				m_PhysicsRect.setRotation(-1 * e.getComponent<CTransform>().angle);
-				m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CBoundingBox>().offset.x, e.getComponent<CTransform>().pos.y + e.getComponent<CBoundingBox>().offset.y);
-				m_PhysicsRect.setFillColor(sf::Color::Transparent);
-				m_PhysicsRect.setOutlineColor(e.getComponent<CRectangle>().color);
-				renderTexture.draw(m_PhysicsRect);
-			}
-			else if (e.hasComponent<CPolygonCollider>())
-			{
-				std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
-				m_PhysicsPoly.setPointCount(vertices.size());
-				Vec2 ePos = e.getComponent<CTransform>().pos;
-				for (size_t i = 0; i < vertices.size(); i++)
-				{
-					Vec2 rotatedPoint = ePos + vertices[i].rotate(-1 * e.getComponent<CTransform>().angle / DEG_PER_RAD);
-					m_PhysicsPoly.setPoint(i, sf::Vector2f(rotatedPoint.x, rotatedPoint.y));
-				}
-				renderTexture.draw(m_PhysicsPoly);
-			}
-		}
-		else
-		{
-			if (e.hasComponent<CSpriteRenderer>())
-			{
-				if (e.getComponent<CSpriteRenderer>().texture != 0)
-				{
-					// highly inefficient drawing
-					sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-					sf::Sprite sprite = sf::Sprite(tex);
-					sprite.setOrigin(tex.getSize().x / 2.0f, tex.getSize().y / 2.0f);
-					sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					sprite.setRotation(-1 * e.getComponent<CTransform>().angle);
-					renderTexture.draw(sprite);
-				}
-			}
-			else if (e.hasComponent<CCircle>())
-			{
-				m_CircleShape.setPointCount(30);
-				m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
-				m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
-				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-				m_CircleShape.setFillColor(e.getComponent<CCircle>().color);
-				renderTexture.draw(m_CircleShape);
-			}
-			else if (e.hasComponent<CRectangle>())
-			{
-				m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
-				m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
-				m_RectangleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
-				m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-				m_RectangleShape.setFillColor(e.getComponent<CRectangle>().color);
-				renderTexture.draw(m_RectangleShape);
-			}
-			else if (e.hasComponent<CPolygon>())
-			{
-				m_CircleShape.setPointCount(e.getComponent<CPolygon>().sides);
-				m_CircleShape.setRadius(e.getComponent<CPolygon>().size);
-				m_CircleShape.setOrigin(e.getComponent<CPolygon>().size, e.getComponent<CPolygon>().size);
-				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-				m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
-				m_CircleShape.setFillColor(e.getComponent<CPolygon>().color);
-				m_CircleShape.setOutlineColor(e.getComponent<CPolygon>().color);
-				renderTexture.draw(m_CircleShape);
-			}
-		}
-		
-		if (e.hasComponent<CJoint>())
-		{
-			if (!m_IsRunning)
-			{
-				//TODO:  only if entity is selected
-				/*m_CircleShape.setPointCount(30);
-				m_CircleShape.setRadius(30.0f);
-				m_CircleShape.setOrigin(30.0f, 30.0f);
-				m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CJoint>().anchorPos.x, e.getComponent<CTransform>().pos.y + e.getComponent<CJoint>().anchorPos.y);
-				m_CircleShape.setFillColor(sf::Color(221, 255, 221, 120));
-				m_CircleShape.setOutlineColor(sf::Color(221, 255, 221, 255));
-				renderTexture.draw(m_CircleShape);*/
-				continue;
-			}
-			
-			auto& jointComponent = e.getComponent<CJoint>();
-			if (!IsEntityUUIDValid(jointComponent.entity2Id))
-			{
-				continue;
-			}
-			auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
-			if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>()))
-			{
-				continue;
-			}
-
-			if (e.getComponent<CJoint>().runtimeJoint)
-			{
-				PhysicsHingeJoint* joint = (PhysicsHingeJoint*)e.getComponent<CJoint>().runtimeJoint;
-
-				Vec2 p1 = e.getComponent<CTransform>().pos;
-				Vec2 p2 = entity2.getComponent<CTransform>().pos;
-				Mat22 R1(e.getComponent<CTransform>().angle / DEG_PER_RAD);
-				Mat22 R2(entity2.getComponent<CTransform>().angle / DEG_PER_RAD);
-
-				Vec2 rotatedAnchorPos1 = R1 * joint->m_localAnchor1;
-				Vec2 anchorPos1 = p1 + Vec2(rotatedAnchorPos1.x * PPM, - rotatedAnchorPos1.y * PPM);
-				Vec2 rotatedAnchorPos2 = R2 * joint->m_localAnchor2;
-				Vec2 anchorPos2 = p2 + Vec2(rotatedAnchorPos2.x * PPM, -rotatedAnchorPos2.y * PPM);
-
-				sf::VertexArray lines(sf::Lines, 4);
-				lines[0].position = sf::Vector2f(p1.x, p1.y);
-				lines[0].color = sf::Color(128, 128, 204); 
-
-				lines[1].position = sf::Vector2f(anchorPos1.x, anchorPos1.y);
-				lines[1].color = sf::Color(128, 128, 204); 
-
-				// Line 2
-				lines[2].position = sf::Vector2f(p2.x, p2.y);
-				lines[2].color = sf::Color(128, 128, 204); 
-
-				lines[3].position = sf::Vector2f(anchorPos2.x, anchorPos2.y);
-				lines[3].color = sf::Color(128, 128, 204);
-				renderTexture.draw(lines);
+				mainCamera = &camera;
+				cameraTransform = e.getComponent<CTransform>();
+				break;
 			}
 		}
 	}
+
+
+	for (auto e : m_entityManager.GetEntities())
+		{
+			if (m_drawPhysicsColliders)
+			{
+				if (e.hasComponent<CCircleCollider>())
+				{
+					m_CircleShape.setPointCount(30);
+					m_CircleShape.setRadius(e.getComponent<CCircleCollider>().radius);
+					m_CircleShape.setOrigin(e.getComponent<CCircleCollider>().radius, e.getComponent<CCircleCollider>().radius);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_CircleShape.setFillColor(sf::Color::Transparent);
+					m_CircleShape.setOutlineColor(e.getComponent<CCircle>().color);
+					m_CircleShape.setOutlineThickness(1.0f);
+					renderTexture.draw(m_CircleShape);
+				}
+				else if (e.hasComponent<CBoundingBox>())
+				{
+					Vec2 rectSize = e.getComponent<CBoundingBox>().size;
+					m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
+					m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
+					m_PhysicsRect.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CBoundingBox>().offset.x, e.getComponent<CTransform>().pos.y + e.getComponent<CBoundingBox>().offset.y);
+					m_PhysicsRect.setFillColor(sf::Color::Transparent);
+					m_PhysicsRect.setOutlineColor(e.getComponent<CRectangle>().color);
+					renderTexture.draw(m_PhysicsRect);
+				}
+				else if (e.hasComponent<CPolygonCollider>())
+				{
+					std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
+					m_PhysicsPoly.setPointCount(vertices.size());
+					Vec2 ePos = e.getComponent<CTransform>().pos;
+					for (size_t i = 0; i < vertices.size(); i++)
+					{
+						Vec2 rotatedPoint = ePos + vertices[i].rotate(-1 * e.getComponent<CTransform>().angle / DEG_PER_RAD);
+						m_PhysicsPoly.setPoint(i, sf::Vector2f(rotatedPoint.x, rotatedPoint.y));
+					}
+					renderTexture.draw(m_PhysicsPoly);
+				}
+			}
+			else
+			{
+				if (e.hasComponent<CSpriteRenderer>())
+				{
+					if (e.getComponent<CSpriteRenderer>().texture != 0)
+					{
+						// highly inefficient drawing
+						sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+						sf::Sprite sprite = sf::Sprite(tex);
+						sprite.setOrigin(tex.getSize().x / 2.0f, tex.getSize().y / 2.0f);
+						sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+						sprite.setRotation(-1 * e.getComponent<CTransform>().angle);
+						renderTexture.draw(sprite);
+					}
+				}
+				else if (e.hasComponent<CCircle>())
+				{
+					m_CircleShape.setPointCount(30);
+					m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
+					m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_CircleShape.setFillColor(e.getComponent<CCircle>().color);
+					renderTexture.draw(m_CircleShape);
+				}
+				else if (e.hasComponent<CRectangle>())
+				{
+					m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
+					m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
+					m_RectangleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_RectangleShape.setFillColor(e.getComponent<CRectangle>().color);
+					m_RectangleShape.setOutlineColor(sf::Color::Transparent);
+					renderTexture.draw(m_RectangleShape);
+				}
+				else if (e.hasComponent<CPolygon>())
+				{
+					m_CircleShape.setPointCount(e.getComponent<CPolygon>().sides);
+					m_CircleShape.setRadius(e.getComponent<CPolygon>().size);
+					m_CircleShape.setOrigin(e.getComponent<CPolygon>().size, e.getComponent<CPolygon>().size);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_CircleShape.setFillColor(e.getComponent<CPolygon>().color);
+					m_CircleShape.setOutlineColor(e.getComponent<CPolygon>().color);
+					renderTexture.draw(m_CircleShape);
+				}
+			}
+		
+			if (e.hasComponent<CJoint>())
+			{
+				if (!m_IsRunning)
+				{
+					//TODO:  only if entity is selected
+					/*m_CircleShape.setPointCount(30);
+					m_CircleShape.setRadius(30.0f);
+					m_CircleShape.setOrigin(30.0f, 30.0f);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CJoint>().anchorPos.x, e.getComponent<CTransform>().pos.y + e.getComponent<CJoint>().anchorPos.y);
+					m_CircleShape.setFillColor(sf::Color(221, 255, 221, 120));
+					m_CircleShape.setOutlineColor(sf::Color(221, 255, 221, 255));
+					renderTexture.draw(m_CircleShape);*/
+
+					auto& jointComponent = e.getComponent<CJoint>();
+					if (!IsEntityUUIDValid(jointComponent.entity2Id))
+					{
+						continue;
+					}
+					auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
+					if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>()))
+					{
+						continue;
+					}
+
+				
+					Vec2 p1 = e.getComponent<CTransform>().pos;
+					Vec2 p2 = entity2.getComponent<CTransform>().pos;
+					Vec2 anchorPos = p1 + e.getComponent<CJoint>().anchorPos;
+					sf::VertexArray lines(sf::Lines, 4);
+					lines[0].position = sf::Vector2f(p1.x, p1.y);
+					lines[0].color = sf::Color(128, 128, 204);
+
+					lines[1].position = sf::Vector2f(anchorPos.x, anchorPos.y);
+					lines[1].color = sf::Color(128, 128, 204);
+
+					// Line 2
+					lines[2].position = sf::Vector2f(p2.x, p2.y);
+					lines[2].color = sf::Color(128, 128, 204);
+
+					lines[3].position = sf::Vector2f(anchorPos.x, anchorPos.y);
+					lines[3].color = sf::Color(128, 128, 204);
+					renderTexture.draw(lines);
+				}
+				else
+				{
+					auto& jointComponent = e.getComponent<CJoint>();
+					if (!IsEntityUUIDValid(jointComponent.entity2Id))
+					{
+						continue;
+					}
+					auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
+					if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>()))
+					{
+						continue;
+					}
+
+					if (e.getComponent<CJoint>().runtimeJoint)
+					{
+						PhysicsHingeJoint* joint = (PhysicsHingeJoint*)e.getComponent<CJoint>().runtimeJoint;
+
+						Vec2 p1 = e.getComponent<CTransform>().pos;
+						Vec2 p2 = entity2.getComponent<CTransform>().pos;
+						Mat22 R1(e.getComponent<CTransform>().angle / DEG_PER_RAD);
+						Mat22 R2(entity2.getComponent<CTransform>().angle / DEG_PER_RAD);
+
+						Vec2 rotatedAnchorPos1 = R1 * joint->m_localAnchor1;
+						Vec2 anchorPos1 = p1 + Vec2(rotatedAnchorPos1.x * PPM, -rotatedAnchorPos1.y * PPM);
+						Vec2 rotatedAnchorPos2 = R2 * joint->m_localAnchor2;
+						Vec2 anchorPos2 = p2 + Vec2(rotatedAnchorPos2.x * PPM, -rotatedAnchorPos2.y * PPM);
+
+						sf::VertexArray lines(sf::Lines, 4);
+						lines[0].position = sf::Vector2f(p1.x, p1.y);
+						lines[0].color = sf::Color(128, 128, 204);
+
+						lines[1].position = sf::Vector2f(anchorPos1.x, anchorPos1.y);
+						lines[1].color = sf::Color(128, 128, 204);
+
+						// Line 2
+						lines[2].position = sf::Vector2f(p2.x, p2.y);
+						lines[2].color = sf::Color(128, 128, 204);
+
+						lines[3].position = sf::Vector2f(anchorPos2.x, anchorPos2.y);
+						lines[3].color = sf::Color(128, 128, 204);
+						renderTexture.draw(lines);
+					}
+				}
+			}
+		}
 
 	if (m_IsRunning)
 	{
@@ -831,4 +928,21 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		}
 	}
 
+	// Camera Editor Rendering
+	if (!m_IsRunning && mainCamera)
+	{
+		g_cameraIconSprite.setOrigin(g_cameraIconTexture.getSize().x / 2.0f, g_cameraIconTexture.getSize().y / 2.0f);
+		g_cameraIconSprite.setPosition(cameraTransform.pos.x, cameraTransform.pos.y);
+		renderTexture.draw(g_cameraIconSprite);
+
+		m_RectangleShape.setSize(sf::Vector2f(mainCamera->size.x, mainCamera->size.y));
+		m_RectangleShape.setOrigin(mainCamera->size.x / 2, mainCamera->size.y / 2);
+		m_RectangleShape.setPosition(cameraTransform.pos.x, cameraTransform.pos.y);
+		m_RectangleShape.setFillColor(sf::Color::Transparent);
+		m_RectangleShape.setOutlineColor(sf::Color::White);
+		m_RectangleShape.setOutlineThickness(3.0f);
+		renderTexture.draw(m_RectangleShape);
+	}
+	
+	
 }

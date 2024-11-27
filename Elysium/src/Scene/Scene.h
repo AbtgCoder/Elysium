@@ -80,6 +80,8 @@ private:
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
+	sf::View m_cameraView;
+
 	// shader test
 	//sf::Shader m_Shader;
 

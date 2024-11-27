@@ -52,6 +52,18 @@ public:
 	CTransform(CTransform& other) = default;
 };
 
+class CCamera : public Component
+{
+public:
+	Vec2 size = { 500.0f, 500.0f };
+	float zoom = 1.0f; //TODO: only allowed btw 0.5 and 2.0 ??
+	bool primary = true;
+	sf::Color backgroundColor = { 49, 77, 121, 255};
+
+	CCamera() = default;
+	CCamera(const CCamera&) = default;
+};
+
 // forward declaration
 class ScriptableEntity;
 class CNativeScriptComponent : public Component
