@@ -24,5 +24,6 @@ private:
 	std::shared_ptr<Scene> m_Scene;
 	Entity m_InspectedEntity;
 
+	std::string searchQuery = "";
 	bool m_MouseButtonPressed = false;
 };

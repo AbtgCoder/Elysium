@@ -59,6 +59,7 @@ void EditorLayer::init()
 
 	m_SceneView.setCenter(0.0f, 0.0f);
 }
+ 
 
 void EditorLayer::setImGuiStyle()
 {
@@ -378,7 +379,7 @@ void EditorLayer::sGUI()
 	m_ContentBrowserPanel->OnImGuiRender();
 	m_PhysicsConfigPanel.OnImGuiRender();
 
-	// Viewport s
+	// Viewport 
 	ImGui::Begin("Viewport");
 	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();

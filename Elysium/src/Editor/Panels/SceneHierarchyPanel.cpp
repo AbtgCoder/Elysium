@@ -3,6 +3,7 @@
 #include "Asset/AssetManager.h"
 #include "core/Texture.h"
 #include "Physics/graham_scan.h"
+#include "Utils/StringUtils.h"
 
 
 #include "ImGui/ImGuiHelper.h"
@@ -156,16 +157,42 @@ void SceneHierarchyPanel::OnImGuiRender()
 		
 		ImGui::Begin("Scene Hierarchy");
 
-		auto& sceneName = m_Scene->m_Name;
+		/*auto& sceneName = m_Scene->m_Name;
 		char buffer[256];
 		memset(buffer, 0, sizeof(buffer));
 		strncpy_s(buffer, sizeof(buffer), sceneName.c_str(), sizeof(buffer));
 		if (ImGui::InputText("##SceneName", buffer, sizeof(buffer)))
 		{
 			sceneName = std::string(buffer);
+		}*/
+
+		char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strncpy_s(buffer, sizeof(buffer), searchQuery.c_str(), sizeof(buffer));
+		if (ImGui::InputTextEx("##SearchEntity", "Search Entity", buffer, sizeof(buffer), ImVec2(ImGui::GetContentRegionAvail().x, 24), ImGuiInputTextFlags_None))
+		{
+			searchQuery = std::string(buffer);
 		}
 
-		for (auto e : m_Scene->m_entityManager.GetEntities())
+		std::vector<Entity> entitiesToDisplay;
+		if (searchQuery.empty())
+		{
+			entitiesToDisplay = m_Scene->m_entityManager.GetEntities();
+		}
+		else
+		{
+			//TODO: improve search matching
+			for (auto e : m_Scene->m_entityManager.GetEntities())
+			{
+				auto entityName = e.getComponent<CTag>().tag;
+				if (StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(entityName)).find(StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(searchQuery))) != std::string::npos)
+				{
+					entitiesToDisplay.push_back(e);
+				}
+			}
+		}
+
+		for (auto e : entitiesToDisplay)
 		{
 			DrawEntityNode(e);
 		}
@@ -519,9 +546,30 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 {
 	auto& tag = entity.getComponent<CTag>().tag;
 
-	ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+	ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+
+	flags |= ImGuiTreeNodeFlags_Leaf; //TODO: only do this if entity has no children
+
+	auto cursorPos = ImGui::GetCursorPos();
+	ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
+	const auto& cleanname = StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(tag));
+	const size_t searchIt = cleanname.find(StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(searchQuery)));
+
+	//ImGui::SetItemAllowOverlap();
 	bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(entity.getComponent<CId>().id), flags, tag.c_str());
+
+	/*if (!searchQuery.empty() && searchIt != std::string::npos)
+	{
+		int firstLetterFoundIndex = static_cast<int>(searchIt);
+		const auto foundStr = tag.substr(0, firstLetterFoundIndex + searchQuery.size());
+		auto highlightBeginPos = ImGui::CalcTextSize(foundStr.c_str());
+		auto highlightEndPos = ImGui::CalcTextSize(searchQuery.c_str());
+
+		auto fg = ImGui::GetForegroundDrawList();
+		auto rgbColor = IM_COL32(97.0f, 0.0f, 255.0f, 0.2f * 255.0f);
+		fg->AddRectFilled(ImVec2(cursorPosition.x + 20.0f, cursorPosition.y + 4.0f), ImVec2(cursorPosition.x + highlightEndPos.x + 26.0f, cursorPosition.y + highlightEndPos.y + 6.0f), rgbColor, 4.0f);
+	}*/
 
 	if (ImGui::IsItemHovered())
 	{
@@ -542,6 +590,7 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	{
 		Elysium::UUID entityId = entity.getComponent<CId>().id;
 		ImGui::SetDragDropPayload("ENTITY", &entityId, sizeof(Elysium::UUID));
+		//TODO: ImGui::Image( (ImTextureID)drag_entity_texture_id, DRAG_ENTITY_SIZE );
 		ImGui::EndDragDropSource();
 	}
 
@@ -558,12 +607,6 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	if (opened)
 	{
 		// TODO: children entities
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool opened = ImGui::TreeNodeEx((void*)9817239, flags, tag.c_str());
-		if (opened)
-		{
-			ImGui::TreePop();
-		}
 		ImGui::TreePop();
 	}
 

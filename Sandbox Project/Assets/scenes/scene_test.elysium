@@ -63,7 +63,7 @@ Entities:
     Tag:
       Tag: Player
     Transform:
-      Position: [765, 314.599365]
+      Position: [224, 443.599365]
       Scale: [1, 1]
       Angle: 0
       Velocity: [0, -2]
@@ -171,7 +171,7 @@ Entities:
       Velocity: [0, 0]
       AngularVelocity: 0
     Camera:
-      Size: [704.799988, 500]
+      Size: [705, 500]
       Zoom: 1
       Primary: true
       BackgroundColor: [49, 77, 121, 255]

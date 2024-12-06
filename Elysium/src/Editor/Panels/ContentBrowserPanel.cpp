@@ -37,7 +37,7 @@ void ContentBrowserPanel::OnImGuiRender()
 	}
 
 	static float padding = 8.0f;
-	static float thumbnailSize = 64.0f;
+	static float thumbnailSize = 100.0f;
 	float cellSize = thumbnailSize + padding;
 
 	float panelWidth = ImGui::GetContentRegionAvail().x;
@@ -74,39 +74,87 @@ void ContentBrowserPanel::OnImGuiRender()
 		{
 			bool isDirectory = std::filesystem::is_directory(Project::GetActiveAssetDirectory() / item);
 			std::string itemStr = item.generic_string();
-			ImGui::PushID(itemStr.c_str());
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			if (isDirectory)
-			{
-				ImGui::ImageButton(m_DirectoryIcon->GetSFMLTexture(), {thumbnailSize, thumbnailSize});
-			}
-			else
-			{
-				ImGui::ImageButton(m_FileIcon->GetSFMLTexture(), {thumbnailSize, thumbnailSize});
-			}
+		//	ImGui::PushID(itemStr.c_str());
 
-			// TODO: implement delete asset ??
-			
-			// Drag Drop Asset
-			if (ImGui::BeginDragDropSource())
-			{
-				AssetHandle handle = m_TreeNodes[treeNodeIndex].Handle;
-				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &handle, sizeof(AssetHandle));
-				ImGui::EndDragDropSource();
-			}
+			ImVec2 prevCursor = ImGui::GetCursorPos();
+			ImVec2 prevScreenPos = ImGui::GetCursorScreenPos();
 
-			ImGui::PopStyleColor();
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+			std::string id = std::string("##") + (Project::GetActiveAssetDirectory() / item).generic_string();
+			const bool selected = ImGui::Selectable(id.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(100, 150));
+
+			if (selected && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 			{
 				if (isDirectory)
 					m_CurrentDirectory /= item.filename();
 			}
 
-			ImGui::TextWrapped(itemStr.c_str());
+			// Drag Drop Asset
+			if (!isDirectory)
+			{
+				if (ImGui::BeginDragDropSource())
+				{
+					AssetHandle handle = m_TreeNodes[treeNodeIndex].Handle;
+					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &handle, sizeof(AssetHandle));
+					ImGui::Image(m_FileIcon->GetSFMLTexture(), { 16.0f, 16.0f });
+					ImGui::SameLine();
+					ImGui::Text(itemStr.c_str());
+					ImGui::EndDragDropSource();
+				}
+			}
+			
+			
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+			ImGui::SetCursorPos(prevCursor);
+			if (isDirectory)
+			{
+				ImGui::Image(m_DirectoryIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
+			}
+			else
+			{
+				ImGui::Image(m_FileIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
+			}
+			ImGui::PopStyleColor();
+
+			
+			auto& imguiStyle = ImGui::GetStyle();
+
+			ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
+			ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
+			ImU32 rectColor = IM_COL32(255, 255, 255, 16);
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y + 100 - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 150 + offsetEnd.y), rectColor, 1.0f);
+
+			std::string visibleName = itemStr;
+			const uint32_t MAX_CHAR_NAME = 20;
+			if (itemStr.size() >= MAX_CHAR_NAME)
+			{
+				visibleName = std::string(visibleName.begin(), visibleName.begin() + MAX_CHAR_NAME - 3) + "...";
+			}
+			ImGui::TextWrapped(visibleName.c_str());
+
+
+			ImGui::SetCursorPosY(prevCursor.y + 150 - ImGui::GetTextLineHeight());
+			std::string fileTypeText = "FOLDER";
+			if (!isDirectory)
+			{
+				std::string extension = item.extension().string();
+				if (extension == ".png")
+				{
+					fileTypeText = "TEXTURE";
+				}
+				else if (extension == ".elysium")
+				{
+					fileTypeText = "SCENE";
+				}
+				else
+				{
+					fileTypeText = "";
+				}
+			}
+			ImGui::TextColored({1.0f, 1.0f, 1.0f, 0.5f}, fileTypeText.c_str());
 
 			ImGui::NextColumn();
 
-			ImGui::PopID();
+		//	ImGui::PopID();
 		}
 	}
 	else
