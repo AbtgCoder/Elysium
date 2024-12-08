@@ -17,6 +17,9 @@ AssetRegistry:
   - Handle: 9785990741684801335
     FilePath: textures/pipesmall.png
     Type: AssetType::Texture
+  - Handle: 10702758249718355508
+    FilePath: textures/cloudsmall.png
+    Type: AssetType::Texture
   - Handle: 12063736264547966939
     FilePath: textures/block.png
     Type: AssetType::Texture
@@ -32,6 +35,9 @@ AssetRegistry:
   - Handle: 16098100752798027042
     FilePath: scenes/joint_physics_test.elysium
     Type: AssetType::Scene
+  - Handle: 17151686820002597247
+    FilePath: textures/bushsmall.png
+    Type: AssetType::Texture
   - Handle: 17269147063933103227
     FilePath: scenes/suspension_bridge.elysium
     Type: AssetType::Scene

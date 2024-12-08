@@ -66,8 +66,7 @@ void EditorLayer::setImGuiStyle()
 
 
 	auto& colors = ImGui::GetStyle().Colors;
-	colors[ImGuiCol_WindowBg] = ImVec4{ 0.08f, 0.08f, 0.08f, 1.0f };
-	//colors[ImGuiCol_WindowBg] = ImVec4{ 0.0f, 0.0f, 0.0f, 1.0f };
+	colors[ImGuiCol_WindowBg] =  ImVec4{ 28.0f / 255.0f, 28.0f / 255.0f, 28.0f / 255.0f, 1.0f };
 	colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
 
 	// Border
@@ -138,7 +137,6 @@ void EditorLayer::setImGuiStyle()
 	style.FrameRounding = 3;
 	style.PopupRounding = 4;
 	style.ChildRounding = 4;
-
 
 }
 
@@ -232,8 +230,10 @@ void EditorLayer::NewScene()
 
 		SceneImporter::SaveScene(scene, relativePath);
 		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+		
 		// refresh content browser
 		m_ContentBrowserPanel->RefreshAssetTree();
+		
 		const auto& assetRegistry = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
 		for (const auto& [handle, metadata] : assetRegistry)
 		{
@@ -390,190 +390,227 @@ void EditorLayer::sGUI()
 	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 	ImGui::Image(m_rt);
 
-	if (ImGui::BeginDragDropTarget())
+	if (m_SceneState == SceneState::Edit)
 	{
-		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+		if (ImGui::BeginDragDropTarget())
 		{
-			AssetHandle handle = *(AssetHandle*)payload->Data;
-			if (AssetManager::GetAssetType(handle) == AssetType::Scene)
+			//if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+			//{
+			//	AssetHandle handle = *(AssetHandle*)payload->Data;
+			//	if (AssetManager::GetAssetType(handle) == AssetType::Scene)
+			//	{
+			//		if (m_SceneState == SceneState::Play)
+			//		{
+			//			OnSceneStop();
+			//		}
+			//		SaveScene();
+			//		OpenScene(handle);
+			//	}
+			//	else if (AssetManager::GetAssetType(handle) == AssetType::Texture)
+			//	{
+			//		// spawn entity with sprite renderer component
+			//		Vec2 viewportPos = windowToViewport(m_mousePos);
+			//		Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
+			//		Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
+			//		m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+			//	}
+			//	else
+			//	{
+			//		//ESM_ERROR("Can't drop this asset type: ", AssetManager::GetAssetType(handle));
+			//	}
+			//}
+
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
 			{
-				if (m_SceneState == SceneState::Play)
+				char* file = (char*)payload->Data;
+				std::string fullPath = std::string(file, 256);
+				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+				AssetHandle handle = 0;
+				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
 				{
-					OnSceneStop();
+					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
 				}
-				SaveScene();
-				OpenScene(handle);
-			}
-			else if (AssetManager::GetAssetType(handle) == AssetType::Texture)
-			{
+				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
 				// spawn entity with sprite renderer component
 				Vec2 viewportPos = windowToViewport(m_mousePos);
 				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 				Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
 				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
-			else
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Scene"))
 			{
-				//ESM_ERROR("Can't drop this asset type: ", AssetManager::GetAssetType(handle));
+				char* file = (char*)payload->Data;
+				std::string fullPath = std::string(file, 256);
+				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+				AssetHandle handle = 0;
+				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+				{
+					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+				}
+				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+				SaveScene(); // TODO: maybe show a prompt/pop-up for this...
+				OpenScene(handle);
 			}
+			ImGui::EndDragDropTarget();
 		}
-		ImGui::EndDragDropTarget();
-	}
 
-	// Gizmos
-	m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-	if (m_inspectedEntity)
-	{
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
-		static const ImU32 selectionColor = 0xFF20AACC;
-		Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().pos;
-		sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
-		ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
-		static const float lineLength = 80.0f;
-		static const float lineThickness = 4.0f;
-		static const float arrowSize = 6.0f;
-		static const float rectSize = 6.0f;
-		static const float circleRadius = 80.0f;
-		static const float squareSize = 20.0f;
 
-		if (m_gizmoType == GIZMO_OPERATION::ROTATE)
+		// Gizmos
+		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+		if (m_inspectedEntity)
 		{
-			// circle
-			ImU32 color = (m_gizmoRotateSelect || m_gizmoRotateHover) ? selectionColor : directionColor[2];
-			drawList->AddCircle(origin, circleRadius, color, 64);
-			// convex poly filled
-			ImVec2 circleArcPoints[32 + 1];
-			circleArcPoints[0] = origin;
-			float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().angle + 180.0f, 360.0f);
-			if (startAngle < 0)
-				startAngle += 360.0f;
-			startAngle -= 180.0f;
-			float endAngle = m_gizmoRotateSelect  ? - 1 * atan2(windowToViewport(m_mousePos).y - pixel.y, windowToViewport(m_mousePos).x - pixel.x) * 180.0 / 3.14 : startAngle;
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
+			static const ImU32 selectionColor = 0xFF20AACC;
+			Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().pos;
+			sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
+			ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
+			static const float lineLength = 80.0f;
+			static const float lineThickness = 4.0f;
+			static const float arrowSize = 6.0f;
+			static const float rectSize = 6.0f;
+			static const float circleRadius = 80.0f;
+			static const float squareSize = 20.0f;
 
-			float angle_step = (endAngle - startAngle) / 32;
-			for (unsigned int i = 1; i < 32; i++)
+			if (m_gizmoType == GIZMO_OPERATION::ROTATE)
 			{
-				float angle = startAngle + angle_step * i;
-				float costheta = cos(angle * 3.14 / 180.0);
-				float sintheta = sin(angle * 3.14 / 180.0);
-				circleArcPoints[i] = ImVec2(origin.x + circleRadius * costheta, origin.y - circleRadius * sintheta);
-			}
-			drawList->AddConvexPolyFilled(circleArcPoints, 32, 0x8020AACC);
-			drawList->AddPolyline(circleArcPoints, 32, color, true, 2);
+				// circle
+				ImU32 color = (m_gizmoRotateSelect || m_gizmoRotateHover) ? selectionColor : directionColor[2];
+				drawList->AddCircle(origin, circleRadius, color, 64);
+				// convex poly filled
+				ImVec2 circleArcPoints[32 + 1];
+				circleArcPoints[0] = origin;
+				float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().angle + 180.0f, 360.0f);
+				if (startAngle < 0)
+					startAngle += 360.0f;
+				startAngle -= 180.0f;
+				float endAngle = m_gizmoRotateSelect  ? - 1 * atan2(windowToViewport(m_mousePos).y - pixel.y, windowToViewport(m_mousePos).x - pixel.x) * 180.0 / 3.14 : startAngle;
 
-			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x - circleRadius, origin.y - circleRadius), ImVec2(origin.x + circleRadius, origin.y + circleRadius)))
-			{
-				m_gizmoRotateHover = true;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				float angle_step = (endAngle - startAngle) / 32;
+				for (unsigned int i = 1; i < 32; i++)
 				{
-					m_gizmoRotateSelect = true;
-					m_lastGizmoRotatePos = windowToViewport(m_mousePos);
+					float angle = startAngle + angle_step * i;
+					float costheta = cos(angle * 3.14 / 180.0);
+					float sintheta = sin(angle * 3.14 / 180.0);
+					circleArcPoints[i] = ImVec2(origin.x + circleRadius * costheta, origin.y - circleRadius * sintheta);
 				}
-				if (m_gizmoRotateSelect && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				drawList->AddConvexPolyFilled(circleArcPoints, 32, 0x8020AACC);
+				drawList->AddPolyline(circleArcPoints, 32, color, true, 2);
+
+				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x - circleRadius, origin.y - circleRadius), ImVec2(origin.x + circleRadius, origin.y + circleRadius)))
 				{
-					m_gizmoRotateSelect = false;
+					m_gizmoRotateHover = true;
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						m_gizmoRotateSelect = true;
+						m_lastGizmoRotatePos = windowToViewport(m_mousePos);
+					}
+					if (m_gizmoRotateSelect && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+					{
+						m_gizmoRotateSelect = false;
+					}
+				}
+				else
+				{
+					m_gizmoRotateHover = false;
 				}
 			}
 			else
 			{
-				m_gizmoRotateHover = false;
-			}
-		}
-		else
-		{
-			// X-translation gizmo
-			ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
-			// line
-			ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
-			drawList->AddLine(origin, endPointX, colorX, lineThickness);
-			// Y-translation gizmo
-			ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
-			// line
-			ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
-			drawList->AddLine(origin, endPointY, colorY, lineThickness);
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				// X-arrow
-				ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
-				float d = sqrtf(ImLengthSqr(dir));
-				dir.x = dir.x / d * arrowSize;
-				dir.y = dir.y / d * arrowSize;
-				ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
-				ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
-				drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
-				// Y-arrow
-				dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
-				d = sqrtf(ImLengthSqr(dir));
-				dir.x = dir.x / d * arrowSize;
-				dir.y = dir.y / d * arrowSize;
-				orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
-				a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
-				drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				// X-square
-				drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2 * rectSize, endPointX.y + rectSize), colorX);
-				// Y-square	
-				drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
-			}
-			ImU32 colorSquare = (m_gizmoSelectSquare || m_gizmoHoverSquare) ? selectionColor : directionColor[2];
-			drawList->AddRectFilled(ImVec2(origin.x + lineThickness/2.0f, origin.y - squareSize - lineThickness/2.0f), ImVec2(origin.x + squareSize + lineThickness/2.0, origin.y - lineThickness/2.0f), colorSquare);
+				// X-translation gizmo
+				ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
+				// line
+				ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
+				drawList->AddLine(origin, endPointX, colorX, lineThickness);
+				// Y-translation gizmo
+				ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
+				// line
+				ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
+				drawList->AddLine(origin, endPointY, colorY, lineThickness);
+				if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
+				{
+					// X-arrow
+					ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
+					float d = sqrtf(ImLengthSqr(dir));
+					dir.x = dir.x / d * arrowSize;
+					dir.y = dir.y / d * arrowSize;
+					ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
+					ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
+					drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
+					// Y-arrow
+					dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
+					d = sqrtf(ImLengthSqr(dir));
+					dir.x = dir.x / d * arrowSize;
+					dir.y = dir.y / d * arrowSize;
+					orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
+					a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
+					drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
+				}
+				else if (m_gizmoType == GIZMO_OPERATION::SCALE)
+				{
+					// X-square
+					drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2 * rectSize, endPointX.y + rectSize), colorX);
+					// Y-square	
+					drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
+				}
+				ImU32 colorSquare = (m_gizmoSelectSquare || m_gizmoHoverSquare) ? selectionColor : directionColor[2];
+				drawList->AddRectFilled(ImVec2(origin.x + lineThickness/2.0f, origin.y - squareSize - lineThickness/2.0f), ImVec2(origin.x + squareSize + lineThickness/2.0, origin.y - lineThickness/2.0f), colorSquare);
 
-			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
-			{
-				m_gizmoHoverX = true;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
 				{
-					m_gizmoSelectX = true;
-					m_lastGizmoPosX = windowToViewport(m_mousePos);
+					m_gizmoHoverX = true;
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectX = true;
+						m_lastGizmoPosX = windowToViewport(m_mousePos);
+					}
+					if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectX = false;
+					}
 				}
-				if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				else
 				{
-					m_gizmoSelectX = false;
+					m_gizmoHoverX = false;
 				}
-			}
-			else
-			{
-				m_gizmoHoverX = false;
+
+				if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
+				{
+					m_gizmoHoverY = true;
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectY = true;
+						m_lastGizmoPosY = windowToViewport(m_mousePos);
+					}
+					if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectY = false;
+					}
+				}
+				else
+				{
+					m_gizmoHoverY = false;
+				}
+
+				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x + lineThickness / 2.0f, origin.y - squareSize - lineThickness / 2.0f), ImVec2(origin.x + squareSize + lineThickness / 2.0, origin.y - lineThickness / 2.0f)))
+				{
+					m_gizmoHoverSquare = true;
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectSquare = true;
+						m_lastGizmoSquarePos = windowToViewport(m_mousePos);
+					}
+					if (m_gizmoSelectSquare && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+					{
+						m_gizmoSelectSquare = false;
+					}
+				}
+				else
+				{
+					m_gizmoHoverSquare = false;
+				}
 			}
 
-			if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
-			{
-				m_gizmoHoverY = true;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					m_gizmoSelectY = true;
-					m_lastGizmoPosY = windowToViewport(m_mousePos);
-				}
-				if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-				{
-					m_gizmoSelectY = false;
-				}
-			}
-			else
-			{
-				m_gizmoHoverY = false;
-			}
-
-			if (ImGui::IsMouseHoveringRect(ImVec2(origin.x + lineThickness / 2.0f, origin.y - squareSize - lineThickness / 2.0f), ImVec2(origin.x + squareSize + lineThickness / 2.0, origin.y - lineThickness / 2.0f)))
-			{
-				m_gizmoHoverSquare = true;
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					m_gizmoSelectSquare = true;
-					m_lastGizmoSquarePos = windowToViewport(m_mousePos);
-				}
-				if (m_gizmoSelectSquare && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-				{
-					m_gizmoSelectSquare = false;
-				}
-			}
-			else
-			{
-				m_gizmoHoverSquare = false;
-			}
 		}
 
 	}

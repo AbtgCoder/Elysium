@@ -4,8 +4,6 @@
 #include "core/Texture.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
-
-
 #include "ImGui/ImGuiHelper.h"
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
@@ -157,15 +155,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 		
 		ImGui::Begin("Scene Hierarchy");
 
-		/*auto& sceneName = m_Scene->m_Name;
-		char buffer[256];
-		memset(buffer, 0, sizeof(buffer));
-		strncpy_s(buffer, sizeof(buffer), sceneName.c_str(), sizeof(buffer));
-		if (ImGui::InputText("##SceneName", buffer, sizeof(buffer)))
-		{
-			sceneName = std::string(buffer);
-		}*/
-
+		// Search Bar
 		char buffer[256];
 		memset(buffer, 0, sizeof(buffer));
 		strncpy_s(buffer, sizeof(buffer), searchQuery.c_str(), sizeof(buffer));
@@ -192,6 +182,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			}
 		}
 
+		
 		for (auto e : entitiesToDisplay)
 		{
 			DrawEntityNode(e);
@@ -475,17 +466,22 @@ void SceneHierarchyPanel::OnImGuiRender()
 				ImGui::Button(label.c_str(), ImVec2(buttonLabelWidth, 0.0f));
 				if (ImGui::BeginDragDropTarget())
 				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
 					{
-						AssetHandle handle = *(AssetHandle*)payload->Data;
-						if (AssetManager::GetAssetType(handle) == AssetType::Texture)
+						char* file = (char*)payload->Data;
+						std::string fullPath = std::string(file, 256);
+						auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+						AssetHandle handle = 0;
+						if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
 						{
-							component.texture = handle;
+							Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
 						}
-						else
-						{
-							// log warning: wrong asset type
-						}
+						handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+						component.texture = handle;
+					}
+					else
+					{
+						// log warning: wrong asset type
 					}
 					ImGui::EndDragDropTarget();
 				}
@@ -603,6 +599,7 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 		}
 		ImGui::EndPopup();
 	}
+
 
 	if (opened)
 	{

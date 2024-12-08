@@ -76,6 +76,27 @@ const std::filesystem::path& EditorAssetManager::GetFilePath(AssetHandle handle)
 	return GetMetadata(handle).FilePath;
 }
 
+const bool EditorAssetManager::AssetExistsAtFilePath(const std::filesystem::path& filepath) const
+{
+	for (const auto& [handle, metadata] : m_AssetRegistry)
+	{
+		if (metadata.FilePath == filepath)
+			return true;
+	}
+	return false;
+}
+
+const AssetHandle EditorAssetManager::GetAssetHandle(const std::filesystem::path& filepath) const
+{
+	for (const auto& [handle, metadata] : m_AssetRegistry)
+	{
+		if (metadata.FilePath == filepath)
+			return handle;
+	}
+	//ESM_Error/Assert: this should never happen...
+	return 0;
+}
+
 std::shared_ptr<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 {
 	if (!IsAssetHandleValid(handle))

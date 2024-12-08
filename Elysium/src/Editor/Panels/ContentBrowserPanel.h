@@ -2,6 +2,7 @@
 
 #include "Project/Project.h"
 #include "Core/Texture.h"
+#include "ThumbnailCache.h"
 
 #include <filesystem>
 #include <map>
@@ -17,6 +18,7 @@ public:
 	void RefreshAssetTree();
 private:
 	std::shared_ptr<Project> m_Project;
+	std::shared_ptr<ThumbnailCache> m_ThumbnailCache;
 	
 	std::filesystem::path m_BaseDirectory;
 	std::filesystem::path m_CurrentDirectory;
@@ -24,25 +26,6 @@ private:
 	std::shared_ptr<Texture> m_DirectoryIcon;
 	std::shared_ptr<Texture> m_FileIcon;
 
-	struct TreeNode
-	{
-		std::filesystem::path Path;
-		AssetHandle Handle = 0;
+	std::string m_SearchQuery = "";
 
-		uint32_t Parent = (uint32_t)-1;
-		std::map<std::filesystem::path, uint32_t> Children;
-
-		TreeNode(const std::filesystem::path& path, AssetHandle handle)
-			: Path(path), Handle(handle) {}
-	};
-
-	std::vector<TreeNode> m_TreeNodes;
-	std::map<std::filesystem::path, std::vector<std::filesystem::path>> m_AssetTree;
-
-	enum class Mode
-	{
-		Asset = 0, FileSystem = 1
-	};
-
-	Mode m_Mode = Mode::Asset;
 };

@@ -516,6 +516,10 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 		RenderScene(renderTexture);
 
 	}
+	else
+	{
+		//TODO: editor log: there is no primary camera in scene
+	}
 
 	
 }

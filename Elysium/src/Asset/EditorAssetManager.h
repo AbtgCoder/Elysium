@@ -18,6 +18,8 @@ public:
 
 	const AssetMetadata& GetMetadata(AssetHandle handle) const;
 	const std::filesystem::path& GetFilePath(AssetHandle handle) const;
+	const bool AssetExistsAtFilePath(const std::filesystem::path& filepath) const;
+	const AssetHandle GetAssetHandle(const std::filesystem::path& filepath) const;
 
 	const AssetRegistry& GetAssetRegistry() const { return m_AssetRegistry; }
 

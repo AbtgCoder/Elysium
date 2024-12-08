@@ -1,91 +1,151 @@
 #include "ContentBrowserPanel.h"
 
 #include "Asset/TextureImporter.h"
+#include "ImGui/ImGuiHelper.h"
 
-#include "imgui.h"
-#include "imgui-SFML.h"
 
 ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)
-	: m_Project(project), m_BaseDirectory(m_Project->GetAssetDirectory()), m_CurrentDirectory(m_BaseDirectory)
+	: m_Project(project), m_ThumbnailCache(std::make_shared<ThumbnailCache>(project)), m_BaseDirectory(m_Project->GetAssetDirectory()), m_CurrentDirectory(m_BaseDirectory)
 {
-	m_TreeNodes.push_back(TreeNode(".", 0));
 
 	m_DirectoryIcon = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/DirectoryIcon.png");
 	m_FileIcon = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/FileIcon.png");
 
-	RefreshAssetTree();
-
-	m_Mode = Mode::Asset;
 }
 
 void ContentBrowserPanel::OnImGuiRender()
 {
 	ImGui::Begin("Content Browser");
 
-	const char* label = m_Mode == Mode::Asset ? "Asset" : "File";
-	if (ImGui::Button(label))
-	{
-		m_Mode = m_Mode == Mode::Asset ? Mode::FileSystem : Mode::Asset;
-	}
+	ImVec2 avail = ImGui::GetContentRegionAvail();
 
-	if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory))
+	std::vector<std::filesystem::path> paths;
+	std::filesystem::path currentParent = m_CurrentDirectory;
+	paths.push_back(currentParent);
+	while (currentParent != m_BaseDirectory && currentParent.has_parent_path())
 	{
-		if (ImGui::Button("<-")) 
+		paths.push_back(currentParent);
+		currentParent = currentParent.parent_path();
+	}
+	paths.push_back(m_BaseDirectory);
+
+	ImGui::BeginChild("Wrapper", avail);
+
+	avail.y = 30;
+	if (ImGui::BeginChild("Path", avail, false))
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 2, 4 });
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+		const auto buttonSize = ImVec2(26, 26);
+		const auto cursorStart = ImGui::GetCursorPosX();
+		if (ImGui::Button("<", buttonSize))
 		{
-			m_CurrentDirectory = m_CurrentDirectory.parent_path();
-		}
-	}
-
-	static float padding = 8.0f;
-	static float thumbnailSize = 100.0f;
-	float cellSize = thumbnailSize + padding;
-
-	float panelWidth = ImGui::GetContentRegionAvail().x;
-	int columnCount = (int)(panelWidth / cellSize);
-	if (columnCount < 1)
-	{
-		columnCount = 1;
-	}
-
-	ImGui::Columns(columnCount, 0, false);
-
-	if (m_Mode == Mode::Asset)
-	{
-		TreeNode* node = &m_TreeNodes[0];
-
-		auto currentDir = std::filesystem::relative(m_CurrentDirectory, Project::GetActiveAssetDirectory());
-		for (const auto& p : currentDir)
-		{
-			if (node->Path == currentDir)
-				break;
-
-			if (node->Children.find(p) != node->Children.end())
+			if (m_CurrentDirectory != std::filesystem::path(m_BaseDirectory))
 			{
-				node = &m_TreeNodes[node->Children[p]];
-				continue;
+				m_CurrentDirectory = m_CurrentDirectory.parent_path();
+			}
+		}
+
+		ImGui::SameLine();
+
+		const auto cursorEnd = ImGui::GetCursorPosX();
+		const auto buttonWidth = cursorEnd - cursorStart;
+		if (ImGui::Button(">", buttonSize))
+		{
+			// TODO...
+		}
+
+		ImGui::SameLine();
+		
+		const uint32_t searchBarSize = 10;
+		ImGui::BeginChild("searchBar", ImVec2(searchBarSize * buttonWidth, 24));
+		char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		std::strncpy(buffer, m_SearchQuery.c_str(), sizeof(buffer));
+		if (ImGui::InputTextEx("##search", "Asset search & filter ...", buffer, sizeof(buffer), ImGui::GetContentRegionAvail(), ImGuiInputTextFlags_None))
+		{
+			m_SearchQuery = std::string(buffer);
+		}
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBgCollapsed]);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 4));
+		ImGui::BeginChild("pathBrowser", ImVec2(ImGui::GetContentRegionAvail().x, 24));
+		for (int i = paths.size() - 1; i > 0; i--)
+		{
+			if (i != paths.size())
+				ImGui::SameLine();
+
+			std::string pathLabel;
+			if (i == paths.size() - 1)
+			{
+				pathLabel = "Assets";
 			}
 			else
 			{
-				// assert(false): cant find path
+				pathLabel = paths[i].filename().string();
 			}
+
+			if (ImGui::Button(pathLabel.c_str()))
+			{
+				m_CurrentDirectory = paths[i];
+			}
+
+			ImGui::SameLine();
+			ImGui::Text(">");
 		}
 
-		for (const auto& [item, treeNodeIndex] : node->Children)
+		ImGui::EndChild();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+	}
+	ImGui::EndChild();
+	
+	//ImGui::GetWindowDrawList()->AddLine(ImVec2(ImGui::GetCursorPosX(), ImGui::GetCursorPosY()), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetCursorPosY()), IM_COL32(255, 0, 0, 255), 1.0f);
+
+	avail = ImGui::GetContentRegionAvail();
+	bool childContent = ImGui::BeginChild("Content", avail);
+	ImGui::SameLine();
+	if (childContent)
+	{
+		static float padding = 8.0f;
+		static float thumbnailSize = 100.0f;
+		float cellSize = thumbnailSize + padding;
+
+		float panelWidth = ImGui::GetContentRegionAvail().x;
+		int columnCount = (int)(panelWidth / cellSize);
+		if (columnCount < 1)
 		{
-			bool isDirectory = std::filesystem::is_directory(Project::GetActiveAssetDirectory() / item);
-			std::string itemStr = item.generic_string();
-		//	ImGui::PushID(itemStr.c_str());
+			columnCount = 1;
+		}
+
+		ImGui::Columns(columnCount, 0, false);
+
+		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+		{
+			bool isDirectory = directoryEntry.is_directory();
+			const auto& path = directoryEntry.path();
+			std::string itemStr = path.filename().string();
+			std::string extension = path.extension().string();
 
 			ImVec2 prevCursor = ImGui::GetCursorPos();
 			ImVec2 prevScreenPos = ImGui::GetCursorScreenPos();
 
-			std::string id = std::string("##") + (Project::GetActiveAssetDirectory() / item).generic_string();
+			std::string id = std::string("##") + std::filesystem::absolute(path).generic_string();
 			const bool selected = ImGui::Selectable(id.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(100, 150));
 
 			if (selected && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 			{
 				if (isDirectory)
-					m_CurrentDirectory /= item.filename();
+					m_CurrentDirectory /= path.filename();
 			}
 
 			// Drag Drop Asset
@@ -93,34 +153,64 @@ void ContentBrowserPanel::OnImGuiRender()
 			{
 				if (ImGui::BeginDragDropSource())
 				{
-					AssetHandle handle = m_TreeNodes[treeNodeIndex].Handle;
-					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &handle, sizeof(AssetHandle));
-					ImGui::Image(m_FileIcon->GetSFMLTexture(), { 16.0f, 16.0f });
-					ImGui::SameLine();
+					char pathBuffer[256];
+					std::strncpy(pathBuffer, std::filesystem::absolute(path).generic_string().c_str(), sizeof(pathBuffer));
+					std::string dragType;
+					if (extension == ".png")
+					{
+						dragType = "_Image";
+					}
+					else if (extension == ".elysium")
+					{
+						dragType = "_Scene";
+					}
+					ImGui::SetDragDropPayload(dragType.c_str(), (void*)(pathBuffer), sizeof(pathBuffer));
 					ImGui::Text(itemStr.c_str());
 					ImGui::EndDragDropSource();
 				}
 			}
-			
-			
+
+			auto& imguiStyle = ImGui::GetStyle();
+
+			//ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
+			//ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
+			ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
+			ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
+			ImU32 rectColor = IM_COL32(19, 19, 19, 255);
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 100 + offsetEnd.y), rectColor, 1.0f);
+
+
+			std::shared_ptr<Texture> thumbnail = m_DirectoryIcon;
+			if (!isDirectory)
+			{
+				thumbnail = m_ThumbnailCache->GetOrCreateThumbnail(path);
+				if (!thumbnail)
+					thumbnail = m_FileIcon;
+			}
+
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::SetCursorPos(prevCursor);
-			if (isDirectory)
+			ImGui::Image(thumbnail->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
+
+			/*if (isDirectory)
 			{
 				ImGui::Image(m_DirectoryIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
 			}
 			else
 			{
-				ImGui::Image(m_FileIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
-			}
+				if (extension == ".png")
+				{
+				}
+				else
+				{
+					ImGui::Image(m_FileIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
+				}
+			}*/
+
 			ImGui::PopStyleColor();
 
-			
-			auto& imguiStyle = ImGui::GetStyle();
 
-			ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
-			ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
-			ImU32 rectColor = IM_COL32(255, 255, 255, 16);
+			rectColor = IM_COL32(255, 255, 255, 16);
 			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y + 100 - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 150 + offsetEnd.y), rectColor, 1.0f);
 
 			std::string visibleName = itemStr;
@@ -132,11 +222,9 @@ void ContentBrowserPanel::OnImGuiRender()
 			ImGui::TextWrapped(visibleName.c_str());
 
 
-			ImGui::SetCursorPosY(prevCursor.y + 150 - ImGui::GetTextLineHeight());
 			std::string fileTypeText = "FOLDER";
 			if (!isDirectory)
 			{
-				std::string extension = item.extension().string();
 				if (extension == ".png")
 				{
 					fileTypeText = "TEXTURE";
@@ -149,108 +237,48 @@ void ContentBrowserPanel::OnImGuiRender()
 				{
 					fileTypeText = "";
 				}
+
+				if (Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(std::filesystem::relative(path, Project::GetActiveAssetDirectory())))
+				{
+					fileTypeText = "ESM_" + fileTypeText;
+				}
 			}
-			ImGui::TextColored({1.0f, 1.0f, 1.0f, 0.5f}, fileTypeText.c_str());
+			ImVec2 texSize = ImGui::CalcTextSize(fileTypeText.c_str());
+			ImGui::SetCursorPosX(prevCursor.x + 100 + offsetEnd.x - texSize.x);
+			ImGui::SetCursorPosY(prevCursor.y + 150 - ImGui::GetTextLineHeight());
+
+			ImGui::TextColored({ 1.0f, 1.0f, 1.0f, 0.5f }, fileTypeText.c_str());
 
 			ImGui::NextColumn();
 
-		//	ImGui::PopID();
 		}
 	}
-	else
-	{
-		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
-		{
-			const auto& path = directoryEntry.path();
-			std::string filenameString = path.filename().string();
-			ImGui::PushID(filenameString.c_str());
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			if (directoryEntry.is_directory())
-			{
-				ImGui::ImageButton(m_DirectoryIcon->GetSFMLTexture(), {thumbnailSize, thumbnailSize});
-			}
-			else
-			{
-				/*auto it = m_assets.find(directoryEntry.path().stem().string());
-				if (it != m_assets.end())
-				{
-					sf::Texture& texture = it->second;
-					float aspectRatio = (float)(texture.getSize().y) / (float)(texture.getSize().x);
-					float thumbnailHeight = thumbnailSize * aspectRatio;
-					float diff = thumbnailSize - thumbnailHeight;
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff);
-					ImGui::ImageButton(texture, { thumbnailSize, thumbnailHeight });
-					if (ImGui::BeginDragDropSource())
-					{
-						ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM_TEXTURE", &directoryEntry.path().stem().string(), sizeof(std::string));
-						ImGui::EndDragDropSource();
-					}
-				}
-				else
-				{*/
-					ImGui::ImageButton(m_FileIcon->GetSFMLTexture(), {thumbnailSize, thumbnailSize});
-				//}
-
-				
-				if (ImGui::BeginPopupContextItem())
-				{
-					if (ImGui::MenuItem("Import"))
-					{
-						auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
-						Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
-						RefreshAssetTree();
-					}
-					ImGui::EndPopup();
-				}
-			}
-
-			ImGui::PopStyleColor();
-
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-			{
-				if (directoryEntry.is_directory())
-				{
-					m_CurrentDirectory /= path.filename();
-				}
-			}
-			ImGui::TextWrapped(filenameString.c_str());
-
-			ImGui::NextColumn();
-			ImGui::PopID();
-		}
-	}
-
 	ImGui::Columns(1);
 
-	//ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
-	//ImGui::SliderFloat("Padding", &padding, 0, 32);
+	// Context Menu
+	if (ImGui::IsMouseReleased(1) && ImGui::IsWindowHovered())
+	{
+		ImGui::OpenPopup("window_hover_menu");
+	}
+
+	if (ImGui::BeginPopup("window_hover_menu"))
+	{
+		if (ImGui::MenuItem("New Folder"))
+		{
+		}
+		ImGui::EndPopup();
+	}
+
+	ImGui::EndChild();
+
+
+	ImGui::EndChild(); //  end wrapper child
+	
 
 	ImGui::End();
 }
 
 void ContentBrowserPanel::RefreshAssetTree()
 {
-	const auto& assetRegistry = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
-	for (const auto& [handle, metadata] : assetRegistry)
-	{
-		uint32_t currentNodeIndex = 0;
-		for (const auto& p : metadata.FilePath)
-		{
-			auto it = m_TreeNodes[currentNodeIndex].Children.find(p.generic_string());
-			if (it != m_TreeNodes[currentNodeIndex].Children.end())
-			{
-				currentNodeIndex = it->second;
-			}
-			else
-			{
-				// Add Node
-				TreeNode newNode(p, handle);
-				newNode.Parent = currentNodeIndex;
-				m_TreeNodes.push_back(newNode);
-
-				m_TreeNodes[currentNodeIndex].Children[p] = (uint32_t)m_TreeNodes.size() - 1;
-				currentNodeIndex = (uint32_t)m_TreeNodes.size() - 1;
-			}
-		}
-	}
+	return;
 }

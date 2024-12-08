@@ -29,7 +29,7 @@ Entities:
         Size: 6
         Elements: [[-52, 95], [51, 95], [59, -40], [59, -92], [-60, -92], [-60, -40]]
     Rigidbody2D:
-      BodyType: Static
+      BodyType: Dynamic
   - Entity: 4163440874578799761
     Tag:
       Tag: Tile1
@@ -54,7 +54,7 @@ Entities:
         Size: 5
         Elements: [[29, 31], [31, 29], [28, -31], [-31, -31], [-31, 28]]
     Rigidbody2D:
-      BodyType: Dynamic
+      BodyType: Static
     Joint:
       Entity1ID: 4163440874578799761
       Entity2ID: 3835143888492085499
@@ -172,6 +172,18 @@ Entities:
       AngularVelocity: 0
     Camera:
       Size: [705, 500]
-      Zoom: 1
+      Zoom: 2
       Primary: true
       BackgroundColor: [49, 77, 121, 255]
+    ? Entity: 17276029681780457571
+      Tag:
+        Tag: Tile
+      Transform:
+        Position: [171.5, 296]
+        Scale: [1, 1]
+        Angle: 0
+        Velocity: [0, 0]
+        AngularVelocity: 0
+      SpriteRenderer:
+        TextureHandle: 10702758249718355508
+        Layer: 0

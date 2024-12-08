@@ -1,6 +1,8 @@
 #include "StringUtils.h"
+
 #include "String.h"
 #include <iostream>
+#include <regex>	
 #include <sstream>
 
 std::string StringUtils::RemoveWhiteSpace(const std::string& string)
@@ -12,19 +14,8 @@ std::string StringUtils::RemoveWhiteSpace(const std::string& string)
 
 std::string StringUtils::ToUpper(const std::string& string)
 {
-	if (string.length() == 0)
-	{
-		return "";
-	}
-
-	auto split = Split(string, ' ');
-	std::string result;
-	for (auto& word : split)
-	{
-		word[0] = std::toupper(word[0]);
-		result += word;
-	}
-
+	std::string result = string;
+	std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c);  });
 	return result;
 }
 
