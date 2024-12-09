@@ -175,15 +175,3 @@ Entities:
       Zoom: 2
       Primary: true
       BackgroundColor: [49, 77, 121, 255]
-    ? Entity: 17276029681780457571
-      Tag:
-        Tag: Tile
-      Transform:
-        Position: [171.5, 296]
-        Scale: [1, 1]
-        Angle: 0
-        Velocity: [0, 0]
-        AngularVelocity: 0
-      SpriteRenderer:
-        TextureHandle: 10702758249718355508
-        Layer: 0

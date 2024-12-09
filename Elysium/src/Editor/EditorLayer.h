@@ -5,6 +5,7 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/PhysicsConfigPanel.h"
+#include "Panels/LoggerPanel.h"
 
 #include <filesystem>
 
@@ -97,6 +98,7 @@ protected:
 	SceneHierarchyPanel m_SceneHierarchyPanel;
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 	PhysicsConfigPanel m_PhysicsConfigPanel;
+	LoggerPanel m_LoggerPanel;
 	
 	std::shared_ptr<Texture> m_IconPlay;
 	std::shared_ptr<Texture> m_IconPause;

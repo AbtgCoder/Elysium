@@ -1,6 +1,5 @@
 #include "Physics.h"
 #include <cmath>
-#include "core/Log.h"
 #define INFINITE            0xFFFFFFFF
 
 void Physics::NarrowPhaseCollision(KDTreeNode* node)
@@ -450,10 +449,10 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 		float dJn = ((v1_v2_dot_c1_c2) / (len_c1_c2 * len_c1_c2)) * ((1 + e) / (1/m1 + 1/m2));
 		Vec2 Jn = c1_c2 * dJn;
 		std::cout << "normal: " << c1_c2.normalize() <<  " dv: " << v1_v2 << " dJn: " << dJn << " impulse: " << Jn << "\n";
-		ESM_LOG("old velocities", a.getComponent<CTransform>().velocity, b.getComponent<CTransform>().velocity);
+		//ESM_LOG("old velocities", a.getComponent<CTransform>().velocity, b.getComponent<CTransform>().velocity);
 		a.getComponent<CTransform>().velocity = a.getComponent<CTransform>().velocity - Jn / m1;
 		b.getComponent<CTransform>().velocity = b.getComponent<CTransform>().velocity + Jn / m2;
-		ESM_LOG("new velocities", a.getComponent<CTransform>().velocity, b.getComponent<CTransform>().velocity);
+		//ESM_LOG("new velocities", a.getComponent<CTransform>().velocity, b.getComponent<CTransform>().velocity);
 
 		// tangential impulse (due to friction)
 		Vec2 tangent = { c1_c2.y, -1 * c1_c2.x };
@@ -658,7 +657,7 @@ std::vector<Vec2> Physics::SAT(Entity a, Entity b)
 		refn = refn * -1;
 	}
 	double max = refn.dot(ref->v);
-	ESM_LOG("flip", flip, "refn", refn, "vmax", max);
+	//ESM_LOG("flip", flip, "refn", refn, "vmax", max);
 	// make sure the final points are not past this maximum
 	if (refn.dot(cp[0]) - max < 0.0)
 	{

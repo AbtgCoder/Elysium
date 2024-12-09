@@ -1,6 +1,5 @@
 #include "PhysicsHingeJoint.h"
 
-#include "core/Log.h"
 
 // Point-to-point constraint
 // C = p2 - p1

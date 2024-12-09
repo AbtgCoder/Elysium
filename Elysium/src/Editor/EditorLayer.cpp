@@ -1,7 +1,10 @@
 #include "EditorLayer.h"
 
 #include "Core/Application.h"
+#include "core/Logger.h"
+
 #include "Physics/graham_scan.h"
+
 
 #include "Asset/AssetManager.h"
 #include "Asset/SceneImporter.h"
@@ -201,6 +204,7 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 {
 	if (Project::Load(path))
 	{
+		Logger::Log("Opening Project: " + path.filename().generic_string(), "editor");
 		m_EditorProjectPath = path;
 		AssetHandle lastOpenedScene = Project::GetActive()->GetConfig().lastOpenedScene;
 		AssetHandle startScene = Project::GetActive()->GetConfig().StartScene;
@@ -276,6 +280,7 @@ void EditorLayer::OpenScene(AssetHandle handle)
 	{
 		return;
 	}
+	Logger::Log("Opening Scene: " + m_ActiveScene->GetName(), "editor");
 	Project::SetLastOpenedScene(handle);
 	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
 	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
@@ -298,6 +303,7 @@ void EditorLayer::SerializeScene(std::shared_ptr<Scene> Scene, const std::filesy
 
 void EditorLayer::OnScenePlay()
 {
+	Logger::Log("Starting Runtime", "editor");
 	m_ActiveScene = Scene::Copy(m_EditorScene);
 	m_ActiveScene->OnRuntimeStart();
 	m_SceneState = SceneState::Play;
@@ -307,6 +313,7 @@ void EditorLayer::OnScenePlay()
 
 void EditorLayer::OnSceneStop()
 {
+	Logger::Log("Stoping Runtime", "editor");
 	m_ActiveScene->OnRuntimeStop();
 	m_SceneState = SceneState::Edit;
 	m_ActiveScene = m_EditorScene;
@@ -378,6 +385,7 @@ void EditorLayer::sGUI()
 	m_SceneHierarchyPanel.OnImGuiRender();
 	m_ContentBrowserPanel->OnImGuiRender();
 	m_PhysicsConfigPanel.OnImGuiRender();
+	m_LoggerPanel.OnImGuiRender();
 
 	// Viewport 
 	ImGui::Begin("Viewport");
@@ -394,32 +402,6 @@ void EditorLayer::sGUI()
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
-			//if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-			//{
-			//	AssetHandle handle = *(AssetHandle*)payload->Data;
-			//	if (AssetManager::GetAssetType(handle) == AssetType::Scene)
-			//	{
-			//		if (m_SceneState == SceneState::Play)
-			//		{
-			//			OnSceneStop();
-			//		}
-			//		SaveScene();
-			//		OpenScene(handle);
-			//	}
-			//	else if (AssetManager::GetAssetType(handle) == AssetType::Texture)
-			//	{
-			//		// spawn entity with sprite renderer component
-			//		Vec2 viewportPos = windowToViewport(m_mousePos);
-			//		Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-			//		Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
-			//		m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
-			//	}
-			//	else
-			//	{
-			//		//ESM_ERROR("Can't drop this asset type: ", AssetManager::GetAssetType(handle));
-			//	}
-			//}
-
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
 			{
 				char* file = (char*)payload->Data;

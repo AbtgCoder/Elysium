@@ -1,6 +1,5 @@
 #include "PhysicsPolygonCollision.h"
 
-#include "core/Log.h"
 
 struct CollisionEdge
 {

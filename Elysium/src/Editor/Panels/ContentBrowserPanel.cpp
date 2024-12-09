@@ -172,8 +172,6 @@ void ContentBrowserPanel::OnImGuiRender()
 
 			auto& imguiStyle = ImGui::GetStyle();
 
-			//ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
-			//ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
 			ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
 			ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
 			ImU32 rectColor = IM_COL32(19, 19, 19, 255);
@@ -191,22 +189,6 @@ void ContentBrowserPanel::OnImGuiRender()
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::SetCursorPos(prevCursor);
 			ImGui::Image(thumbnail->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
-
-			/*if (isDirectory)
-			{
-				ImGui::Image(m_DirectoryIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
-			}
-			else
-			{
-				if (extension == ".png")
-				{
-				}
-				else
-				{
-					ImGui::Image(m_FileIcon->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
-				}
-			}*/
-
 			ImGui::PopStyleColor();
 
 

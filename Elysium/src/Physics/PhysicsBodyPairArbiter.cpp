@@ -1,6 +1,5 @@
 #include "PhysicsBodyPairArbiter.h"
 
-#include "core/Log.h"
 
 Arbiter::Arbiter(PhysicsBody* b1, PhysicsBody* b2)
 {

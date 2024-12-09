@@ -1,4 +1,4 @@
-#include "core/Log.h"
+#include "core/Logger.h"
 
 #include "Scene.h"
 
@@ -296,7 +296,7 @@ std::vector<Entity>& Scene::GetAllPhysicsEntities()
 
 void Scene::OnRuntimeStart()
 {
-	ESM_INFO("Starting Runtime");
+	//Logger::Log("Starting Runtime");
 
 	m_IsRunning = true;
 

@@ -1,6 +1,5 @@
 #include "PhysicsCircleCollision.h"
 
-#include "core/Log.h"
 
 int PhysicsCircleCircleCollision(Contact* contacts, PhysicsBody* body1, PhysicsBody* body2)
 {
