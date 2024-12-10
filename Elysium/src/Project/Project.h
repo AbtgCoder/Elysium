@@ -51,6 +51,7 @@ public:
 	std::shared_ptr<EditorAssetManager> GetEditorAssetManager() { return std::static_pointer_cast<EditorAssetManager>(m_AssetManager); }
 
 	static std::shared_ptr<Project> New();
+	static std::shared_ptr<Project> New(const std::string& name, const std::string& location);
 	static std::shared_ptr<Project> Load(const std::filesystem::path& path);
 	static bool SaveActive(const std::filesystem::path& path);
 private:

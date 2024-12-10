@@ -1,0 +1,4 @@
+AssetRegistry:
+  - Handle: 17235218781622890045
+    FilePath: Scenes/Gameplay.elysium
+    Type: AssetType::Scene

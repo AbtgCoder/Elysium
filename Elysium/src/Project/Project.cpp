@@ -7,6 +7,20 @@ std::shared_ptr<Project> Project::New()
     return s_ActiveProject;
 }
 
+std::shared_ptr<Project> Project::New(const std::string& name, const std::string& location)
+{
+    std::shared_ptr<Project> project = std::make_shared<Project>();
+    project->m_ProjectDirectory = std::filesystem::path(location).parent_path();
+    auto& config = project->GetConfig();
+    config.Name = name;
+    config.AssetDirectory = "Assets";
+    config.AssetRegistryPath = name + ".assetregistry";
+    s_ActiveProject = project;
+    std::shared_ptr<EditorAssetManager> editorAssetManager = std::make_shared<EditorAssetManager>();
+    s_ActiveProject->m_AssetManager = editorAssetManager;
+    return s_ActiveProject;
+}
+
 std::shared_ptr<Project> Project::Load(const std::filesystem::path& path)
 {
     std::shared_ptr<Project> project = std::make_shared<Project>();

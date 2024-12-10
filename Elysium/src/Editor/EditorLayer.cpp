@@ -11,6 +11,7 @@
 #include "Asset/TextureImporter.h"
 
 #include "Utils/FileUtils.h"
+#include "Utils/StringUtils.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -188,6 +189,204 @@ void EditorLayer::sRender()
 
 void EditorLayer::NewProject()
 {
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(1000, 700));
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(32.0f, 32.0f));
+	if (ImGui::BeginPopupModal("new_project", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize))
+	{
+
+		{
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 16.0f);
+			bool opened = ImGui::BeginChild("ProjectTemplates", ImVec2(ImGui::GetContentRegionAvail().x * 0.5, ImGui::GetContentRegionAvail().y), false);
+			if (opened)
+			{
+				ImGui::PopStyleVar();
+				ImGui::Text("Project Templates");
+				ImGui::Dummy(ImVec2(32, 16));
+			}
+			if (!opened)
+			{
+				ImGui::PopStyleVar();
+			}
+
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.1f, 0.1f, 0.2f));
+			ImGui::BeginChild("TemplateContainer", { ImGui::GetContentRegionAvail().x - 64.0f, ImGui::GetContentRegionAvail().y }, true);
+			{
+				ImGui::Dummy({ 4, 4 });
+				//TODO: Draw Projet templates
+			}
+			ImGui::EndChild();
+			ImGui::PopStyleColor();
+
+			ImGui::EndChild();
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::SameLine();
+
+		{
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 16.0f);
+			bool opened = ImGui::BeginChild("ProjectSetupView", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), false);
+			if (opened)
+			{
+				ImGui::PopStyleVar();
+
+				ImGui::Text("Project Setup");
+
+				ImGui::Dummy(ImVec2(32, 16));
+
+				static std::string projectName = "";
+				static bool showNameEmptyWarning = false;
+				static bool showPathWarning = false;
+				ImGui::Text("Name");
+				if (showNameEmptyWarning && projectName.empty())
+				{
+					ImGui::SameLine();
+					ImGui::TextColored({ 1.0f, 1.0f, 1.0f, 1.0f }, "!!");
+					//TODO: tooltip...
+				}
+
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
+				std::strncpy(buffer, projectName.c_str(), sizeof(buffer));
+				if (ImGui::InputText("##ProjectName", buffer, sizeof(buffer)))
+				{
+					projectName = std::string(buffer);
+				}
+
+				ImGui::Dummy(ImVec2(32, 16));
+
+				ImGui::Text("Location");
+
+				static std::string location = "";
+				static bool isPathValid = false;
+				if ((showPathWarning && location.empty()) || (!location.empty() && !(std::filesystem::exists(location) && std::filesystem::is_directory(location))))
+				{
+					ImGui::SameLine();
+					ImGui::TextColored({ 1.0, 0.1, 0.1, 1.0 }, "!!");
+					//TODO: tooltips
+				}
+
+				ImGui::TextColored(ImVec4(1, 1, 1, 0.4), "A folder in which to create your new project");
+				std::string finalLocation = "";
+				static std::string projectFileName = "";
+
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40.0f);
+				char buffer2[256];
+				memset(buffer2, 0, sizeof(buffer2));
+				std::strncpy(buffer2, location.c_str(), sizeof(buffer2));
+				if (ImGui::InputText("##ProjectLocation", buffer2, sizeof(buffer2)))
+				{
+					location = std::string(buffer2);
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button("##folderOpen"))
+				{
+					std::string folderPath = WindowsFileUtils::OpenFolder(m_game->window().getSystemHandle());
+					if (!folderPath.empty())
+					{
+						std::replace(folderPath.begin(), folderPath.end(), '\\', '/');
+						auto splits = StringUtils::Split(folderPath, '/');
+						location = "";
+						for (int i = 0; i < splits.size(); i++)
+						{
+							location += splits[i] + "/";
+						}
+					}
+				}
+
+				projectFileName =  StringUtils::RemoveWhiteSpace(projectName) + ".eproject";
+
+				//finalLocation = location;
+				static std::string projectParentPath = location;
+				projectParentPath = location;
+				projectParentPath += projectName + "/";
+				finalLocation = projectParentPath + projectFileName;
+
+				if (!location.empty() && !projectName.empty())
+				{
+					ImGui::TextColored(ImVec4(1, 1, 1, 0.4), "Project will be created at under:");
+					ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
+					ImGui::TextColored(ImVec4(1, 1, 1, 0.4), finalLocation.c_str());
+					ImGui::PopTextWrapPos();
+				}
+				
+				ImGui::Dummy({ 1, ImGui::GetContentRegionAvail().y - 42 });
+
+				ImGui::Dummy({ ImGui::GetContentRegionAvail().x - 230 - 16, 38 });
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel", ImVec2(100, 38)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Create", ImVec2(120, 38)))
+				{
+					if (projectName.empty())
+					{
+						showNameEmptyWarning = true;
+					}
+					else
+					{
+						showNameEmptyWarning = false;
+					}
+
+					if (location.empty())
+					{
+						showPathWarning = true;
+					}
+					else if (std::filesystem::exists(location) && std::filesystem::is_directory(location))
+					{
+						showPathWarning = false;
+					}
+
+					if (!showNameEmptyWarning && !showPathWarning)
+					{
+						// Create Project
+						const auto& projectInitialSceneDirectory = projectParentPath + "/Assets/Scenes/";
+						std::filesystem::create_directories(projectInitialSceneDirectory);
+						Project::New(projectName, finalLocation);
+						auto projectInitialScenePath = projectInitialSceneDirectory + "Gameplay.elysium";
+						auto relativePath = std::filesystem::relative(projectInitialScenePath, Project::GetActiveAssetDirectory());
+						std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+						// Add Main Camera
+						auto camera = scene->AddEntity("Main Camera");
+						camera.addComponent<CCamera>();
+						SceneImporter::SaveScene(scene, relativePath);
+						Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+						AssetHandle sceneHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+						auto& pConfig = Project::GetActive()->GetConfig();
+						pConfig.StartScene = sceneHandle;
+						pConfig.lastOpenedScene = sceneHandle;
+						Project::SaveActive(finalLocation);
+						Logger::Log("Created Project: " + projectFileName, "editor");
+						OpenProject(finalLocation);
+					}
+					ImGui::CloseCurrentPopup();
+				}
+				
+			}
+			
+			if (!opened)
+			{
+				ImGui::PopStyleVar();
+			}
+			ImGui::EndChild();
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar(2);
 }
 
 bool EditorLayer::OpenProject()
@@ -213,6 +412,10 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 		else if (startScene)
 			OpenScene(startScene);
 		m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>(Project::GetActive());
+	}
+	else
+	{
+		Logger::Log("Couldn't load project: " + path.filename().generic_string(), "editor", LOG_TYPE::CRITICAL);
 	}
 }
 
@@ -362,11 +565,29 @@ void EditorLayer::sGUI()
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 	}
 
+	bool createNewProject = false;
+
 	// Menu Bar
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
+			if (ImGui::MenuItem("New  Project", "Ctrl+Shift+N"))
+			{
+				createNewProject = true;
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Open Project", "Ctrl+Shift+O"))
+			{
+				SaveProject();
+				OpenProject();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save Project", "Ctrl+Shift+S"))
+			{
+				SaveProject();
+			}
+			ImGui::Separator();
 			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
 			{
 				SaveScene(); // save active Scene
@@ -377,10 +598,22 @@ void EditorLayer::sGUI()
 			{
 				NewScene();
 			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
+			{
+				SaveScene();
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
 	}
+
+	if (createNewProject)
+		ImGui::OpenPopup("new_project");
+
+	if (ImGui::IsPopupOpen("new_project"))
+		NewProject();
+
 
 	m_SceneHierarchyPanel.OnImGuiRender();
 	m_ContentBrowserPanel->OnImGuiRender();
@@ -417,6 +650,7 @@ void EditorLayer::sGUI()
 				Vec2 viewportPos = windowToViewport(m_mousePos);
 				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
 				Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
+				newEntity.getComponent<CTag>().tag = relativePath.stem().string();
 				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Scene"))

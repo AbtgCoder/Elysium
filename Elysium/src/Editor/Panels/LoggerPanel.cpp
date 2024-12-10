@@ -38,6 +38,8 @@ void LoggerPanel::OnImGuiRender()
 				ImGui::PopStyleColor();
 			}
 
+			ImGui::Separator();
+
 			isEnabled = m_LogWarnings;
 			if (isEnabled)
 			{
@@ -49,6 +51,8 @@ void LoggerPanel::OnImGuiRender()
 			{
 				ImGui::PopStyleColor();
 			}
+
+			ImGui::Separator();
 
 			isEnabled = m_LogDebug;
 			if (isEnabled)

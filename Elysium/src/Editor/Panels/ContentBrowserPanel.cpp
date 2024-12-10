@@ -136,6 +136,9 @@ void ContentBrowserPanel::OnImGuiRender()
 			std::string itemStr = path.filename().string();
 			std::string extension = path.extension().string();
 
+			if (extension == ".assetregistry")
+				continue;
+
 			ImVec2 prevCursor = ImGui::GetCursorPos();
 			ImVec2 prevScreenPos = ImGui::GetCursorScreenPos();
 
