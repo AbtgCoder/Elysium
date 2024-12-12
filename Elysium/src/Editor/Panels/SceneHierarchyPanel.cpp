@@ -2,6 +2,7 @@
 
 #include "Asset/AssetManager.h"
 #include "core/Texture.h"
+#include "core/Logger.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
 #include "ImGui/ImGuiHelper.h"
@@ -185,7 +186,10 @@ void SceneHierarchyPanel::OnImGuiRender()
 		
 		for (auto e : entitiesToDisplay)
 		{
-			DrawEntityNode(e);
+			if ((searchQuery.empty() && !e.getComponent<CParent>().HasParent) || !searchQuery.empty())
+			{
+				DrawEntityNode(e);
+			}
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -196,24 +200,29 @@ void SceneHierarchyPanel::OnImGuiRender()
 		// Right click on blank space
 		if (ImGui::BeginPopupContextWindow(0, 1, false))
 		{
+			Entity entity;
 			if (ImGui::MenuItem("Create Empty Entity"))
 			{
-				m_Scene->AddEntity("Empty Entity");
+				entity = m_Scene->AddEntity("Empty Entity");
 			}
 			if (ImGui::MenuItem("Create Circle Entity"))
 			{
-				auto entity = m_Scene->AddEntity("Circle");
+				entity = m_Scene->AddEntity("Circle");
 				entity.addComponent<CCircle>();
 			}
 			if (ImGui::MenuItem("Create Rectangle Entity"))
 			{
-				auto entity = m_Scene->AddEntity("rectangle");
+				entity = m_Scene->AddEntity("rectangle");
 				entity.addComponent<CRectangle>();
 			}
 			if (ImGui::MenuItem("Create Polygon Entity"))
 			{
-				auto entity = m_Scene->AddEntity("polygon");
+				entity = m_Scene->AddEntity("polygon");
 				entity.addComponent<CPolygon>();
+			}
+			if (entity)
+			{
+				m_InspectedEntity = entity;
 			}
 			ImGui::EndPopup();
 		}
@@ -287,11 +296,11 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CTransform>("Transform", m_InspectedEntity, [](auto& component)
 			{
-				DrawVec2Control("Position", component.pos, 0.0f, 80.0f);
-				DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
-				DrawVec2Control("Scale", component.scale, 0.0f, 80.0f);
-				DrawFloatControl("Angle", component.angle, 0.0f, 360.0f);
-				DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
+				DrawVec2Control("Translation", component.Translation, 0.0f, 80.0f);
+				DrawFloatControl("Rotation", component.Rotation, 0.0f, 360.0f);
+			//	DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
+				DrawVec2Control("Scale", component.Scale, 0.0f, 80.0f);
+				//DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
 			});
 
 		DrawComponentGUI<CCamera>("Camera", m_InspectedEntity, [](auto& component)
@@ -545,7 +554,10 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 
-	flags |= ImGuiTreeNodeFlags_Leaf; //TODO: only do this if entity has no children
+	auto& parent = entity.getComponent<CParent>();
+
+	if (parent.Children.size() <= 0)
+		flags |= ImGuiTreeNodeFlags_Leaf; 
 
 	auto cursorPos = ImGui::GetCursorPos();
 	ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
@@ -590,6 +602,37 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 		ImGui::EndDragDropSource();
 	}
 
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+		{
+			Elysium::UUID eId = *(Elysium::UUID*)payload->Data;
+
+
+			bool entityContainsItself = false; // TODO: implement this function
+
+			auto& payloadParentComponent = m_Scene->GetEntityByUUID(eId).getComponent<CParent>();
+			
+			if (!entityContainsItself && payloadParentComponent.ParentID != eId && std::count(parent.Children.begin(), parent.Children.end(), eId) == 0)
+			{
+				if (payloadParentComponent.HasParent)
+				{
+					// payload_entity already has a parent
+					auto& ogParentComponent = m_Scene->GetEntityByUUID(payloadParentComponent.ParentID).getComponent<CParent>(); // it is a child of this parent ...
+					// so, remove payload_entity from og_parent
+					ogParentComponent.Children.erase(std::remove(ogParentComponent.Children.begin(), ogParentComponent.Children.end(), eId), ogParentComponent.Children.end());
+				}
+				payloadParentComponent.HasParent = true;
+				payloadParentComponent.ParentID = entity.getComponent<CId>().id;
+				parent.Children.push_back(eId);
+				//TODO OR NOT_TODO: m_Scene->GetEntityByUUID(eId).getComponent<CTransform>().Translation = m_Scene->GetEntityByUUID(eId).getComponent<CTransform>().GlobalTranslation - entity.getComponent<CTransform>().GlobalTranslation;
+				//m_InspectedEntity = m_Scene->GetEntityByUUID(eId);
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+
 	bool entityDeleted = false;
 	if (ImGui::BeginPopupContextItem())
 	{
@@ -597,19 +640,39 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 		{
 			entityDeleted = true;
 		}
+		if (ImGui::MenuItem("Create Empty"))
+		{
+			Entity child = m_Scene->AddEntity("Empty Entity");
+			child.getComponent<CParent>().HasParent = true;
+			child.getComponent<CParent>().ParentID = entity.getComponent<CId>().id;
+			parent.Children.push_back(child.getComponent<CId>().id);
+			m_InspectedEntity = child;
+		}
+		//TODO: move to root ...
+		if (parent.HasParent && ImGui::MenuItem("Move to root"))
+		{
+			auto& parentParentComponent = m_Scene->GetEntityByUUID(parent.ParentID).getComponent<CParent>();
+			parentParentComponent.RemoveChild(entity.getComponent<CId>().id);
+			parent.HasParent = false;
+		}
 		ImGui::EndPopup();
 	}
 
 
 	if (opened)
 	{
-		// TODO: children entities
+		// TODO: draw children entities
+		auto children = parent.Children;
+		for (auto& child : children)
+		{
+			DrawEntityNode(m_Scene->GetEntityByUUID(child));
+		}
 		ImGui::TreePop();
 	}
 
 	if (entityDeleted)
 	{
-		entity.destroy();
+		m_Scene->DestroyEntity(entity);
 		if (m_InspectedEntity == entity)
 		{
 			m_InspectedEntity = {};

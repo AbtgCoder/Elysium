@@ -104,13 +104,38 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::BeginMap; // Transform Component
 
 		auto& tc = entity.getComponent<CTransform>();
-		out << YAML::Key << "Position" << YAML::Value << tc.pos;
-		out << YAML::Key << "Scale" << YAML::Value << tc.scale;
-		out << YAML::Key << "Angle" << YAML::Value << tc.angle;
-		out << YAML::Key << "Velocity" << YAML::Value << tc.velocity;
-		out << YAML::Key << "AngularVelocity" << YAML::Value << tc.angularVelocity;
+		out << YAML::Key << "Translation" << YAML::Value << tc.Translation;
+		out << YAML::Key << "Rotation" << YAML::Value << tc.Rotation;
+		out << YAML::Key << "Scale" << YAML::Value << tc.Scale;
+
+		out << YAML::Key << "GlobalTranslation" << YAML::Value << tc.GlobalTranslation;
+		out << YAML::Key << "GlobalRotation" << YAML::Value << tc.GlobalRotation;
+		out << YAML::Key << "GlobalScale" << YAML::Value << tc.GlobalScale;
+		//out << YAML::Key << "Velocity" << YAML::Value << tc.velocity;
+		//out << YAML::Key << "AngularVelocity" << YAML::Value << tc.angularVelocity;
 
 		out << YAML::EndMap; // TransformComponent
+	}
+	if (entity.hasComponent<CParent>())
+	{
+		out << YAML::Key << "ParentComponent";
+		out << YAML::BeginMap;
+		auto& pc = entity.getComponent<CParent>();
+		out << YAML::Key << "HasParent" << YAML::Value << pc.HasParent;
+		Elysium::UUID pId = 0;
+		if (pc.HasParent)
+		{
+			pId = pc.ParentID;
+		}
+		out << YAML::Key << "ParentID" << YAML::Value << pId;
+		out << YAML::Key << "Children" << YAML::Value << YAML::Flow;
+		out << YAML::BeginSeq;
+		for (auto& cId : pc.Children)
+		{
+			out << cId;
+		}
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CCamera>())
 	{
@@ -127,6 +152,7 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << (float)camera.backgroundColor.b;
 		out << (float)camera.backgroundColor.a;
 		out << YAML::EndSeq;
+		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CCircle>())
 	{
@@ -353,11 +379,31 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			if (transformComponent)
 			{
 				auto& tc = deserializedEntity.addComponent<CTransform>();
-				tc.pos = transformComponent["Position"].as<Vec2>();
-				tc.scale = transformComponent["Scale"].as<Vec2>();
-				tc.angle = transformComponent["Angle"].as<float>();
-				tc.velocity = transformComponent["Velocity"].as<Vec2>();
-				tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
+				tc.Translation = transformComponent["Translation"].as<Vec2>();
+				tc.Rotation = transformComponent["Rotation"].as<float>();
+				tc.Scale = transformComponent["Scale"].as<Vec2>();
+
+				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<Vec2>();
+				tc.GlobalRotation = transformComponent["GlobalRotation"].as<float>();
+				tc.GlobalScale = transformComponent["GlobalScale"].as<Vec2>();
+				//tc.velocity = transformComponent["Velocity"].as<Vec2>();
+				//tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
+			}
+
+			//deserializedEntity.addComponent<CParent>();
+
+			auto parentComponent = entity["ParentComponent"];
+			if (parentComponent)
+			{
+				auto& pc = deserializedEntity.addComponent<CParent>();
+				pc.HasParent = parentComponent["HasParent"].as<bool>();
+				if (pc.HasParent)
+					pc.ParentID = parentComponent["ParentID"].as<uint64_t>();
+				auto children = parentComponent["Children"];
+				for (auto childId : children)
+				{
+					pc.Children.push_back(childId.as<uint64_t>());
+				}
 			}
 
 			auto cameraComponent = entity["Camera"];

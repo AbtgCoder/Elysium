@@ -15,7 +15,7 @@ KDTreeNode* makeKDTree(KDTreeNode* rootNode, uint16_t depth)
 	float sumCoord = 0.0f;
 	for (auto e : rootNode->entities)
 	{
-		sumCoord += e.getComponent<CTransform>().pos[currentDim];
+		sumCoord += e.getComponent<CTransform>().GlobalTranslation[currentDim];
 	}
 	rootNode->medianVal = sumCoord / numEntities;
 
@@ -24,7 +24,7 @@ KDTreeNode* makeKDTree(KDTreeNode* rootNode, uint16_t depth)
 
 	for (auto e : rootNode->entities)
 	{
-		if (e.getComponent<CTransform>().pos[currentDim] < rootNode->medianVal)
+		if (e.getComponent<CTransform>().GlobalTranslation[currentDim] < rootNode->medianVal)
 		{
 			rootNode->left->entities.push_back(e);
 		}

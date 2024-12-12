@@ -47,6 +47,20 @@ Scene::Scene(const std::string& name)
 
 Scene::~Scene()
 {
+	//TODO: delete m_PhysicsWorld;
+}
+
+template <typename Component>
+static void CopyComponentIfExists(Entity sourceEntity, Entity targetEntity)
+{
+	if (sourceEntity.hasComponent<Component>())
+		targetEntity.addComponent<Component>(sourceEntity.getComponent<Component>());
+}
+
+template <typename... Components>
+static void CopyComponentsIfExists(Entity sourceEntity, Entity targetEntity)
+{
+	(CopyComponentIfExists<Components>(sourceEntity, targetEntity), ...);
 }
 
 std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
@@ -65,57 +79,22 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	{
 		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, "runtime_" + e.getComponent<CTag>().tag);
 		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
-		if (e.hasComponent<CSpriteRenderer>())
-		{
-			runtimeEntity.addComponent<CSpriteRenderer>(e.getComponent<CSpriteRenderer>());
-		}
-		else if (e.hasComponent<CCircle>())
-		{
-			runtimeEntity.addComponent<CCircle>(e.getComponent<CCircle>());
-		}
-		else if (e.hasComponent<CRectangle>())
-		{
-			runtimeEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
-		}
-		else if (e.hasComponent<CPolygon>())
-		{
-			runtimeEntity.addComponent<CPolygon>(e.getComponent<CPolygon>());
-		}
+		runtimeEntity.addComponent<CParent>(e.getComponent<CParent>());
 
-		if (e.hasComponent<CCircleCollider>())
-		{
-			runtimeEntity.addComponent<CCircleCollider>(e.getComponent<CCircleCollider>());
-		}
-		else if (e.hasComponent<CBoundingBox>())
-		{
-			runtimeEntity.addComponent<CBoundingBox>(e.getComponent<CBoundingBox>());
-		}
-		else if (e.hasComponent<CPolygonCollider>())
-		{
-			runtimeEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
-		}
-		if (e.hasComponent<CRigidBody>())
-		{
-			runtimeEntity.addComponent<CRigidBody>(e.getComponent<CRigidBody>());
-		}
-		if (e.hasComponent<CPhysicsMaterial>())
-		{
-			runtimeEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
-		}
-		if (e.hasComponent<CJoint>())
-		{
-			runtimeEntity.addComponent<CJoint>(e.getComponent<CJoint>());
-		}
+		CopyComponentsIfExists<
+			CSpriteRenderer,
+			CCircle,
+			CRectangle,
+			CPolygon,
+			CCircleCollider,
+			CBoundingBox,
+			CPolygonCollider,
+			CRigidBody,
+			CPhysicsMaterial,
+			CJoint,
+			CCamera
+		>(e, runtimeEntity);
 
-		if (e.hasComponent<CNativeScriptComponent>())
-		{
-			runtimeEntity.addComponent<CNativeScriptComponent>().Bind<RotateEntity>();
-		}
-
-		if (e.hasComponent<CCamera>())
-		{
-			runtimeEntity.addComponent<CCamera>(e.getComponent<CCamera>());
-		}
 	}
 
 	scene->m_entityManager.update();
@@ -133,6 +112,7 @@ Entity Scene::AddEntityWithUUID(Elysium::UUID uuid, const std::string& name)
 	Entity e = m_entityManager.addEntity();
 	e.addComponent<CId>(uuid);
 	e.addComponent<CTransform>();
+	e.addComponent<CParent>();
 	auto& tag = e.addComponent<CTag>();
 	tag.tag = name.empty() ? "Entity" : name;
 	m_entityManager.update();
@@ -144,6 +124,7 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	// asset, asset type as texture
 	auto entity = m_entityManager.addEntity();
 	entity.addComponent<CId>(Elysium::UUID());
+	entity.addComponent<CParent>();
 	entity.addComponent<CTag>("Tile");
 	entity.addComponent<CTransform>(pos);
 	entity.addComponent<CSpriteRenderer>();
@@ -151,61 +132,64 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	return entity;
 }
 
-//TODO: improve "Duplication" functionality
-Entity Scene::DuplicateEntity(Entity e)
+Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID)
 {
+	// Create a duplicate of the current entity
 	auto duplicateEntity = AddEntity(e.getComponent<CTag>().tag);
 	duplicateEntity.addComponent<CTransform>(e.getComponent<CTransform>());
-	if (e.hasComponent<CSpriteRenderer>())
-	{
-		duplicateEntity.addComponent<CSpriteRenderer>(e.getComponent<CSpriteRenderer>());
+
+	// Handle Parent Component
+	auto& originalParentComponent = e.getComponent<CParent>();
+	auto& duplicateParentComponent = duplicateEntity.addComponent<CParent>();
+
+	if (newParentID.has_value()) {
+		// Assign new parent if specified
+		duplicateParentComponent.HasParent = true;
+		duplicateParentComponent.ParentID = newParentID.value();
+
+		// Add duplicate entity to the new parent's Children list
+		auto& newParent = GetEntityByUUID(newParentID.value());
+		newParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
-	else if (e.hasComponent<CCircle>())
-	{
-		duplicateEntity.addComponent<CCircle>(e.getComponent<CCircle>());
+	else if (originalParentComponent.HasParent) {
+		// Keep the same parent if no new parent is specified
+		duplicateParentComponent.HasParent = true;
+		duplicateParentComponent.ParentID = originalParentComponent.ParentID;
+
+		// Add duplicate entity to the original parent's Children list
+		auto& originalParent = GetEntityByUUID(originalParentComponent.ParentID);
+		originalParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
-	else if (e.hasComponent<CRectangle>())
-	{
-		duplicateEntity.addComponent<CRectangle>(e.getComponent<CRectangle>());
+	else {
+		// If the original entity has no parent, the duplicate is a root entity
+		duplicateParentComponent.HasParent = false;
 	}
-	else if (e.hasComponent<CPolygon>())
-	{
-		duplicateEntity.addComponent<CPolygon>(e.getComponent<CPolygon>());
+	CopyComponentsIfExists<
+		CSpriteRenderer,
+		CCircle,
+		CRectangle,
+		CPolygon,
+		CCircleCollider,
+		CBoundingBox,
+		CPolygonCollider,
+		CRigidBody,
+		CPhysicsMaterial,
+		CJoint,
+		CCamera
+	>(e, duplicateEntity);
+
+	// Handle recursive duplication of children
+	for (auto childId : originalParentComponent.Children) {
+		Entity originalChildEntity = GetEntityByUUID(childId);
+
+		// Duplicate the child entity and assign it to this duplicate entity
+		DuplicateEntity(originalChildEntity, duplicateEntity.getComponent<CId>().id);
 	}
 
-	if (e.hasComponent<CCircleCollider>())
-	{
-		duplicateEntity.addComponent<CCircleCollider>(e.getComponent<CCircleCollider>());
-	}
-	else if (e.hasComponent<CBoundingBox>())
-	{
-		duplicateEntity.addComponent<CBoundingBox>(e.getComponent<CBoundingBox>());
-	}
-	else if (e.hasComponent<CPolygonCollider>())
-	{
-		duplicateEntity.addComponent<CPolygonCollider>(e.getComponent<CPolygonCollider>());
-	}
-
-	if (e.hasComponent<CRigidBody>())
-	{
-		duplicateEntity.addComponent<CRigidBody>(e.getComponent<CRigidBody>());
-	}
-	if (e.hasComponent<CPhysicsMaterial>())
-	{
-		duplicateEntity.addComponent<CPhysicsMaterial>(e.getComponent<CPhysicsMaterial>());
-	}
-	if (e.hasComponent<CJoint>())
-	{
-		duplicateEntity.addComponent<CJoint>(e.getComponent<CJoint>());
-	}
-
-	if (e.hasComponent<CNativeScriptComponent>())
-	{
-		duplicateEntity.addComponent<CNativeScriptComponent>().Bind<RotateEntity>();
-	}
 	m_entityManager.update();
 	return duplicateEntity;
 }
+
 
 static bool IsInside(Vec2 pos, Entity e)
 {
@@ -228,7 +212,7 @@ static bool IsInside(Vec2 pos, Entity e)
 	{
 		s = g_cameraIconTexture.getSize() + sf::Vector2u(10.0f, 10.0f);
 	}
-	Vec2 ePos = e.getComponent<CTransform>().pos;
+	Vec2 ePos = e.getComponent<CTransform>().GlobalTranslation;
 	if (pos.x > ePos.x - s.x / 2 &&
 		pos.x < ePos.x + s.x / 2 &&
 		pos.y > ePos.y - s.y / 2 &&
@@ -266,6 +250,21 @@ Entity Scene::GetEntityByUUID(Elysium::UUID id)
 
 void Scene::DestroyEntity(Entity entity)
 {
+	auto& parentComponent = entity.getComponent<CParent>();
+	std::vector<Elysium::UUID> copyChildren = parentComponent.Children;
+
+	if (parentComponent.HasParent)
+	{
+		// remove self from parents children list..
+		auto& parent = GetEntityByUUID(parentComponent.ParentID).getComponent<CParent>();
+		parent.RemoveChild(entity.getComponent<CId>().id);
+	}
+
+	for (auto& cId : copyChildren)
+	{
+		DestroyEntity(GetEntityByUUID(cId));
+	}
+
 	entity.destroy();
 }
 
@@ -300,6 +299,8 @@ void Scene::OnRuntimeStart()
 
 	m_IsRunning = true;
 
+	UpdateTransforms();
+
 	// Instantiate script
 	for (auto e : m_entityManager.GetEntities())
 	{
@@ -322,10 +323,10 @@ void Scene::OnRuntimeStart()
 			auto& rb2d = e.getComponent<CRigidBody>();
 
 			PhysicsBody* body = new PhysicsBody();
-			body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
-			body->m_rotation = transform.angle / DEG_PER_RAD;
-			body->m_velocity = transform.velocity;
-			body->m_angularVelocity = transform.angularVelocity;
+			body->m_position = { transform.GlobalTranslation.x / PPM, -1 * transform.GlobalTranslation.y / PPM };
+			body->m_rotation = transform.GlobalRotation / DEG_PER_RAD;
+		//	body->m_velocity = transform.velocity;
+		//	body->m_angularVelocity = transform.angularVelocity;
 			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
 			rb2d.runtimeBody = body;
 
@@ -333,7 +334,7 @@ void Scene::OnRuntimeStart()
 			{
 				auto& bb2d = e.getComponent<CBoundingBox>();
 				PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-				boxShape->SetAsBox(bb2d.halfSize.x * transform.scale.x / PPM, bb2d.halfSize.y * transform.scale.y / PPM, bb2d.offset / PPM, 0.0f);
+				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x / PPM, bb2d.halfSize.y * transform.GlobalScale.y / PPM, bb2d.offset / PPM, 0.0f);
 				body->m_shape = boxShape;
 			}
 			else if (e.hasComponent<CPolygonCollider>())
@@ -354,7 +355,7 @@ void Scene::OnRuntimeStart()
 			{
 				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
 				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
-				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().scale.x / PPM;
+				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x / PPM;
 				body->m_shape = circleShape;
 			}
 
@@ -396,7 +397,7 @@ void Scene::OnRuntimeStart()
 			{
 				continue;
 			}
-			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().pos;
+			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().GlobalTranslation;
 			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
 			joint->Set(body1, body2, Vec2(anchorWorldPos.x / PPM, - anchorWorldPos.y / PPM));
 			// TODO: add softness & bias to the joint component ??
@@ -427,6 +428,40 @@ void Scene::OnRuntimeStop()
 	delete m_PhysicsWorld;
 	if (m_bomb)
 		m_bomb.destroy();
+}
+
+void Scene::UpdateTransforms()
+{
+	// calculate all global transforms..
+	for (auto e : m_entityManager.GetEntities())
+	{
+		auto& transform = e.getComponent<CTransform>();
+		if (!e.getComponent<CParent>().HasParent)
+		{
+			transform.GlobalTranslation = transform.Translation;
+			transform.GlobalRotation = transform.Rotation;
+			transform.GlobalScale = transform.Scale;
+			continue;
+		}
+
+		Vec2 globalPosition = transform.Translation;
+		float globalOrientation = transform.Rotation;
+		Vec2 globalScale = transform.Scale;
+
+		auto parentComponent = e.getComponent<CParent>();
+		while (parentComponent.HasParent)
+		{
+			auto& parentTransform = GetEntityByUUID(parentComponent.ParentID).getComponent<CTransform>();
+			globalPosition += parentTransform.Translation;
+			globalOrientation += parentTransform.Rotation;
+			globalScale.x *= parentTransform.Scale.x;
+			globalScale.y *= parentTransform.Scale.y;
+			parentComponent = GetEntityByUUID(parentComponent.ParentID).getComponent<CParent>();
+		}
+		transform.GlobalTranslation = globalPosition;
+		transform.GlobalRotation = globalOrientation;
+		transform.GlobalScale = globalScale;
+	}
 }
 
 void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
@@ -474,11 +509,12 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 					auto& rb2d = e.getComponent<CRigidBody>();
 					if (rb2d.runtimeBody)
 					{
+						//TODO: fix this for when entity e has a parent....
 						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-						e.getComponent<CTransform>().velocity = body->m_velocity;
-						e.getComponent<CTransform>().pos = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
-						e.getComponent<CTransform>().angle = body->m_rotation * DEG_PER_RAD;
-						e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
+					//	e.getComponent<CTransform>().velocity = body->m_velocity;
+						e.getComponent<CTransform>().Translation = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
+						e.getComponent<CTransform>().Rotation = body->m_rotation * DEG_PER_RAD;
+					//	e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
 					}
 				}
 			}
@@ -507,11 +543,13 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 	if (mainCamera)
 	{
 		m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
-		m_cameraView.setCenter(cameraTransform.pos.x, cameraTransform.pos.y);
+		m_cameraView.setCenter(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
 		m_cameraView.zoom(mainCamera->zoom);
-		m_cameraView.setRotation(cameraTransform.angle);
+		m_cameraView.setRotation(cameraTransform.GlobalRotation);
 		renderTexture.setView(m_cameraView);
 		renderTexture.clear(mainCamera->backgroundColor);
+
+		UpdateTransforms();
 
 		RenderScene(renderTexture);
 
@@ -526,12 +564,16 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
 {
-	// stuff
+	// Update transforms..
+	UpdateTransforms();
+
+	// Render Scene
 	RenderScene(renderTexture);
 }
 
 void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 {
+#if 0
 	if (!m_bomb)
 	{
 		m_bomb = AddEntity("runtime_bomb");
@@ -576,7 +618,7 @@ void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 	body->m_rotation = transform.angle / DEG_PER_RAD;
 	body->m_velocity = transform.velocity;
 	body->m_angularVelocity = transform.angularVelocity;
-	
+#endif
 }
 
 void Scene::Step(int frames)
@@ -613,8 +655,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					m_CircleShape.setPointCount(30);
 					m_CircleShape.setRadius(e.getComponent<CCircleCollider>().radius);
 					m_CircleShape.setOrigin(e.getComponent<CCircleCollider>().radius, e.getComponent<CCircleCollider>().radius);
-					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
+					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
 					m_CircleShape.setFillColor(sf::Color::Transparent);
 					m_CircleShape.setOutlineColor(e.getComponent<CCircle>().color);
 					m_CircleShape.setOutlineThickness(1.0f);
@@ -625,8 +667,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					Vec2 rectSize = e.getComponent<CBoundingBox>().size;
 					m_PhysicsRect.setSize(sf::Vector2f(rectSize.x, rectSize.y));
 					m_PhysicsRect.setOrigin(rectSize.x / 2, rectSize.y / 2);
-					m_PhysicsRect.setRotation(-1 * e.getComponent<CTransform>().angle);
-					m_PhysicsRect.setPosition(e.getComponent<CTransform>().pos.x + e.getComponent<CBoundingBox>().offset.x, e.getComponent<CTransform>().pos.y + e.getComponent<CBoundingBox>().offset.y);
+					m_PhysicsRect.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
+					m_PhysicsRect.setPosition(e.getComponent<CTransform>().GlobalTranslation.x + e.getComponent<CBoundingBox>().offset.x, e.getComponent<CTransform>().GlobalTranslation.y + e.getComponent<CBoundingBox>().offset.y);
 					m_PhysicsRect.setFillColor(sf::Color::Transparent);
 					m_PhysicsRect.setOutlineColor(e.getComponent<CRectangle>().color);
 					renderTexture.draw(m_PhysicsRect);
@@ -635,10 +677,10 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				{
 					std::vector<Vec2> vertices = e.getComponent<CPolygonCollider>().colliderVertices;
 					m_PhysicsPoly.setPointCount(vertices.size());
-					Vec2 ePos = e.getComponent<CTransform>().pos;
+					Vec2 ePos = e.getComponent<CTransform>().GlobalTranslation;
 					for (size_t i = 0; i < vertices.size(); i++)
 					{
-						Vec2 rotatedPoint = ePos + vertices[i].rotate(-1 * e.getComponent<CTransform>().angle / DEG_PER_RAD);
+						Vec2 rotatedPoint = ePos + vertices[i].rotate(-1 * e.getComponent<CTransform>().GlobalRotation / DEG_PER_RAD);
 						m_PhysicsPoly.setPoint(i, sf::Vector2f(rotatedPoint.x, rotatedPoint.y));
 					}
 					renderTexture.draw(m_PhysicsPoly);
@@ -654,8 +696,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 						sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 						sf::Sprite sprite = sf::Sprite(tex);
 						sprite.setOrigin(tex.getSize().x / 2.0f, tex.getSize().y / 2.0f);
-						sprite.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-						sprite.setRotation(-1 * e.getComponent<CTransform>().angle);
+						sprite.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
+						sprite.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
 						renderTexture.draw(sprite);
 					}
 				}
@@ -664,7 +706,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					m_CircleShape.setPointCount(30);
 					m_CircleShape.setRadius(e.getComponent<CCircle>().radius);
 					m_CircleShape.setOrigin(e.getComponent<CCircle>().radius, e.getComponent<CCircle>().radius);
-					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 					m_CircleShape.setFillColor(e.getComponent<CCircle>().color);
 					renderTexture.draw(m_CircleShape);
 				}
@@ -672,8 +714,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				{
 					m_RectangleShape.setSize(sf::Vector2f(e.getComponent<CRectangle>().size.x, e.getComponent<CRectangle>().size.y));
 					m_RectangleShape.setOrigin(e.getComponent<CRectangle>().size.x / 2, e.getComponent<CRectangle>().size.y / 2);
-					m_RectangleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
-					m_RectangleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+					m_RectangleShape.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
+					m_RectangleShape.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 					m_RectangleShape.setFillColor(e.getComponent<CRectangle>().color);
 					m_RectangleShape.setOutlineColor(sf::Color::Transparent);
 					renderTexture.draw(m_RectangleShape);
@@ -683,8 +725,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					m_CircleShape.setPointCount(e.getComponent<CPolygon>().sides);
 					m_CircleShape.setRadius(e.getComponent<CPolygon>().size);
 					m_CircleShape.setOrigin(e.getComponent<CPolygon>().size, e.getComponent<CPolygon>().size);
-					m_CircleShape.setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
-					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().angle);
+					m_CircleShape.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
+					m_CircleShape.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
 					m_CircleShape.setFillColor(e.getComponent<CPolygon>().color);
 					m_CircleShape.setOutlineColor(e.getComponent<CPolygon>().color);
 					renderTexture.draw(m_CircleShape);
@@ -716,8 +758,8 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					}
 
 				
-					Vec2 p1 = e.getComponent<CTransform>().pos;
-					Vec2 p2 = entity2.getComponent<CTransform>().pos;
+					Vec2 p1 = e.getComponent<CTransform>().GlobalTranslation;
+					Vec2 p2 = entity2.getComponent<CTransform>().GlobalTranslation;
 					Vec2 anchorPos = p1 + e.getComponent<CJoint>().anchorPos;
 					sf::VertexArray lines(sf::Lines, 4);
 					lines[0].position = sf::Vector2f(p1.x, p1.y);
@@ -751,10 +793,10 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 					{
 						PhysicsHingeJoint* joint = (PhysicsHingeJoint*)e.getComponent<CJoint>().runtimeJoint;
 
-						Vec2 p1 = e.getComponent<CTransform>().pos;
-						Vec2 p2 = entity2.getComponent<CTransform>().pos;
-						Mat22 R1(e.getComponent<CTransform>().angle / DEG_PER_RAD);
-						Mat22 R2(entity2.getComponent<CTransform>().angle / DEG_PER_RAD);
+						Vec2 p1 = e.getComponent<CTransform>().GlobalTranslation;
+						Vec2 p2 = entity2.getComponent<CTransform>().GlobalTranslation;
+						Mat22 R1(e.getComponent<CTransform>().GlobalRotation / DEG_PER_RAD);
+						Mat22 R2(entity2.getComponent<CTransform>().GlobalRotation / DEG_PER_RAD);
 
 						Vec2 rotatedAnchorPos1 = R1 * joint->m_localAnchor1;
 						Vec2 anchorPos1 = p1 + Vec2(rotatedAnchorPos1.x * PPM, -rotatedAnchorPos1.y * PPM);
@@ -794,16 +836,16 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		}
 	}
 
-	// Camera Editor Rendering
+	// Camera Editor Rendering (TODO: should be done in editor layer...
 	if (!m_IsRunning && mainCamera)
 	{
 		g_cameraIconSprite.setOrigin(g_cameraIconTexture.getSize().x / 2.0f, g_cameraIconTexture.getSize().y / 2.0f);
-		g_cameraIconSprite.setPosition(cameraTransform.pos.x, cameraTransform.pos.y);
+		g_cameraIconSprite.setPosition(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
 		renderTexture.draw(g_cameraIconSprite);
 
 		m_RectangleShape.setSize(sf::Vector2f(mainCamera->size.x, mainCamera->size.y));
 		m_RectangleShape.setOrigin(mainCamera->size.x / 2, mainCamera->size.y / 2);
-		m_RectangleShape.setPosition(cameraTransform.pos.x, cameraTransform.pos.y);
+		m_RectangleShape.setPosition(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
 		m_RectangleShape.setFillColor(sf::Color::Transparent);
 		m_RectangleShape.setOutlineColor(sf::Color::White);
 		m_RectangleShape.setOutlineThickness(3.0f);

@@ -15,5 +15,5 @@ void RotateEntity::OnUpdate(float ts)
 	auto& transform = getComponent<CTransform>();
 	float speed = 15.0f;
 
-	transform.angle += speed * ts;
+	//transform.angle += speed * ts;
 }

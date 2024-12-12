@@ -8,6 +8,7 @@
 #include "EntityManager.h"
 
 #include <string>
+#include <optional>
 
 class Scene : public Asset
 {
@@ -21,7 +22,8 @@ public:
 	Entity AddEntity(const std::string& name);
 	Entity AddEntityWithUUID(Elysium::UUID uuid, const std::string& name);
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
-	Entity DuplicateEntity(Entity entity);
+	//Entity DuplicateEntity(Entity entity);
+	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
 	Entity GetEntityIfClicked(Vec2 mousePos);
 	Entity GetEntityByUUID(Elysium::UUID id);
 	void DestroyEntity(Entity entity);
@@ -36,6 +38,7 @@ public:
 
 	void OnRuntimeStart();
 	void OnRuntimeStop();
+	void UpdateTransforms();
 	void OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt);
 	void OnUpdateEditor(sf::RenderTexture& renderTexture);
 

@@ -47,7 +47,7 @@ Vec2 Physics::GetOverlap(Entity a, Entity b)
     Vec2 offsetA = a.getComponent<CBoundingBox>().offset;
     Vec2 offsetB = b.getComponent<CBoundingBox>().offset;
 
-    Vec2 delta = a.getComponent<CTransform>().pos - b.getComponent<CTransform>().pos + (offsetA - offsetB);
+    Vec2 delta = a.getComponent<CTransform>().GlobalTranslation - b.getComponent<CTransform>().GlobalTranslation + (offsetA - offsetB);
     float ox = halfSizeA.x + halfSizeB.x - abs(delta.x);
     float oy = halfSizeA.y + halfSizeB.y - abs(delta.y);
 
@@ -61,11 +61,12 @@ Vec2 Physics::GetPreviousOverlap(Entity a, Entity b)
     Vec2 offsetA = a.getComponent<CBoundingBox>().offset;
     Vec2 offsetB = b.getComponent<CBoundingBox>().offset;
 
-    Vec2 delta = a.getComponent<CTransform>().prevPos - b.getComponent<CTransform>().prevPos + (offsetA - offsetB);
+   /* Vec2 delta = a.getComponent<CTransform>().prevPos - b.getComponent<CTransform>().prevPos + (offsetA - offsetB);
     float ox = halfSizeA.x + halfSizeB.x - abs(delta.x);
     float oy = halfSizeA.y + halfSizeB.y - abs(delta.y);
-
-    return Vec2(ox, oy);
+    return Vec2(ox, oy);*/
+	
+	return Vec2(0, 0);
 }
 
 std::vector<Vec2> getRotatedRectangleVertices(float centerX, float centerY, float width, float height, float angle)
@@ -183,8 +184,8 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 	std::vector<Vec2> empty;
 
 
-	std::vector<Vec2> colliderVerticesA = getRotatedRectangleVertices(a.getComponent<CTransform>().pos.x, a.getComponent<CTransform>().pos.y, a.getComponent<CBoundingBox>().size.x, a.getComponent<CBoundingBox>().size.y, a.getComponent<CTransform>().angle);
-	std::vector<Vec2> colliderVerticesB = getRotatedRectangleVertices(b.getComponent<CTransform>().pos.x, b.getComponent<CTransform>().pos.y, b.getComponent<CBoundingBox>().size.x, b.getComponent<CBoundingBox>().size.y, b.getComponent<CTransform>().angle);
+	std::vector<Vec2> colliderVerticesA = getRotatedRectangleVertices(a.getComponent<CTransform>().GlobalTranslation.x, a.getComponent<CTransform>().GlobalTranslation.y, a.getComponent<CBoundingBox>().size.x, a.getComponent<CBoundingBox>().size.y, a.getComponent<CTransform>().GlobalRotation);
+	std::vector<Vec2> colliderVerticesB = getRotatedRectangleVertices(b.getComponent<CTransform>().GlobalTranslation.x, b.getComponent<CTransform>().GlobalTranslation.y, b.getComponent<CBoundingBox>().size.x, b.getComponent<CBoundingBox>().size.y, b.getComponent<CTransform>().GlobalRotation);
 
 	// collision normal: axis along which min. penetration occurs
 	std::vector<Vec2> axesA;
@@ -300,7 +301,7 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 		}
 	}
 
-	Vec2 direction = b.getComponent<CTransform>().pos - a.getComponent<CTransform>().pos;
+	Vec2 direction = b.getComponent<CTransform>().GlobalTranslation - a.getComponent<CTransform>().GlobalTranslation;
 	if (direction.dot(collisionNormal) < 0.0f)
 	{
 		collisionNormal = collisionNormal * -1; //  because we want the collision normal to be in a direction such that A & B move away from each other
@@ -412,6 +413,7 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 
 bool Physics::CircleCircleCollision(Entity a, Entity b)
 {
+#if 0
 	Vec2 c1 = a.getComponent<CTransform>().pos;
 	Vec2 c2 = b.getComponent<CTransform>().pos;
 	float r1 = a.getComponent<CCircleCollider>().radius;
@@ -468,11 +470,15 @@ bool Physics::CircleCircleCollision(Entity a, Entity b)
 	{
 		return false;
 	}
+#endif
+
+	return false;
 }
 
 std::vector<Vec2> Physics::SAT(Entity a, Entity b)
 {
 	std::vector<Vec2> empty;
+#if 0
 
 	std::vector<Vec2> colliderVerticesA;
 	Vec2 aPos = a.getComponent<CTransform>().pos;
@@ -679,4 +685,7 @@ std::vector<Vec2> Physics::SAT(Entity a, Entity b)
 
 	return cp;
 
+#endif
+
+	return empty;
 }

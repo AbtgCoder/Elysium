@@ -678,7 +678,7 @@ void EditorLayer::sGUI()
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
 			static const ImU32 selectionColor = 0xFF20AACC;
-			Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().pos;
+			Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().GlobalTranslation;
 			sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
 			ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
 			static const float lineLength = 80.0f;
@@ -696,7 +696,7 @@ void EditorLayer::sGUI()
 				// convex poly filled
 				ImVec2 circleArcPoints[32 + 1];
 				circleArcPoints[0] = origin;
-				float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().angle + 180.0f, 360.0f);
+				float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().GlobalRotation + 180.0f, 360.0f);
 				if (startAngle < 0)
 					startAngle += 360.0f;
 				startAngle -= 180.0f;
@@ -934,11 +934,11 @@ void EditorLayer::sDoAction(const Action& action)
 			m_lastGizmoPosX = viewportPos;
 			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().pos.x += deltaPos.x;
+				m_inspectedEntity.getComponent<CTransform>().Translation.x += deltaPos.x;
 			}
 			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().scale.x += m_scalingFactor * deltaPos.x;
+				m_inspectedEntity.getComponent<CTransform>().Scale.x += m_scalingFactor * deltaPos.x;
 			}
 		}
 		else if (m_gizmoSelectY && m_inspectedEntity)
@@ -947,11 +947,11 @@ void EditorLayer::sDoAction(const Action& action)
 			m_lastGizmoPosY = viewportPos;
 			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().pos.y += deltaPos.y;
+				m_inspectedEntity.getComponent<CTransform>().Translation.y += deltaPos.y;
 			}
 			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().scale.y += m_scalingFactor * deltaPos.y;
+				m_inspectedEntity.getComponent<CTransform>().Scale.y += m_scalingFactor * deltaPos.y;
 			}
 		}
 		else if (m_gizmoSelectSquare && m_inspectedEntity)
@@ -960,11 +960,11 @@ void EditorLayer::sDoAction(const Action& action)
 			m_lastGizmoSquarePos = viewportPos;
 			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().pos += deltaPos;
+				m_inspectedEntity.getComponent<CTransform>().Translation += deltaPos;
 			}
 			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
 			{
-				m_inspectedEntity.getComponent<CTransform>().scale += deltaPos * m_scalingFactor;
+				m_inspectedEntity.getComponent<CTransform>().Scale += deltaPos * m_scalingFactor;
 			}
 		}
 		else if (m_gizmoRotateSelect && m_inspectedEntity)
@@ -972,8 +972,8 @@ void EditorLayer::sDoAction(const Action& action)
 			deltaPos = viewportPos - m_lastGizmoRotatePos;
 			m_lastGizmoRotatePos = viewportPos;
 			float deltaRotation = atan2(deltaPos.y, deltaPos.x) * 180.0 / 3.14;
-			float newAngle = m_inspectedEntity.getComponent<CTransform>().angle + m_rotationFactor * deltaRotation;
-			m_inspectedEntity.getComponent<CTransform>().angle = newAngle; 
+			float newAngle = m_inspectedEntity.getComponent<CTransform>().Rotation + m_rotationFactor * deltaRotation;
+			m_inspectedEntity.getComponent<CTransform>().Rotation = newAngle;
 		}
 	}
 

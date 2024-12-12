@@ -13,6 +13,7 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [X] Make a Play Test Scene, where the created level and its systems(collision, animation, etc) can be tested.
 - [X] World view/camera to make bigger levels
 - [X] basic Asset Management system
+- [X] Entity Parent-Child relationship
 
 ### Physics Features
 - [X] Polygon Collider
@@ -25,7 +26,6 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
   
 ### Features currently in development
 - [ ] Basic Scripting Support
-- [ ] Entity Parent-Child relationship
 - [ ] Prefabs
 - [ ] Editor Improvements
 

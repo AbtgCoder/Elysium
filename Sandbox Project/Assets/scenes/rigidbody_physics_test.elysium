@@ -11,11 +11,14 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Position: [821, 257]
+      Translation: [821, 257]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, -7.4000001]
-      AngularVelocity: 0
+      GlobalTranslation: [821, 257]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     CircleShape:
       Radius: 50
       Color: [141, 19, 156, 255]
@@ -32,11 +35,14 @@ Entities:
     Tag:
       Tag: Circle2
     Transform:
-      Position: [827, 479.017761]
+      Translation: [827, 479.017761]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [827, 479.017761]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     CircleShape:
       Radius: 50
       Color: [175, 59, 251, 255]
@@ -53,11 +59,14 @@ Entities:
     Tag:
       Tag: Rectangle_bottom
     Transform:
-      Position: [422.399994, 840]
+      Translation: [422.399994, 840]
+      Rotation: 0
       Scale: [1.00000203, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [422.399994, 840]
+      GlobalRotation: 0
+      GlobalScale: [1.00000203, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [1500, 50]
       Color: [189, 181, 109, 255]
@@ -75,11 +84,14 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Position: [341, 728]
+      Translation: [341, 728]
+      Rotation: 13.6000004
       Scale: [1, 1]
-      Angle: 13.6000004
-      Velocity: [0, 0]
-      AngularVelocity: -4.69999981
+      GlobalTranslation: [341, 728]
+      GlobalRotation: 13.6000004
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [70, 50]
       Color: [76, 76, 228, 255]
@@ -97,11 +109,14 @@ Entities:
     Tag:
       Tag: rectangle_left
     Transform:
-      Position: [-392, 314]
+      Translation: [-392, 314]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [-392, 314]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [200, 1200]
       Color: [255, 255, 255, 255]
@@ -119,11 +134,14 @@ Entities:
     Tag:
       Tag: rectangle_right
     Transform:
-      Position: [1088, 474]
+      Translation: [1088, 474]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [1088, 474]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [50, 1200]
       Color: [105, 205, 4, 255]
@@ -141,11 +159,14 @@ Entities:
     Tag:
       Tag: rectangle_top
     Transform:
-      Position: [461, -61]
+      Translation: [461, -61]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [461, -61]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [1500, 50]
       Color: [255, 255, 255, 255]
@@ -163,11 +184,14 @@ Entities:
     Tag:
       Tag: rectangle_tabele_top
     Transform:
-      Position: [241, 556]
+      Translation: [241, 556]
+      Rotation: 155.199997
       Scale: [1, 1]
-      Angle: 155.199997
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [241, 556]
+      GlobalRotation: 155.199997
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [400, 20]
       Color: [31, 12, 12, 255]
@@ -185,11 +209,14 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Position: [740, 451]
+      Translation: [740, 451]
+      Rotation: 46.7933922
       Scale: [1, 1]
-      Angle: 46.7933922
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [740, 451]
+      GlobalRotation: 46.7933922
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     RectangleShape:
       Size: [350, 20]
       Color: [38, 12, 12, 255]
@@ -202,11 +229,14 @@ Entities:
     Tag:
       Tag: polygon
     Transform:
-      Position: [245, 325]
+      Translation: [245, 325]
+      Rotation: 173.5
       Scale: [1, 1]
-      Angle: 173.5
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [245, 325]
+      GlobalRotation: 173.5
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     PolygonShape:
       Sides: 5
       Size: 50
@@ -228,11 +258,14 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Position: [324, 471.700012]
+      Translation: [324, 471.700012]
+      Rotation: 0
       Scale: [1, 1]
-      Angle: 0
-      Velocity: [0, 0]
-      AngularVelocity: 0
+      GlobalTranslation: [324, 471.700012]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: false
     Camera:
       Size: [770, 779.900024]
       Zoom: 1

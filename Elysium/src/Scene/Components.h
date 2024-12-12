@@ -35,21 +35,45 @@ public:
 class CTransform : public Component
 {
 public:
-	Vec2 pos = { 0.0, 0.0 };
-	Vec2 prevPos = { 0.0, 0.0 };
-	Vec2 velocity = { 0.0, 0.0 };
-	Vec2 scale = {1.0, 1.0};
-	float angle = 0.0f;
-	float angularVelocity = 0.0f;
+	Vec2 Translation = { 0.0, 0.0 };
+	float Rotation = 0.0f;
+	Vec2 Scale = {1.0, 1.0};
+
+	Vec2 GlobalTranslation = {0.0, 0.0};
+	float GlobalRotation = 0.0f;
+	Vec2 GlobalScale = { 1.0, 1.0 };
 
 	CTransform() {}
 	CTransform(const Vec2& p)
-		: pos(p), prevPos(p) {}
+		: Translation(p) {}
 	CTransform(const Vec2& p, const Vec2& sc, float a)
-		: pos(p), prevPos(p), scale(sc), angle(a) {}
-	CTransform(const Vec2& p, const Vec2& sp, const Vec2& sc, float a)
-		: pos(p), prevPos(p), velocity(sp), scale(sc), angle(a) {}
+		: Translation(p), Scale(sc), Rotation(a) {}
 	CTransform(CTransform& other) = default;
+};
+
+class CParent : public Component
+{
+public:
+	bool HasParent = false;
+	Elysium::UUID ParentID;
+	std::vector<Elysium::UUID> Children;
+
+	CParent() = default;
+	CParent(CParent& other)
+		: HasParent(other.HasParent), ParentID(other.ParentID), Children(other.Children) {}
+
+	bool RemoveChild(Elysium::UUID childId)
+	{
+		for (int i = 0; i < Children.size(); i++)
+		{
+			if (Children[i] == childId)
+			{
+				Children.erase(Children.begin() + i);
+				return true;
+			}
+		}
+		return false;
+	}
 };
 
 class CCamera : public Component

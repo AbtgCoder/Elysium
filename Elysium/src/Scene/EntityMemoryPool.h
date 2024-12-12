@@ -6,6 +6,7 @@
 
 typedef std::tuple <
 	std::vector<CId>, 
+	std::vector<CParent>,
 	std::vector<CTag>,
 	std::vector<CTransform>,
 	std::vector<CLifespan>,
@@ -104,5 +105,5 @@ private:
 	EntityComponentVectorTuple m_pool;
 	std::vector<bool> m_active;
 	EntityMemoryPool(size_t maxEntities)
-		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
+		: m_numEntities(0), m_pool(maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities, maxEntities), m_active(maxEntities, false) {}
 };
