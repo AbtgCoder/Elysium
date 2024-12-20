@@ -1,6 +1,6 @@
 #include "PhysicsConfigPanel.h"
 
-#include "ImGui/ImGuiHelper.h"
+#include "../Helper/ImGuiHelper.h"
 
 PhysicsConfigPanel::PhysicsConfigPanel(const std::shared_ptr<Scene>& Scene)
 {

@@ -21,6 +21,8 @@ struct ProjectConfig
 class Project
 {
 public:
+	//~Project() { std::cout << "project destroyed!!\n"; }
+
 	const std::filesystem::path& GetProjectDirectory() { return m_ProjectDirectory; }
 	std::filesystem::path GetAssetDirectory() { return GetProjectDirectory() / s_ActiveProject->m_Config.AssetDirectory; }
 	std::filesystem::path GetAssetRegistryPath() { return GetAssetDirectory() / s_ActiveProject->m_Config.AssetRegistryPath; }

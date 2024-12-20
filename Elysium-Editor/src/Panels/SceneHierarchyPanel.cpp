@@ -5,7 +5,7 @@
 #include "core/Logger.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
-#include "ImGui/ImGuiHelper.h"
+#include "../Helper/ImGuiHelper.h"
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
 {

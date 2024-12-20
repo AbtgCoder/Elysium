@@ -1,6 +1,6 @@
 workspace "Elysium"
    architecture "x64"
-   startproject "Elysium"
+   startproject "Elysium-Editor"
    configurations { "Debug", "Release", "Dist" }
 
    flags
@@ -21,12 +21,12 @@ IncludeDir["yaml_cpp"] = "%{wks.location}/Elysium/vendor/yaml-cpp/include"
 
 group "Dependencies"
     include "Elysium/vendor/yaml-cpp"
-   -- include "Elysium/vendor/imgui"
-   
+group ""
+
 group "Core"
    include "Elysium"
-   
 group ""
--- group "Misc"
---     include "Sandbox Project"
 
+group "Tools"
+   include "Elysium-Editor"
+group ""

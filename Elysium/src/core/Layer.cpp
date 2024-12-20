@@ -4,10 +4,10 @@ Layer::Layer()
 {
 }
 
-Layer::Layer(Application* Application)
-	: m_game(Application)
-{
-}
+//Layer::Layer(Application* Application)
+//	: m_game(Application)
+//{
+//}
 
 void Layer::simulate(int s)
 {

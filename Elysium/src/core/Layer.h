@@ -12,7 +12,7 @@ class Layer
 {
 public:
 	Layer();
-	Layer(Application* Application);
+	//Layer(Application* Application);
 
 	virtual void update(float ts) = 0;
 	virtual void sDoAction(const Action& action) = 0;
@@ -30,7 +30,7 @@ public:
 	const ActionMap& getActionMap() const;
 
 protected:
-	Application* m_game=nullptr;
+	//Application* m_game=nullptr;
 	ActionMap m_actionMap;
 	bool m_paused = false;
 	bool m_hasEnded = false;

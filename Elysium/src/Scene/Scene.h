@@ -59,9 +59,10 @@ private:
 	sf::RectangleShape m_PhysicsRect;
 	sf::ConvexShape m_PhysicsPoly;
 	
-	// drawing shapes
+	// drawing
 	sf::CircleShape m_CircleShape;
 	sf::RectangleShape m_RectangleShape;
+	//sf::Texture m_Texture;
 
 	void RenderScene(sf::RenderTexture& renderTexture);
 private:

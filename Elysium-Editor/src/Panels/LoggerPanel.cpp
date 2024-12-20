@@ -1,6 +1,6 @@
 #include "LoggerPanel.h"
 #include "core/Logger.h"
-#include "ImGui/ImGuiHelper.h"
+#include "../Helper/ImGuiHelper.h"
 
 void LoggerPanel::OnImGuiRender()
 {

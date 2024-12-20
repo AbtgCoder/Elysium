@@ -21,11 +21,16 @@
 #include <cmath>
 #include <algorithm>
 
-EditorLayer::EditorLayer(Application* Application)
-	: Layer(Application)
+EditorLayer::EditorLayer()
 {
 	init();
 }
+
+//EditorLayer::EditorLayer(Application* Application)
+//	: Layer(Application)
+//{
+//	init();
+//}
 
 void EditorLayer::init()
 {
@@ -153,7 +158,7 @@ Vec2 EditorLayer::windowToViewport(const Vec2& windowPos) const
 
 void EditorLayer::update(float ts)
 {
-	ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
+	//ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
 	m_rt.create(m_viewportSize.x, m_viewportSize.y);
 	
 	switch (m_SceneState)
@@ -291,7 +296,7 @@ void EditorLayer::NewProject()
 
 				if (ImGui::Button("##folderOpen"))
 				{
-					std::string folderPath = WindowsFileUtils::OpenFolder(m_game->window().getSystemHandle());
+					std::string folderPath = WindowsFileUtils::OpenFolder(Application::Get().window().getSystemHandle());
 					if (!folderPath.empty())
 					{
 						std::replace(folderPath.begin(), folderPath.end(), '\\', '/');
@@ -391,7 +396,7 @@ void EditorLayer::NewProject()
 
 bool EditorLayer::OpenProject()
 {
-	std::string projectPath = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Project (*.eproject)\0*.eproject\0");
+	std::string projectPath = WindowsFileUtils::OpenFile(Application::Get().window().getSystemHandle(), "Elysium Project (*.eproject)\0*.eproject\0");
 	if (projectPath.empty())
 		return false;
 
@@ -426,7 +431,7 @@ void EditorLayer::SaveProject()
 
 void EditorLayer::NewScene()
 {
-	std::string path = WindowsFileUtils::SaveFile(m_game->window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::SaveFile(Application::Get().window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
@@ -455,7 +460,7 @@ void EditorLayer::NewScene()
 
 void EditorLayer::OpenScene()
 {
-	std::string path = WindowsFileUtils::OpenFile(m_game->window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::OpenFile(Application::Get().window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
@@ -837,7 +842,7 @@ void EditorLayer::sGUI()
 
 	ImGui::End(); // end "Dockspace demo" 
 
-	ImGui::SFML::Render(m_game->window());
+	//ImGui::SFML::Render(m_game->window());
 
 }
 
@@ -1130,5 +1135,5 @@ void EditorLayer::sDoAction(const Action& action)
 void EditorLayer::onEnd()
 {
 	//TODO: Save editor settings: viewport size , zoom etc ig...
-	m_game->quit();
+	//m_game->quit();
 }

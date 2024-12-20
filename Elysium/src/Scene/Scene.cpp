@@ -556,7 +556,7 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 	}
 	else
 	{
-		//TODO: editor log: there is no primary camera in scene
+		Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
 	}
 
 	
@@ -645,7 +645,6 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		}
 	}
 
-
 	for (auto e : m_entityManager.GetEntities())
 		{
 			if (m_drawPhysicsColliders)
@@ -692,13 +691,12 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				{
 					if (e.getComponent<CSpriteRenderer>().texture != 0)
 					{
-						// highly inefficient drawing
-						sf::Texture tex = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
-						sf::Sprite sprite = sf::Sprite(tex);
-						sprite.setOrigin(tex.getSize().x / 2.0f, tex.getSize().y / 2.0f);
+						/*m_Texture = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+						sf::Sprite sprite = sf::Sprite(m_Texture);
+						sprite.setOrigin(m_Texture.getSize().x / 2.0f, m_Texture.getSize().y / 2.0f);
 						sprite.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 						sprite.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
-						renderTexture.draw(sprite);
+						renderTexture.draw(sprite);*/
 					}
 				}
 				else if (e.hasComponent<CCircle>())

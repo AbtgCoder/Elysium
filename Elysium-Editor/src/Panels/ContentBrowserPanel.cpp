@@ -1,7 +1,7 @@
 #include "ContentBrowserPanel.h"
 
 #include "Asset/TextureImporter.h"
-#include "ImGui/ImGuiHelper.h"
+#include "../Helper/ImGuiHelper.h"
 
 
 ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)

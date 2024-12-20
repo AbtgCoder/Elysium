@@ -148,10 +148,10 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [476, 341]
+      Translation: [506, 342]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [476, 341]
+      GlobalTranslation: [506, 342]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -222,7 +222,7 @@ Entities:
       Translation: [99, -50]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [575, 291]
+      GlobalTranslation: [605, 292]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -236,10 +236,10 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [30, 341]
+      Translation: [86, 341]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [30, 341]
+      GlobalTranslation: [86, 341]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -261,7 +261,7 @@ Entities:
       Translation: [0, -87]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [30, 254]
+      GlobalTranslation: [86, 254]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:

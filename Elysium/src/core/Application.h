@@ -5,13 +5,17 @@
 
 typedef std::map<std::string, std::shared_ptr<Layer>> LayerMap;
 
+int main(int argc, char** argv);
+
 class Application
 {
 public:
 	Application(const std::string& name);
+	~Application();
 
 	void changeLayer(const std::string& LayerName, std::shared_ptr<Layer> Layer, bool endCurrentLayer = false);
 
+	static Application& Get() { return *s_Instance; }
 
 	void quit();
 	void run();
@@ -22,6 +26,9 @@ public:
 	const LayerMap& Layers() const;
 	 
 protected:
+	static Application* s_Instance;
+	friend int ::main(int argc, char** argv);
+
 	sf::RenderWindow m_window;
 
 	std::string m_currentLayer;
@@ -36,3 +43,6 @@ protected:
 
 	std::shared_ptr<Layer> currentLayer();
 };
+
+// to be defined in Client 
+Application* CreateApplication();

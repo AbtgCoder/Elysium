@@ -1,12 +1,25 @@
 #include "Application.h"
-#include "Editor/EditorLayer.h"
+#include "Project/Project.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
 
+Application* Application::s_Instance = nullptr;
+
 Application::Application(const std::string& name)
 {
+	s_Instance = this;
+
 	init(name);
+}
+
+Application::~Application()
+{
+//	m_LayerMap.clear();
+
+	ImGui::SFML::Shutdown();
+
+	//Project::GetActive().reset();
 }
 
 void Application::init(const std::string& name)
@@ -33,8 +46,8 @@ void Application::init(const std::string& name)
 #endif
 
 	// Initialize Editor Layer
-	std::shared_ptr<Layer> editorLayer = std::make_shared<EditorLayer>(this);
-	changeLayer("Editor_Layer", editorLayer, true);
+	//std::shared_ptr<Layer> editorLayer = std::make_shared<EditorLayer>(this);
+	//changeLayer("Editor_Layer", editorLayer, true);
 
 }
 
@@ -90,11 +103,13 @@ void Application::run()
 	{
 		sUserInput();
 		float ts = deltaClock.restart().asSeconds(); // Timestep ts
+		ImGui::SFML::Update(m_window, m_deltaClock.restart());
 		update(ts);
+		ImGui::SFML::Render(m_window);
 		m_window.display();
 	}
 
-	ImGui::SFML::Shutdown();
+	//ImGui::SFML::Shutdown();
 
 }
 
@@ -114,6 +129,7 @@ void Application::sUserInput()
 		{
 			m_running = false; 
 			currentLayer()->sDoAction(Action("QUIT", "START"));
+			//m_window.close();
 		}
 
 		if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)

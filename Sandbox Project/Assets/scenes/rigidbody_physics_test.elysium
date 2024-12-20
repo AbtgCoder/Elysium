@@ -19,6 +19,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     CircleShape:
       Radius: 50
       Color: [141, 19, 156, 255]
@@ -43,6 +45,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     CircleShape:
       Radius: 50
       Color: [175, 59, 251, 255]
@@ -67,6 +71,8 @@ Entities:
       GlobalScale: [1.00000203, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [1500, 50]
       Color: [189, 181, 109, 255]
@@ -92,6 +98,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [70, 50]
       Color: [76, 76, 228, 255]
@@ -117,6 +125,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [200, 1200]
       Color: [255, 255, 255, 255]
@@ -142,6 +152,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [50, 1200]
       Color: [105, 205, 4, 255]
@@ -167,6 +179,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [1500, 50]
       Color: [255, 255, 255, 255]
@@ -192,6 +206,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [400, 20]
       Color: [31, 12, 12, 255]
@@ -217,6 +233,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     RectangleShape:
       Size: [350, 20]
       Color: [38, 12, 12, 255]
@@ -237,6 +255,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     PolygonShape:
       Sides: 5
       Size: 50
@@ -266,6 +286,8 @@ Entities:
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
+      ParentID: 0
+      Children: []
     Camera:
       Size: [770, 779.900024]
       Zoom: 1

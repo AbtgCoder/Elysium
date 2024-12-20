@@ -13,13 +13,15 @@ enum GIZMO_OPERATION
 {
 	TRANSLATE,
 	SCALE,
-	ROTATE, // TODO: add rotation gizmo!!
+	ROTATE,
 };
 
 class EditorLayer : public Layer
 {
 public:
-	EditorLayer(Application* Application = nullptr);
+	EditorLayer();
+	~EditorLayer() { std::cout << "editor layer destroyed!\n"; }
+
 	void sGUI();
 	void sRender();
 

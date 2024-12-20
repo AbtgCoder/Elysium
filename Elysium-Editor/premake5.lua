@@ -1,10 +1,9 @@
-project "Elysium"
-        location "Elysium" 
-        kind "StaticLib"
+project "Elysium-Editor"
+        kind "ConsoleApp"
         language "C++"
         cppdialect "C++17"
         staticruntime "off"
-        
+
         targetdir("%{wks.location}/bin/" ..OutputDir.. "/%{prj.name}") 
         objdir("%{wks.location}/bin-int/" ..OutputDir.. "/%{prj.name}") 
 
@@ -13,20 +12,18 @@ project "Elysium"
             "src/**.cpp",
             "imgui/**.h",
             "imgui/**.cpp",
-            "Elysium/*.rc",
-            "Elysium/resource.h",
         }
         --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
         includedirs
         {
-            "src/",
+            "%{wks.location}/Elysium/src",
+            "%{wks.location}/Elysium/vendor",
             "imgui/",
-            "%{IncludeDir.yaml_cpp}",
-            "../../SFML-2.5.1/include"
+            "../../SFML-2.5.1/include",
+          --  "%{IncludeDir.yaml_cpp}",
         }
-        
-        -- link sfml libraries statically
+
         libdirs 
         {
             "../../SFML-2.5.1/lib"
@@ -34,24 +31,27 @@ project "Elysium"
 
         links
         {
+            "Elysium", -- link the engine static lib
             "sfml-graphics-s",
             "sfml-window-s",
             "sfml-system-s",
             "sfml-audio-s",
-            "freetype",        -- Add FreeType
-            "opengl32",        -- OpenGL
-            "winmm",           -- Windows multimedia
-            "gdi32",           -- Graphics Device Interface
-            "openal32",        -- OpenAL
-            "flac",            -- Audio codec
-            "vorbis",          -- Audio codec
-            "vorbisfile",      -- Audio codec
-            "vorbisenc",       -- Audio codec
-            "ogg",              -- Audio codec
-            "yaml-cpp"
+            "freetype",
+            "opengl32",
+            "winmm",
+            "gdi32",
+            "openal32",
+            "flac",
+            "vorbis",
+            "vorbisfile",
+            "vorbisenc",
+            "ogg"
+            --"yaml-cpp"
         }
 
-        -- define SFML_STATIC for static linking
+        --externalincludedirs {"../../SFML-2.5.1/include"}
+       -- syslibdirs {"../../SFML-2.5.1/lib"}
+        
         defines { "SFML_STATIC" }
 
         filter "system:windows"
