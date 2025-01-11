@@ -252,8 +252,6 @@ Entities:
     AABB:
       Offset: [0, 0]
       Size: [50, 50]
-    Rigidbody2D:
-      BodyType: Dynamic
   - Entity: 13890830768999544706
     Tag:
       Tag: Circle

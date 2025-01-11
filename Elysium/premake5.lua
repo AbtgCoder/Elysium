@@ -5,41 +5,71 @@ project "Elysium"
         cppdialect "C++17"
         staticruntime "off"
         
-        targetdir("%{wks.location}/bin/" ..OutputDir.. "/%{prj.name}") 
-        objdir("%{wks.location}/bin-int/" ..OutputDir.. "/%{prj.name}") 
+        targetdir("%{wks.location}/bin/" ..outputdir.. "/%{prj.name}") 
+        objdir("%{wks.location}/bin-int/" ..outputdir.. "/%{prj.name}") 
 
         files {
             "src/**.h",
             "src/**.cpp",
             "imgui/**.h",
             "imgui/**.cpp",
+
+            "vendor/stb_image/**.h",
+            "vendor/stb_image/**.cpp",
+
+            "vendor/glm/glm/**.hpp",
+            "vendor/glm/glm/**.inl",
+
+
             "Elysium/*.rc",
             "Elysium/resource.h",
         }
         --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
+        defines
+        {
+            "_CRT_SECURE_NO_WARNINGS",
+            "GLFW_INCLUDE_NONE"
+        }
+
+        
         includedirs
         {
             "src/",
             "imgui/",
             "%{IncludeDir.yaml_cpp}",
+
+            "%{IncludeDir.GLFW}",
+            "%{IncludeDir.Glad}",
+            --"%{IncludeDir.ImGui}",
+            "%{IncludeDir.stb_image}",
+            "%{IncludeDir.glm}",
+
+
             "../../SFML-2.5.1/include"
         }
         
         -- link sfml libraries statically
         libdirs 
         {
-            "../../SFML-2.5.1/lib"
+            "../../SFML-2.5.1/lib",
         }
 
         links
         {
+            "GLFW",
+            "Glad",
+            --"ImGui"
+
+            "yaml-cpp",
+
+            "opengl32",        -- OpenGL
+
             "sfml-graphics-s",
             "sfml-window-s",
             "sfml-system-s",
             "sfml-audio-s",
             "freetype",        -- Add FreeType
-            "opengl32",        -- OpenGL
             "winmm",           -- Windows multimedia
             "gdi32",           -- Graphics Device Interface
             "openal32",        -- OpenAL
@@ -48,7 +78,6 @@ project "Elysium"
             "vorbisfile",      -- Audio codec
             "vorbisenc",       -- Audio codec
             "ogg",              -- Audio codec
-            "yaml-cpp"
         }
 
         -- define SFML_STATIC for static linking
@@ -63,7 +92,7 @@ project "Elysium"
             defines { "DEBUG" }
             runtime "Debug"
             symbols "On"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics-d.lib",
@@ -76,7 +105,7 @@ project "Elysium"
             runtime "Release"
             optimize "On"
             symbols "On"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics.lib",
@@ -90,7 +119,7 @@ project "Elysium"
             runtime "Release"
             optimize "On"
             symbols "Off"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics.lib",

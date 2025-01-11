@@ -13,14 +13,22 @@ workspace "Elysium"
      -- buildoptions { "/EHsc", "/Zc:preprocessor", "/Zc:__cplusplus" }
 
 
-OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 
 IncludeDir = {}
 IncludeDir["yaml_cpp"] = "%{wks.location}/Elysium/vendor/yaml-cpp/include"
+IncludeDir["GLFW"] = "%{wks.location}/Elysium/vendor/GLFW/include"
+IncludeDir["Glad"] = "%{wks.location}/Elysium/vendor/Glad/include"
+IncludeDir["ImGui"] = "%{wks.location}/Elysium/vendor/imgui"
+IncludeDir["stb_image"] = "%{wks.location}/Elysium/vendor/stb_image"
+IncludeDir["glm"] = "%{wks.location}/Elysium/vendor/glm"
 
 group "Dependencies"
-    include "Elysium/vendor/yaml-cpp"
+   include "Elysium/vendor/GLFW"
+   include "Elysium/vendor/Glad"
+   include "Elysium/vendor/imgui"
+   include "Elysium/vendor/yaml-cpp"
 group ""
 
 group "Core"

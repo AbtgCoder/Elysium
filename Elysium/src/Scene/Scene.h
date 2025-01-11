@@ -62,7 +62,7 @@ private:
 	// drawing
 	sf::CircleShape m_CircleShape;
 	sf::RectangleShape m_RectangleShape;
-	//sf::Texture m_Texture;
+	sf::Texture m_Texture;
 
 	void RenderScene(sf::RenderTexture& renderTexture);
 private:

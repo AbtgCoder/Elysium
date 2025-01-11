@@ -8,6 +8,7 @@
 
 #include "Scripts/RotateEntity.h"
 
+#include <windows.h>
 
 // Pixels per meter. Box2D uses metric units, so we need to define a conversion
 #define PPM 30.0F
@@ -92,7 +93,8 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 			CRigidBody,
 			CPhysicsMaterial,
 			CJoint,
-			CCamera
+			CCamera,
+			CNativeScriptComponent
 		>(e, runtimeEntity);
 
 	}
@@ -293,6 +295,27 @@ std::vector<Entity>& Scene::GetAllPhysicsEntities()
 	return physicsEntities;
 }
 
+ScriptableEntity* TryLoadScript()
+{
+	std::string userScriptPath = "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/bin/Release-windows-x86_64/Sandbox/Sandbox.dll";
+	HMODULE library = LoadLibraryA(userScriptPath.c_str());
+	if (!library)
+	{
+		Logger::Log("couldnt load game scripts!", "Scene", LOG_TYPE::CRITICAL);
+		return nullptr;
+	}
+	using ScriptCreateFunc = ScriptableEntity* (*)();
+	std::string funcName = "CreateScript";
+	auto createFunc = (ScriptCreateFunc)GetProcAddress(library, funcName.c_str());
+	if (!createFunc)
+	{
+		Logger::Log("failed to find CreateScript function in the game scripts..", "Scene", LOG_TYPE::CRITICAL);
+		return nullptr;
+	}
+	return createFunc();
+}
+
+
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");
@@ -307,8 +330,9 @@ void Scene::OnRuntimeStart()
 		if (e.hasComponent<CNativeScriptComponent>())
 		{
 			auto& nsc = e.getComponent<CNativeScriptComponent>();
-			nsc.instance = nsc.InstantiateScript();
-			nsc.instance->m_Entity = e;
+			//nsc.instance = nsc.InstantiateScript();
+			nsc.instance = TryLoadScript();
+			nsc.instance->m_Entity = &e;
 			nsc.instance->OnCreate();
 		}
 	}
@@ -420,7 +444,9 @@ void Scene::OnRuntimeStop()
 		{
 			auto& nsc = e.getComponent<CNativeScriptComponent>();
 			nsc.instance->OnDestroy();
-			nsc.DestroyScript(&nsc);
+			delete nsc.instance;
+			nsc.instance = nullptr;
+			//nsc.DestroyScript(&nsc);
 		}
 	}
 
@@ -691,12 +717,12 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				{
 					if (e.getComponent<CSpriteRenderer>().texture != 0)
 					{
-						/*m_Texture = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+						m_Texture = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 						sf::Sprite sprite = sf::Sprite(m_Texture);
 						sprite.setOrigin(m_Texture.getSize().x / 2.0f, m_Texture.getSize().y / 2.0f);
 						sprite.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 						sprite.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
-						renderTexture.draw(sprite);*/
+						renderTexture.draw(sprite);
 					}
 				}
 				else if (e.hasComponent<CCircle>())

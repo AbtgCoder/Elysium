@@ -4,8 +4,8 @@ project "Elysium-Editor"
         cppdialect "C++17"
         staticruntime "off"
 
-        targetdir("%{wks.location}/bin/" ..OutputDir.. "/%{prj.name}") 
-        objdir("%{wks.location}/bin-int/" ..OutputDir.. "/%{prj.name}") 
+        targetdir("%{wks.location}/bin/" ..outputdir.. "/%{prj.name}") 
+        objdir("%{wks.location}/bin-int/" ..outputdir.. "/%{prj.name}") 
 
         files {
             "src/**.h",
@@ -21,7 +21,9 @@ project "Elysium-Editor"
             "%{wks.location}/Elysium/vendor",
             "imgui/",
             "../../SFML-2.5.1/include",
-          --  "%{IncludeDir.yaml_cpp}",
+
+            "%{IncludeDir.glm}",
+
         }
 
         libdirs 
@@ -32,6 +34,7 @@ project "Elysium-Editor"
         links
         {
             "Elysium", -- link the engine static lib
+
             "sfml-graphics-s",
             "sfml-window-s",
             "sfml-system-s",
@@ -63,7 +66,7 @@ project "Elysium-Editor"
             defines { "DEBUG" }
             runtime "Debug"
             symbols "On"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics-d.lib",
@@ -76,7 +79,7 @@ project "Elysium-Editor"
             runtime "Release"
             optimize "On"
             symbols "On"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics.lib",
@@ -90,7 +93,7 @@ project "Elysium-Editor"
             runtime "Release"
             optimize "On"
             symbols "Off"
-            debugdir ("%{wks.location}/bin/" .. OutputDir .. "/%{prj.name}")
+            debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
             -- links
             -- {
             --     "sfml-graphics.lib",
