@@ -1,7 +1,11 @@
 #include "Application.h"
 #include "Project/Project.h"
 
+#include "core/Logger.h"
+
 #include <GLFW/glfw3.h>
+
+#define BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
 Application* Application::s_Instance = nullptr;
 
@@ -10,7 +14,7 @@ Application::Application(const std::string& name)
 	s_Instance = this;
 
 	m_Window = Window::Create(WindowProps(name));
-	// set event callback
+	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 	
 	// initialize renderer
 
@@ -36,6 +40,24 @@ void Application::PushOverlay(Layer* layer)
 	layer->OnAttach();
 }
 
+void Application::OnEvent(Event& e)
+{
+	//Logger::Log(e.ToString());
+
+	EventDispatcher dispatcher(e);
+	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
+	dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(Application::OnWindowResize));
+
+	for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it)
+	{
+		if (e.Handled)
+		{
+			break;
+		}
+		(*it)->OnEvent(e);
+	}
+}
+
 void Application::Close()
 {
 	m_Running = false;
@@ -43,7 +65,7 @@ void Application::Close()
 
 void Application::Run()
 {
-	while (!glfwWindowShouldClose((GLFWwindow*)m_Window->GetNativeWindow()))
+	while (m_Running)
 	{
 		float time = glfwGetTime();
 		float timestep = time - m_LastFrameTime;
@@ -65,6 +87,17 @@ void Application::Run()
 
 		m_Window->OnUpdate();
 	}
+}
+
+bool Application::OnWindowClose(WindowCloseEvent& e)
+{
+	m_Running = false;
+	return true;
+}
+
+bool Application::OnWindowResize(WindowResizeEvent& e)
+{
+	return false;
 }
 
 

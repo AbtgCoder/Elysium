@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/LayerStack.h"
-
 #include "core/Window.h"
+
+#include "Events/Event.h"
+#include "Events/ApplicationEvent.h"
 
 #include "ImGui/ImGuiLayer.h"
 
@@ -19,6 +21,8 @@ public:
 	void PushLayer(Layer* layer);
 	void PushOverlay(Layer* layer);
 
+	void OnEvent(Event& e);
+
 	Window& GetWindow() { return *m_Window; }
 	
 	void Close();
@@ -26,7 +30,8 @@ public:
 	ImGuiLayer* GetImGuiLayer() { return  m_ImGuiLayer; }
 private:
 	void Run();
-
+	bool OnWindowClose(WindowCloseEvent& e);
+	bool OnWindowResize(WindowResizeEvent& e);
 private:
 	std::unique_ptr<Window> m_Window;
 	ImGuiLayer* m_ImGuiLayer;

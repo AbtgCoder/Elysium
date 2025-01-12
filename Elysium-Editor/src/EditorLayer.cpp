@@ -423,6 +423,25 @@ void EditorLayer::OnImGuiRender()
 
 }
 
+void EditorLayer::OnEvent(Event& event)
+{
+}
+
+bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
+{
+	return false;
+}
+
+bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
+{
+	return false;
+}
+
+bool EditorLayer::OnWindowDrop(WindowDropEvent& e)
+{
+	return false;
+}
+
 void EditorLayer::UI_Toolbar()
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
@@ -450,8 +469,8 @@ void EditorLayer::UI_Toolbar()
 
 	if (hasPlayButton)
 	{
-		std::shared_ptr<Texture> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
-		/*if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+		std::shared_ptr<Texture2D> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
+		if (ImGui::ImageButton("#toolbar_icon", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 		{
 			if (m_SceneState == SceneState::Edit)
 			{
@@ -461,7 +480,7 @@ void EditorLayer::UI_Toolbar()
 			{
 				OnSceneStop();
 			}
-		}*/
+		}
 	}
 
 	if (hasPauseButton)
@@ -469,11 +488,11 @@ void EditorLayer::UI_Toolbar()
 		bool isPaused = m_ActiveScene->IsPaused();
 		ImGui::SameLine();
 		{
-			std::shared_ptr<Texture> icon = m_IconPause;
-			/*if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+			std::shared_ptr<Texture2D> icon = m_IconPause;
+			if (ImGui::ImageButton("#toolbar_icon2", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 			{
 				m_ActiveScene->SetPaused(!isPaused);
-			}*/
+			}
 		}
 
 		// step button
@@ -481,11 +500,11 @@ void EditorLayer::UI_Toolbar()
 		{
 			ImGui::SameLine();
 			{
-				std::shared_ptr<Texture> icon = m_IconStep;
-				/*if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+				std::shared_ptr<Texture2D> icon = m_IconStep;
+				if (ImGui::ImageButton("#toolbar_icon3", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
 				{
 					m_ActiveScene->Step();
-				}*/
+				}
 			}
 		}
 	}

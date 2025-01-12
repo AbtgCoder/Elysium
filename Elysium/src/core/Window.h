@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Events/Event.h"
+
 #include <sstream>
 
 struct WindowProps
@@ -17,6 +19,8 @@ struct WindowProps
 class Window
 {
 public:
+	using EventCallbackFn = std::function<void(Event&)>;
+
 	virtual ~Window() = default;
 
 	virtual void OnUpdate() = 0;
@@ -25,6 +29,7 @@ public:
 	virtual uint32_t GetHeight() const = 0;
 
 	// window attributes
+	virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
 	virtual void SetVSync(bool enabled) = 0;
 	virtual bool IsVSync() const = 0;
 

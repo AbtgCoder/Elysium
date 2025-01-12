@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Events/Event.h"	
+
 #include <string>
 
 class Layer
@@ -13,7 +15,7 @@ public:
 	virtual void OnUpdate(float ts) {}
 	virtual void OnImGuiRender() {}
 
-	virtual void OnEvent() {} 
+	virtual void OnEvent(Event& event) {}
 
 	const std::string& GetName() const { return m_DebugName; }
 private:

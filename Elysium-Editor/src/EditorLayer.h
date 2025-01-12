@@ -2,10 +2,16 @@
 
 #include "Core/Layer.h"
 
+#include "Events/ApplicationEvent.h"
+#include "Events/KeyEvent.h"
+#include "Events/MouseEvent.h"
+
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/PhysicsConfigPanel.h"
 #include "Panels/LoggerPanel.h"
+
+#include "core/Logger.h"
 
 #include <filesystem>
 
@@ -20,14 +26,18 @@ class EditorLayer : public Layer
 {
 public:
 	EditorLayer();
-	~EditorLayer() { std::cout << "editor layer destroyed!\n"; }
+	~EditorLayer() { Logger::Log("editor layer destroyed", "editor layer"); }
 
 	virtual void OnAttach() override;
 	virtual void OnDetach() override;
 
 	void OnUpdate(float ts) override;
 	virtual void OnImGuiRender() override;
-
+	void OnEvent(Event& event) override;
+private:
+	bool OnKeyPressed(KeyPressedEvent& e);
+	bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
+	bool OnWindowDrop(WindowDropEvent& e);
 protected:
 
 	std::filesystem::path m_EditorProjectPath;
