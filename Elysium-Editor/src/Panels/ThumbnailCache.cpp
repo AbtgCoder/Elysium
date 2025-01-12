@@ -11,7 +11,7 @@ ThumbnailCache::ThumbnailCache(std::shared_ptr<Project> project)
 	m_ThumbnailCachePath = m_Project->GetAssetDirectory() / "Thumbnail.cache";
 }
 
-std::shared_ptr<Texture> ThumbnailCache::GetOrCreateThumbnail(const std::filesystem::path& path)
+std::shared_ptr<Texture2D> ThumbnailCache::GetOrCreateThumbnail(const std::filesystem::path& path)
 {
 	// 1. Read file timestamp
 	// 2. Compare hashed timestamp with existing cached image (in memory first,TODO: then from cache file)
@@ -33,7 +33,7 @@ std::shared_ptr<Texture> ThumbnailCache::GetOrCreateThumbnail(const std::filesys
 	if (path.extension() != ".png")
 		return nullptr;
 
-	std::shared_ptr<Texture> texture = TextureImporter::LoadTexture(absolutePath);
+	std::shared_ptr<Texture2D> texture = TextureImporter::LoadTexture2D(absolutePath);
 	if (!texture)
 		return nullptr;
 

@@ -7,8 +7,9 @@ using AssetHandle = Elysium::UUID;
 enum class AssetType : uint16_t
 {
 	None = 0,
-	Texture,
+	//Texture,
 	Scene,
+	Texture2D
 };
 
 std::string_view AssetTypeToString(AssetType type);

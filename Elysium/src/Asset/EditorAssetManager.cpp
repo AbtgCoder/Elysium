@@ -8,7 +8,7 @@
 
 static std::map<std::filesystem::path, AssetType> s_AssetExtensionMap = {
 	{".elysium", AssetType::Scene},
-	{".png", AssetType::Texture}, // TODO: check other image file formats supported by sfml
+	{".png", AssetType::Texture2D}, // TODO: check other image file formats supported by sfml
 };
 
 static AssetType GetAssetTypeFromFileExtension(const std::filesystem::path& extension)

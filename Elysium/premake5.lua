@@ -11,8 +11,6 @@ project "Elysium"
         files {
             "src/**.h",
             "src/**.cpp",
-            "imgui/**.h",
-            "imgui/**.cpp",
 
             "vendor/stb_image/**.h",
             "vendor/stb_image/**.cpp",
@@ -24,7 +22,6 @@ project "Elysium"
             "Elysium/*.rc",
             "Elysium/resource.h",
         }
-        --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
         defines
         {
@@ -36,69 +33,39 @@ project "Elysium"
         includedirs
         {
             "src/",
-            "imgui/",
-            "%{IncludeDir.yaml_cpp}",
 
+            "%{IncludeDir.yaml_cpp}",
             "%{IncludeDir.GLFW}",
             "%{IncludeDir.Glad}",
-            --"%{IncludeDir.ImGui}",
+            "%{IncludeDir.ImGui}",
             "%{IncludeDir.stb_image}",
             "%{IncludeDir.glm}",
 
-
-            "../../SFML-2.5.1/include"
         }
         
-        -- link sfml libraries statically
-        libdirs 
-        {
-            "../../SFML-2.5.1/lib",
-        }
-
         links
         {
             "GLFW",
             "Glad",
-            --"ImGui"
+            "ImGui",
 
             "yaml-cpp",
 
             "opengl32",        -- OpenGL
 
-            "sfml-graphics-s",
-            "sfml-window-s",
-            "sfml-system-s",
-            "sfml-audio-s",
-            "freetype",        -- Add FreeType
-            "winmm",           -- Windows multimedia
-            "gdi32",           -- Graphics Device Interface
-            "openal32",        -- OpenAL
-            "flac",            -- Audio codec
-            "vorbis",          -- Audio codec
-            "vorbisfile",      -- Audio codec
-            "vorbisenc",       -- Audio codec
-            "ogg",              -- Audio codec
         }
 
-        -- define SFML_STATIC for static linking
-        defines { "SFML_STATIC" }
 
         filter "system:windows"
             systemversion "latest"
             defines { "WINDOWS" }
-            links { "opengl32", "winmm", "gdi32" }
+           -- links { "opengl32", "winmm", "gdi32" }
 
         filter "configurations:Debug"
             defines { "DEBUG" }
             runtime "Debug"
             symbols "On"
             debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-            -- links
-            -- {
-            --     "sfml-graphics-d.lib",
-            --     "sfml-window-d.lib",
-            --     "sfml-system-d.lib"
-            -- }
 
         filter "configurations:Release"
             defines { "RELEASE" }
@@ -106,12 +73,6 @@ project "Elysium"
             optimize "On"
             symbols "On"
             debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-            -- links
-            -- {
-            --     "sfml-graphics.lib",
-            --     "sfml-window.lib",
-            --     "sfml-system.lib"
-            -- }
 
 
         filter "configurations:Dist"
@@ -120,10 +81,4 @@ project "Elysium"
             optimize "On"
             symbols "Off"
             debugdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-            -- links
-            -- {
-            --     "sfml-graphics.lib",
-            --     "sfml-window.lib",
-            --     "sfml-system.lib"
-            -- }
         

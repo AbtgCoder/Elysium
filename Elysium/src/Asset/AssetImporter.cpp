@@ -9,7 +9,7 @@
 using AssetImportFunction = std::function<std::shared_ptr<Asset>(AssetHandle, const AssetMetadata&)>;
 static std::map<AssetType, AssetImportFunction> s_AssetImportFunctions = {
 	{AssetType::Scene, SceneImporter::ImportScene}, 
-	{AssetType::Texture, TextureImporter::ImportTexture} // other asset imports
+	{AssetType::Texture2D, TextureImporter::ImportTexture2D} // other asset imports
 };
 
 std::shared_ptr<Asset> AssetImporter::ImportAsset(AssetHandle handle, const AssetMetadata& metadata)

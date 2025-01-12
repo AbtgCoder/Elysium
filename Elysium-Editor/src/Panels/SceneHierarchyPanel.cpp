@@ -1,11 +1,13 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Asset/AssetManager.h"
-#include "core/Texture.h"
+#include "Renderer/Texture.h"
 #include "core/Logger.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
 #include "../Helper/ImGuiHelper.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
 {
@@ -64,6 +66,7 @@ void SceneHierarchyPanel::DrawComponentGUI(const std::string& name, Entity entit
 	}
 }
 
+#if 0
 std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity e)
 {
 	sf::Texture tex = entityTex; 
@@ -131,6 +134,7 @@ std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity 
 	return colliderVertices;
 	
 }
+#endif
 
 std::vector<Vec2> generatePolygonColliderVertices(int numSides, float radius)
 {
@@ -198,7 +202,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 		}
 
 		// Right click on blank space
-		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_NoOpenOverItems))
 		{
 			Entity entity;
 			if (ImGui::MenuItem("Create Empty Entity"))
@@ -231,6 +235,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 
 	ImGui::Begin("Entity Inspector");
+
 	if (m_InspectedEntity)
 	{
 		auto& tag = m_InspectedEntity.getComponent<CTag>().tag;
@@ -255,12 +260,12 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CTransform>("Transform");
 			if (m_InspectedEntity.hasComponent<CSpriteRenderer>())
 			{
-				if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
+				/*if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
 				{
 					sf::Texture tex = AssetManager::GetAsset<Texture>(m_InspectedEntity.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 					DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", Vec2(tex.getSize().x, tex.getSize().y));
 					DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", Vec2(tex.getSize().x, tex.getSize().y), generatePolygonColliderVertices(tex, m_InspectedEntity));
-				}
+				}*/
 			}
 			else if (m_InspectedEntity.hasComponent<CCircle>())
 			{
@@ -309,20 +314,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				DrawFloatControl("Zoom", component.zoom, 0.5f, 2.0f);
 				ImGui::Checkbox("Primary", &component.primary);
 
-				float colorArray[4];
-				colorArray[0] = component.backgroundColor.r / 255.0f;
-				colorArray[1] = component.backgroundColor.g / 255.0f;
-				colorArray[2] = component.backgroundColor.b / 255.0f;
-				colorArray[3] = component.backgroundColor.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.backgroundColor = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.backgroundColor));
 			});
 
 		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 
@@ -331,58 +323,22 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawFloatControl("Radius", component.radius, 0.0f, 200.0f);
 			});
 
 		DrawComponentGUI<CRectangle>("Rectangle Shape", m_InspectedEntity, [](auto& component)
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
 			});
 
 		DrawComponentGUI<CPolygon>("Polygon Shape", m_InspectedEntity, [](auto& component)
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawIntControl("Sides", component.sides, 3, 10);
 				DrawFloatControl("Size", component.size, 0.0f, 200.0f);
 			});
@@ -456,7 +412,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				if (component.texture != 0)
 				{
 					if (AssetManager::IsAssetHandleValid(component.texture)
-						&& AssetManager::GetAssetType(component.texture) == AssetType::Texture)
+						&& AssetManager::GetAssetType(component.texture) == AssetType::Texture2D)
 					{
 						const std::filesystem::path& textureFilepath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(component.texture);
 						label = textureFilepath.filename().string();
@@ -517,6 +473,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 					}
 				}
 			});
+
 
 	}
 

@@ -22,8 +22,11 @@ public:
 	EditorLayer();
 	~EditorLayer() { std::cout << "editor layer destroyed!\n"; }
 
-	void sGUI();
-	void sRender();
+	virtual void OnAttach() override;
+	virtual void OnDetach() override;
+
+	void OnUpdate(float ts) override;
+	virtual void OnImGuiRender() override;
 
 protected:
 
@@ -48,7 +51,6 @@ protected:
 	void OnSceneStop();
 
 	// Scene Editor Camera and Camera Controller stuff
-	sf::View m_SceneView;
 	Vec2 m_SceneViewCenter;
 	float m_SceneViewZoom = 1.0f;
 	bool m_altPressed = false;
@@ -56,7 +58,6 @@ protected:
 	bool m_SceneViewMoving = false;
 
 	// Main Rendering Viewport
-	sf::RenderTexture m_rt{};
 	Vec2 m_viewportSize;
 	std::pair<Vec2, Vec2> m_viewportBounds;
 
@@ -81,8 +82,6 @@ protected:
 	// Debug stuff
 	bool m_drawGrid = false;
 	const Vec2 m_gridSize = { 64, 64 };
-	sf::Text m_gridText;
-	sf::RectangleShape m_gridRect;
 
 	Vec2 m_mousePos;
 	Entity m_inspectedEntity = {};
@@ -93,8 +92,6 @@ protected:
 	};
 	SceneState m_SceneState = SceneState::Edit;
 
-	// ImGui
-	void setImGuiStyle();
 
 	// Panels
 	SceneHierarchyPanel m_SceneHierarchyPanel;
@@ -102,19 +99,13 @@ protected:
 	PhysicsConfigPanel m_PhysicsConfigPanel;
 	LoggerPanel m_LoggerPanel;
 	
-	std::shared_ptr<Texture> m_IconPlay;
-	std::shared_ptr<Texture> m_IconPause;
-	std::shared_ptr<Texture> m_IconStep;
-	std::shared_ptr<Texture> m_IconStop;
+	std::shared_ptr<Texture2D> m_IconPlay;
+	std::shared_ptr<Texture2D> m_IconPause;
+	std::shared_ptr<Texture2D> m_IconStep;
+	std::shared_ptr<Texture2D> m_IconStop;
 
 	void UI_Toolbar();
 
 	Vec2 windowToViewport(const Vec2& windowPos) const;
-
-
-	void init();
-	void update(float ts);
-	void onEnd();
-	void sDoAction(const Action& action);
 
 };

@@ -8,16 +8,6 @@ Vec2::Vec2(float xin, float yin)
 {
 }
 
-Vec2::Vec2(sf::Vector2f v)
-	: x(v.x), y(v.y)
-{
-}
-
-Vec2::Vec2(sf::Vector2i v)
-	: x(v.x), y(v.y)
-{
-}
-
 float Vec2::operator[](size_t i) const
 {
 	if (i == 0) return x;

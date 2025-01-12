@@ -8,8 +8,8 @@ ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)
 	: m_Project(project), m_ThumbnailCache(std::make_shared<ThumbnailCache>(project)), m_BaseDirectory(m_Project->GetAssetDirectory()), m_CurrentDirectory(m_BaseDirectory)
 {
 
-	m_DirectoryIcon = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/DirectoryIcon.png");
-	m_FileIcon = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/FileIcon.png");
+	m_DirectoryIcon = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/DirectoryIcon.png");
+	m_FileIcon = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/FileIcon.png");
 
 }
 
@@ -181,7 +181,7 @@ void ContentBrowserPanel::OnImGuiRender()
 			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 100 + offsetEnd.y), rectColor, 1.0f);
 
 
-			std::shared_ptr<Texture> thumbnail = m_DirectoryIcon;
+			std::shared_ptr<Texture2D> thumbnail = m_DirectoryIcon;
 			if (!isDirectory)
 			{
 				thumbnail = m_ThumbnailCache->GetOrCreateThumbnail(path);
@@ -191,7 +191,7 @@ void ContentBrowserPanel::OnImGuiRender()
 
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::SetCursorPos(prevCursor);
-			ImGui::Image(thumbnail->GetSFMLTexture(), { thumbnailSize, thumbnailSize });
+			ImGui::Image((ImTextureID)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, {0, 1}, {1, 0});
 			ImGui::PopStyleColor();
 
 

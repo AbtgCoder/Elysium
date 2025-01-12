@@ -1,8 +1,7 @@
 #include "Application.h"
 #include "Project/Project.h"
 
-#include "imgui.h"
-#include "imgui-SFML.h"
+#include <GLFW/glfw3.h>
 
 Application* Application::s_Instance = nullptr;
 
@@ -10,17 +9,66 @@ Application::Application(const std::string& name)
 {
 	s_Instance = this;
 
-	init(name);
+	m_Window = Window::Create(WindowProps(name));
+	// set event callback
+	
+	// initialize renderer
+
+	// create and push imgui layer
+	m_ImGuiLayer = new ImGuiLayer();
+	PushOverlay(m_ImGuiLayer);
+
 }
 
 Application::~Application()
 {
-//	m_LayerMap.clear();
-
-	ImGui::SFML::Shutdown();
-
-	//Project::GetActive().reset();
 }
+
+void Application::PushLayer(Layer* layer)
+{
+	m_LayerStack.PushLayer(layer);
+	layer->OnAttach();
+}
+
+void Application::PushOverlay(Layer* layer)
+{
+	m_LayerStack.PushOverlay(layer);
+	layer->OnAttach();
+}
+
+void Application::Close()
+{
+	m_Running = false;
+}
+
+void Application::Run()
+{
+	while (!glfwWindowShouldClose((GLFWwindow*)m_Window->GetNativeWindow()))
+	{
+		float time = glfwGetTime();
+		float timestep = time - m_LastFrameTime;
+		m_LastFrameTime = time;
+
+		for (Layer* layer : m_LayerStack)
+		{
+			layer->OnUpdate(timestep);
+		}
+
+		m_ImGuiLayer->Begin();
+		{
+			for (Layer* layer : m_LayerStack)
+			{
+				layer->OnImGuiRender();
+			}
+		}
+		m_ImGuiLayer->End();
+
+		m_Window->OnUpdate();
+	}
+}
+
+
+#if 0
 
 void Application::init(const std::string& name)
 {
@@ -75,6 +123,7 @@ const LayerMap& Application::Layers() const
 {
 	return m_LayerMap;
 }
+
 
 
 
@@ -179,4 +228,5 @@ void Application::sUserInput()
 	}
 }
 
+#endif
 

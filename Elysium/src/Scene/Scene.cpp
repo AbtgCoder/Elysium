@@ -3,7 +3,7 @@
 #include "Scene.h"
 
 #include "Asset/AssetManager.h"
-#include "Core/Texture.h"
+#include "Renderer/Texture.h"
 #include "Asset/TextureImporter.h"
 
 #include "Scripts/RotateEntity.h"
@@ -16,8 +16,8 @@
 #define DEG_PER_RAD 57.2957795F
 
 
-sf::Texture g_cameraIconTexture = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/CameraIcon2.png")->GetSFMLTexture();
-sf::Sprite g_cameraIconSprite = sf::Sprite(g_cameraIconTexture);
+//sf::Texture g_cameraIconTexture = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/CameraIcon2.png")->GetSFMLTexture();
+//sf::Sprite g_cameraIconSprite = sf::Sprite(g_cameraIconTexture);
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -27,20 +27,20 @@ Scene::Scene()
 Scene::Scene(const std::string& name)
 	: m_Name(name)
 {
-	m_PhysicsRect.setFillColor(sf::Color::Transparent);
-	m_PhysicsRect.setOutlineColor(sf::Color::White);
-	m_PhysicsRect.setOutlineThickness(1);
+	//m_PhysicsRect.setFillColor(sf::Color::Transparent);
+	//m_PhysicsRect.setOutlineColor(sf::Color::White);
+	//m_PhysicsRect.setOutlineThickness(1);
 
-	m_PhysicsPoly.setFillColor(sf::Color::Transparent);
-	m_PhysicsPoly.setOutlineColor(sf::Color::White);
-	m_PhysicsPoly.setOutlineThickness(1);
+	//m_PhysicsPoly.setFillColor(sf::Color::Transparent);
+	//m_PhysicsPoly.setOutlineColor(sf::Color::White);
+	//m_PhysicsPoly.setOutlineThickness(1);
 
-	m_CircleShape.setFillColor(sf::Color::Transparent);
-	//m_CircleShape.setOutlineColor(sf::Color::White);
-	//m_CircleShape.setOutlineThickness(1);
-	m_CircleShape.setPointCount(30);
+	//m_CircleShape.setFillColor(sf::Color::Transparent);
+	////m_CircleShape.setOutlineColor(sf::Color::White);
+	////m_CircleShape.setOutlineThickness(1);
+	//m_CircleShape.setPointCount(30);
 
-	m_RectangleShape.setFillColor(sf::Color::Transparent);
+	//m_RectangleShape.setFillColor(sf::Color::Transparent);
 	/*m_RectangleShape.setOutlineColor(sf::Color::White);
 	m_RectangleShape.setOutlineThickness(1);*/
 
@@ -195,7 +195,7 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 
 static bool IsInside(Vec2 pos, Entity e)
 {
-	sf::Vector2u s;
+	/*sf::Vector2u s;
 	if (e.hasComponent<CSpriteRenderer>())
 	{
 		s = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture().getSize();
@@ -221,7 +221,7 @@ static bool IsInside(Vec2 pos, Entity e)
 		pos.y < ePos.y + s.y / 2)
 	{
 		return true;
-	}
+	}*/
 	return false;
 }
 
@@ -490,7 +490,7 @@ void Scene::UpdateTransforms()
 	}
 }
 
-void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
+void Scene::OnUpdateRuntime(float dt)
 {
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
@@ -568,16 +568,16 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 	if (mainCamera)
 	{
-		m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
+		/*m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
 		m_cameraView.setCenter(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
 		m_cameraView.zoom(mainCamera->zoom);
 		m_cameraView.setRotation(cameraTransform.GlobalRotation);
 		renderTexture.setView(m_cameraView);
-		renderTexture.clear(mainCamera->backgroundColor);
+		renderTexture.clear(mainCamera->backgroundColor);*/
 
 		UpdateTransforms();
 
-		RenderScene(renderTexture);
+		RenderScene();
 
 	}
 	else
@@ -588,15 +588,16 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 	
 }
 
-void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
+void Scene::OnUpdateEditor()
 {
 	// Update transforms..
 	UpdateTransforms();
 
 	// Render Scene
-	RenderScene(renderTexture);
+	RenderScene();
 }
 
+#if 0
 void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 {
 #if 0
@@ -646,13 +647,14 @@ void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
 	body->m_angularVelocity = transform.angularVelocity;
 #endif
 }
+#endif
 
 void Scene::Step(int frames)
 {
 	m_StepFrames = frames;
 }
 
-void Scene::RenderScene(sf::RenderTexture& renderTexture)
+void Scene::RenderScene()
 {
 
 	CCamera* mainCamera = nullptr;
@@ -670,6 +672,9 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			}
 		}
 	}
+
+
+#if 0
 
 	for (auto e : m_entityManager.GetEntities())
 		{
@@ -876,5 +881,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		renderTexture.draw(m_RectangleShape);
 	}
 	
+
+#endif
 	
 }

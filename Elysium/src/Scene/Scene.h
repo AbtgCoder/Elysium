@@ -39,11 +39,11 @@ public:
 	void OnRuntimeStart();
 	void OnRuntimeStop();
 	void UpdateTransforms();
-	void OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt);
-	void OnUpdateEditor(sf::RenderTexture& renderTexture);
+	void OnUpdateRuntime(float dt);
+	void OnUpdateEditor();
 
 	// Physics
-	void LaunchBomb(sf::RenderTexture& renderTexture);
+	//void LaunchBomb(sf::RenderTexture& renderTexture);
 
 	bool IsRunning() const { return m_IsRunning; }
 	bool IsPaused() const { return m_IsPaused; }
@@ -56,15 +56,15 @@ private:
 	Entity m_player = {};
 
 	// debug stuff
-	sf::RectangleShape m_PhysicsRect;
-	sf::ConvexShape m_PhysicsPoly;
-	
-	// drawing
-	sf::CircleShape m_CircleShape;
-	sf::RectangleShape m_RectangleShape;
-	sf::Texture m_Texture;
+	//sf::RectangleShape m_PhysicsRect;
+	//sf::ConvexShape m_PhysicsPoly;
+	//
+	//// drawing
+	//sf::CircleShape m_CircleShape;
+	//sf::RectangleShape m_RectangleShape;
+	//sf::Texture m_Texture;
 
-	void RenderScene(sf::RenderTexture& renderTexture);
+	void RenderScene();
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
@@ -84,7 +84,7 @@ private:
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
-	sf::View m_cameraView;
+	//sf::View m_cameraView;
 
 	// shader test
 	//sf::Shader m_Shader;

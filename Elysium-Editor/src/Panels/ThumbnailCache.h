@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Project/Project.h"
-#include "core/Texture.h"
+#include "Renderer/Texture.h"
 
 struct ThumbnailImage
 {
 	uint64_t Timestamp;
-	std::shared_ptr<Texture> Image;
+	std::shared_ptr<Texture2D> Image;
 };
 
 class ThumbnailCache
@@ -14,7 +14,7 @@ class ThumbnailCache
 public:
 	ThumbnailCache(std::shared_ptr<Project> project);
 
-	std::shared_ptr<Texture> GetOrCreateThumbnail(const std::filesystem::path& path);
+	std::shared_ptr<Texture2D> GetOrCreateThumbnail(const std::filesystem::path& path);
 private:
 	std::shared_ptr<Project> m_Project;
 	std::map<std::filesystem::path, ThumbnailImage> m_CachedImages;

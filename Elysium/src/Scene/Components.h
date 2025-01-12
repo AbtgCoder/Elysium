@@ -5,6 +5,14 @@
 #include "Math/Vec2.h"
 #include "core/UUID.h"
 
+#include <vector>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 class Component
 {
 public:
@@ -82,7 +90,9 @@ public:
 	Vec2 size = { 500.0f, 500.0f };
 	float zoom = 1.0f; //TODO: only allowed btw 0.5 and 2.0 ??
 	bool primary = true;
-	sf::Color backgroundColor = { 49, 77, 121, 255};
+	
+	glm::vec4 backgroundColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+	//sf::Color backgroundColor = { 49, 77, 121, 255};
 
 	CCamera() = default;
 	CCamera(const CCamera&) = default;
@@ -111,7 +121,9 @@ class CRectangle : public Component
 {
 public:
 	Vec2 size = {50.0, 50.0};
-	sf::Color color = { 255, 255, 255, 255 };
+	//sf::Color color = { 255, 255, 255, 255 };
+
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	CRectangle() {}
 	CRectangle(float s)
@@ -126,7 +138,10 @@ class CCircle : public Component
 {
 public:
 	float radius = 50.0f;
-	sf::Color color = {255, 255, 255, 255};
+	//sf::Color color = {255, 255, 255, 255};
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+
 	CCircle() {}
 	CCircle(float r)
 		: radius(r) {}
@@ -138,7 +153,9 @@ class CPolygon : public Component
 public:
 	int sides = 3; // this must be >= 3
 	float size = 50.0f;
-	sf::Color color = { 255, 255, 255, 255 };
+	//sf::Color color = { 255, 255, 255, 255 };
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
 	CPolygon() = default;
 	CPolygon(const CPolygon&) = default;
 };
