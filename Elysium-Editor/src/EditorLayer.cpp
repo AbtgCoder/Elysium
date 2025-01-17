@@ -3,6 +3,8 @@
 #include "Core/Application.h"
 #include "core/Logger.h"
 
+#include "Renderer/RenderCommand.h"
+
 #include "Physics/graham_scan.h"
 
 
@@ -43,6 +45,12 @@ void EditorLayer::OnAttach()
 	m_IconStep = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
 	m_IconStop = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
 	
+	// framebuffer
+	FramebufferSpecification fbSpec;
+	fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth};
+	fbSpec.Width = 1280;
+	fbSpec.Height = 720;
+	m_Framebuffer = Framebuffer::Create(fbSpec);
 
 
 	//OpenProject();
@@ -54,24 +62,26 @@ void EditorLayer::OnDetach()
 {
 }
  
-
-Vec2 EditorLayer::windowToViewport(const Vec2& windowPos) const
-{
-	auto viewportPos = windowPos - m_viewportBounds.first;
-	return viewportPos;
-}
- 
-
 void EditorLayer::OnUpdate(float ts)
 {
 	// scene viewport resize
 
 	// frame buffer resize
-	// camera updates
+	if (FramebufferSpecification spec = m_Framebuffer->GetSpecification();
+		m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
+		(spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y))
+	{
+		m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		// camera updates
+	}
 
 	// render
+	// reset renderer stats
 	// bind framebuffer
+	m_Framebuffer->Bind();
 	// rendercommand -> clear
+	RenderCommand::SetClearColor({ 1.0f, 0.1f, 0.1f, 1 });
+	RenderCommand::Clear();
 
 	switch (m_SceneState)
 	{
@@ -95,11 +105,22 @@ void EditorLayer::OnUpdate(float ts)
 	}
 
 	// hovered/selected entity
+	auto [mx, my] = ImGui::GetMousePos();
+	mx -= m_ViewportBounds[0].x;
+	my -= m_ViewportBounds[0].y;
+	Vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+	my = viewportSize.y - my;
+	int mouseX = (int)mx;
+	int mouseY = (int)my;
+	if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+	{
+		// read pixel data
+	}
 
 	// overlay render
 
 	// framebuffer unbind
-	
+	m_Framebuffer->Unbind();
 }
 
 
@@ -204,11 +225,19 @@ void EditorLayer::OnImGuiRender()
 	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
 	auto viewportOffset = ImGui::GetWindowPos();
-	m_viewportBounds.first = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-	m_viewportBounds.second = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+	m_ViewportBounds[0] = {viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y};
+	m_ViewportBounds[1] = {viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y};
+	
+	m_ViewportFocused = ImGui::IsWindowFocused();
+	m_ViewportHovered = ImGui::IsWindowHovered();
+
+	Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
+
 	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-	//ImGui::Image(m_rt);
+	m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+
+	uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
+	ImGui::Image((ImTextureID)(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
 	if (m_SceneState == SceneState::Edit)
 	{

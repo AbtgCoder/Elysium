@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Core/Layer.h"
+#include "core/Logger.h"
+
+#include "Renderer/Framebuffer.h"
 
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
@@ -11,7 +14,6 @@
 #include "Panels/PhysicsConfigPanel.h"
 #include "Panels/LoggerPanel.h"
 
-#include "core/Logger.h"
 
 #include <filesystem>
 
@@ -35,16 +37,11 @@ public:
 	virtual void OnImGuiRender() override;
 	void OnEvent(Event& event) override;
 private:
+	// event handling
 	bool OnKeyPressed(KeyPressedEvent& e);
 	bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 	bool OnWindowDrop(WindowDropEvent& e);
-protected:
-
-	std::filesystem::path m_EditorProjectPath;
-	std::filesystem::path m_EditorScenePath;
-	std::shared_ptr<Scene> m_ActiveScene;
-	std::shared_ptr<Scene> m_EditorScene;
-
+	
 	void NewProject();
 	bool OpenProject();
 	void OpenProject(const std::filesystem::path& path);
@@ -60,6 +57,13 @@ protected:
 	void OnScenePlay();
 	void OnSceneStop();
 
+	void UI_Toolbar();
+private:
+	std::filesystem::path m_EditorProjectPath;
+	std::filesystem::path m_EditorScenePath;
+	std::shared_ptr<Scene> m_ActiveScene;
+	std::shared_ptr<Scene> m_EditorScene;
+
 	// Scene Editor Camera and Camera Controller stuff
 	Vec2 m_SceneViewCenter;
 	float m_SceneViewZoom = 1.0f;
@@ -68,8 +72,10 @@ protected:
 	bool m_SceneViewMoving = false;
 
 	// Main Rendering Viewport
-	Vec2 m_viewportSize;
-	std::pair<Vec2, Vec2> m_viewportBounds;
+	std::shared_ptr<Framebuffer> m_Framebuffer;
+	Vec2 m_ViewportSize = { 0.0f, 0.0f };
+	Vec2 m_ViewportBounds[2];
+	bool m_ViewportFocused = false, m_ViewportHovered = false;
 
 	// Gizmo stuff
 	bool m_gizmoHoverX = false;
@@ -114,8 +120,5 @@ protected:
 	std::shared_ptr<Texture2D> m_IconStep;
 	std::shared_ptr<Texture2D> m_IconStop;
 
-	void UI_Toolbar();
-
-	Vec2 windowToViewport(const Vec2& windowPos) const;
 
 };
