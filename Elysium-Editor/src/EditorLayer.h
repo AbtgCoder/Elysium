@@ -9,6 +9,8 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 
+#include "Renderer/EditorCamera.h"
+
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/PhysicsConfigPanel.h"
@@ -65,6 +67,8 @@ private:
 	std::shared_ptr<Scene> m_EditorScene;
 
 	// Scene Editor Camera and Camera Controller stuff
+	EditorCamera m_EditorCamera;
+
 	Vec2 m_SceneViewCenter;
 	float m_SceneViewZoom = 1.0f;
 	bool m_altPressed = false;

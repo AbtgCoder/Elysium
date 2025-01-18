@@ -4,6 +4,7 @@
 #include "core/Logger.h"
 
 #include "Renderer/RenderCommand.h"
+#include "Renderer/Renderer2D.h"
 
 #include "Physics/graham_scan.h"
 
@@ -52,6 +53,8 @@ void EditorLayer::OnAttach()
 	fbSpec.Height = 720;
 	m_Framebuffer = Framebuffer::Create(fbSpec);
 
+	// camera
+	m_EditorCamera = EditorCamera(30.0f, 1.778f, 0.1f, 1000.0f);
 
 	//OpenProject();
 	OpenProject("D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox.eproject");
@@ -73,6 +76,7 @@ void EditorLayer::OnUpdate(float ts)
 	{
 		m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		// camera updates
+		m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 	}
 
 	// render
@@ -80,7 +84,7 @@ void EditorLayer::OnUpdate(float ts)
 	// bind framebuffer
 	m_Framebuffer->Bind();
 	// rendercommand -> clear
-	RenderCommand::SetClearColor({ 1.0f, 0.1f, 0.1f, 1 });
+	RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
 	RenderCommand::Clear();
 
 	switch (m_SceneState)
@@ -103,6 +107,12 @@ void EditorLayer::OnUpdate(float ts)
 			break;
 		}
 	}
+
+	m_EditorCamera.OnUpdate(ts);
+
+	Renderer2D::BeginScene(m_EditorCamera);
+
+	Renderer2D::DrawTriangle();
 
 	// hovered/selected entity
 	auto [mx, my] = ImGui::GetMousePos();
@@ -454,6 +464,11 @@ void EditorLayer::OnImGuiRender()
 
 void EditorLayer::OnEvent(Event& event)
 {
+
+	m_EditorCamera.OnEvent(event);
+
+	// EventDispatcher dispatcher(event);
+	//dispatcher.Dispatch<KeyPressedEvent>(std::bind(&EditorLayer::OnKeyPressed, this, std::placeholders::_1));
 }
 
 bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)

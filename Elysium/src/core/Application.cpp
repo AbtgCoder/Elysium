@@ -1,6 +1,9 @@
 #include "Application.h"
 #include "Project/Project.h"
 
+#include "Renderer/RenderCommand.h"
+#include "Renderer/Renderer2D.h"
+
 #include "core/Logger.h"
 
 #include <GLFW/glfw3.h>
@@ -17,6 +20,8 @@ Application::Application(const std::string& name)
 	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 	
 	// initialize renderer
+	RenderCommand::Init();
+	Renderer2D::Init();
 
 	// create and push imgui layer
 	m_ImGuiLayer = new ImGuiLayer();
@@ -26,6 +31,7 @@ Application::Application(const std::string& name)
 
 Application::~Application()
 {
+	Renderer2D::Shutdown();
 }
 
 void Application::PushLayer(Layer* layer)
@@ -97,6 +103,8 @@ bool Application::OnWindowClose(WindowCloseEvent& e)
 
 bool Application::OnWindowResize(WindowResizeEvent& e)
 {
+	RenderCommand::SetViewport(0, 0, e.GetWidth(), e.GetHeight());
+
 	return false;
 }
 
