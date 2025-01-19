@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Renderer/VertexArray.h"
+
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -20,7 +22,10 @@ public:
 	virtual void Clear() = 0;
 
 	// draw indexed
+	virtual void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray, uint32_t indexCount = 0) = 0;
 	// draw lines
+	virtual void SetLineWidth(float lineWidth) = 0;
+	virtual void DrawLines(const std::shared_ptr<VertexArray>& vertexArray, uint32_t vertexCount) = 0;
 
 	static API GetAPI() { return s_API; }
 

@@ -12,4 +12,8 @@ public:
 	virtual void Clear() override;
 
 	// draw indexed, lines
+	virtual void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray, uint32_t indexCount = 0) override;
+	virtual void SetLineWidth(float lineWidth) override;
+	virtual void DrawLines(const std::shared_ptr<VertexArray>& vertexArray, uint32_t vertexCount) override;
+
 };

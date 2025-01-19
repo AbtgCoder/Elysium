@@ -3,6 +3,8 @@
 #include "Core/Application.h"
 #include "core/Logger.h"
 
+#include "core/Input.h"
+
 #include "Renderer/RenderCommand.h"
 #include "Renderer/Renderer2D.h"
 
@@ -49,6 +51,10 @@ void EditorLayer::OnAttach()
 	// framebuffer
 	FramebufferSpecification fbSpec;
 	fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth};
+	/*
+		the first attachment is the main scene color buffer
+		second attachment is used to store and read entity ids 
+	*/
 	fbSpec.Width = 1280;
 	fbSpec.Height = 720;
 	m_Framebuffer = Framebuffer::Create(fbSpec);
@@ -87,6 +93,9 @@ void EditorLayer::OnUpdate(float ts)
 	RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
 	RenderCommand::Clear();
 
+	// clean our entity ID attachment to -1
+	m_Framebuffer->ClearAttachment(1, -1); 
+
 	switch (m_SceneState)
 	{
 		case SceneState::Edit:
@@ -96,7 +105,7 @@ void EditorLayer::OnUpdate(float ts)
 			m_rt.setView(m_SceneView);
 			m_rt.clear();*/
 			if (m_ActiveScene)
-				m_ActiveScene->OnUpdateEditor();
+				m_ActiveScene->OnUpdateEditor(m_EditorCamera);
 			break;
 		}
 		case SceneState::Play:
@@ -110,9 +119,6 @@ void EditorLayer::OnUpdate(float ts)
 
 	m_EditorCamera.OnUpdate(ts);
 
-	Renderer2D::BeginScene(m_EditorCamera);
-
-	Renderer2D::DrawTriangle();
 
 	// hovered/selected entity
 	auto [mx, my] = ImGui::GetMousePos();
@@ -125,9 +131,18 @@ void EditorLayer::OnUpdate(float ts)
 	if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 	{
 		// read pixel data
+		int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
+		m_HoveredEntity = pixelData == -1 ? Entity() : m_ActiveScene->GetEntityByEntityID(pixelData);
+		
+		//std::cout << pixelData << "\n";
+		/*if (m_HoveredEntity)
+		{
+			Logger::Log(m_HoveredEntity.getComponent<CTag>().tag, "editor");
+		}*/
 	}
 
 	// overlay render
+	OnOverlayRender();
 
 	// framebuffer unbind
 	m_Framebuffer->Unbind();
@@ -462,13 +477,42 @@ void EditorLayer::OnImGuiRender()
 
 }
 
+void EditorLayer::OnOverlayRender()
+{
+	if (m_SceneState == SceneState::Edit)
+	{
+		Renderer2D::BeginScene(m_EditorCamera);
+		
+		// draw inspected entity outline
+		if (Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity())
+		{
+			auto transform = inspectedEntity.getComponent<CTransform>();
+			if (inspectedEntity.hasComponent<CRectangle>())
+			{
+				auto rect = inspectedEntity.getComponent<CRectangle>();
+				Renderer2D::DrawRotatedRect({ transform.Translation.x, transform.Translation.y }, { rect.size.x, rect.size.y }, transform.Rotation, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			}
+
+			if (inspectedEntity.hasComponent<CSpriteRenderer>())
+			{
+				Renderer2D::DrawRect(transform.GetTransform(), glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			}
+		}
+
+		Renderer2D::EndScene();
+	}
+}
+
+
 void EditorLayer::OnEvent(Event& event)
 {
+	if (m_SceneState == SceneState::Edit)
+		m_EditorCamera.OnEvent(event);
 
-	m_EditorCamera.OnEvent(event);
-
-	// EventDispatcher dispatcher(event);
-	//dispatcher.Dispatch<KeyPressedEvent>(std::bind(&EditorLayer::OnKeyPressed, this, std::placeholders::_1));
+	EventDispatcher dispatcher(event);
+	dispatcher.Dispatch<KeyPressedEvent>(std::bind(&EditorLayer::OnKeyPressed, this, std::placeholders::_1));
+	dispatcher.Dispatch<MouseButtonPressedEvent>(std::bind(&EditorLayer::OnMouseButtonPressed, this, std::placeholders::_1));
+	dispatcher.Dispatch<WindowDropEvent>(std::bind(&EditorLayer::OnWindowDrop, this, std::placeholders::_1));
 }
 
 bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
@@ -478,6 +522,13 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 
 bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
 {
+	if (e.GetMouseButton() == Mouse::ButtonLeft)
+	{
+		if (m_ViewportHovered && !Input::IsKeyPressed(Key::LeftAlt))
+		{
+			m_SceneHierarchyPanel.SetInspectedEntity(m_HoveredEntity);
+		}
+	}
 	return false;
 }
 

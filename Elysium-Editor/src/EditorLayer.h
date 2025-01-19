@@ -39,11 +39,14 @@ public:
 	virtual void OnImGuiRender() override;
 	void OnEvent(Event& event) override;
 private:
+	
+	void OnOverlayRender();
+	
 	// event handling
 	bool OnKeyPressed(KeyPressedEvent& e);
 	bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 	bool OnWindowDrop(WindowDropEvent& e);
-	
+
 	void NewProject();
 	bool OpenProject();
 	void OpenProject(const std::filesystem::path& path);
@@ -104,6 +107,8 @@ private:
 	const Vec2 m_gridSize = { 64, 64 };
 
 	Vec2 m_mousePos;
+
+	Entity m_HoveredEntity = {};
 	Entity m_inspectedEntity = {};
 
 	enum class SceneState

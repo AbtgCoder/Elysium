@@ -5,6 +5,8 @@
 #include "Physics/PhysicsWorld.h"
 #include "core/UUID.h"
 
+#include "Renderer/EditorCamera.h"
+
 #include "EntityManager.h"
 
 #include <string>
@@ -26,6 +28,7 @@ public:
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
 	Entity GetEntityIfClicked(Vec2 mousePos);
 	Entity GetEntityByUUID(Elysium::UUID id);
+	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
 
 	bool IsEntityUUIDValid(Elysium::UUID uuid);
@@ -40,7 +43,7 @@ public:
 	void OnRuntimeStop();
 	void UpdateTransforms();
 	void OnUpdateRuntime(float dt);
-	void OnUpdateEditor();
+	void OnUpdateEditor(EditorCamera& camera);
 
 	// Physics
 	//void LaunchBomb(sf::RenderTexture& renderTexture);
@@ -64,7 +67,7 @@ private:
 	//sf::RectangleShape m_RectangleShape;
 	//sf::Texture m_Texture;
 
-	void RenderScene();
+	void RenderScene(EditorCamera& camera);
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;

@@ -223,3 +223,23 @@ void OpenGLFramebuffer::Resize(uint32_t width, uint32_t height)
 
 	Invalidate();
 }
+
+int OpenGLFramebuffer::ReadPixel(uint32_t attachmentIndex, int x, int y)
+{
+	// assert attachmentindex < colorattachments' size
+
+	glReadBuffer(GL_COLOR_ATTACHMENT0 + attachmentIndex); // tell openGL to read from the specified buffer
+
+	int pixelData;
+	glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_INT, &pixelData);
+
+	return pixelData;
+}
+
+void OpenGLFramebuffer::ClearAttachment(uint32_t attachmentIndex, int value)
+{
+	// assert attachmentindex < colorattachments' size
+
+	auto& spec = m_ColorAttachmentSpecifications[attachmentIndex];
+	glClearTexImage(m_ColorAttachments[attachmentIndex], 0, Utils::ElysiumFBTextureFormatToGL(spec.TextureFormat), GL_INT, &value);
+}

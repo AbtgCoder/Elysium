@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Renderer/VertexArray.h"
+
 #include "Renderer/RendererAPI.h"
 
 #include <memory>
@@ -28,7 +30,19 @@ public:
 	}
 
 	// draw indexed
+	static void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray, uint32_t indexCount = 0)
+	{
+		s_RendererAPI->DrawIndexed(vertexArray, indexCount);
+	}
 	// draw lines
+	static void SetLineWidth(float lineWidth)
+	{
+		s_RendererAPI->SetLineWidth(lineWidth);
+	}
+	static void DrawLines(const std::shared_ptr<VertexArray>& vertexArray, uint32_t vertexCount)
+	{
+		s_RendererAPI->DrawLines(vertexArray, vertexCount);
+	}
 
 private:
 	static std::unique_ptr<RendererAPI> s_RendererAPI;

@@ -147,10 +147,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Primary" << YAML::Value << camera.primary;
 		out << YAML::Key << "BackgroundColor" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		/*out << (float)camera.backgroundColor.r;
-		out << (float)camera.backgroundColor.g;
-		out << (float)camera.backgroundColor.b;
-		out << (float)camera.backgroundColor.a;*/
+		out << (float)camera.backgroundColor.x;
+		out << (float)camera.backgroundColor.y;
+		out << (float)camera.backgroundColor.z;
+		out << (float)camera.backgroundColor.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -162,10 +162,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Radius" << YAML::Value << cc.radius;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		/*out << (float)cc.color.r;
-		out << (float)cc.color.g;
-		out << (float)cc.color.b;
-		out << (float)cc.color.a;*/
+		out << (float)cc.color.x;
+		out << (float)cc.color.y;
+		out << (float)cc.color.z;
+		out << (float)cc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -177,10 +177,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Size" << YAML::Value << rc.size;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		/*out << (float)rc.color.r;
-		out << (float)rc.color.g;
-		out << (float)rc.color.b;
-		out << (float)rc.color.a;*/
+		out << (float)rc.color.x;
+		out << (float)rc.color.y;
+		out << (float)rc.color.z;
+		out << (float)rc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -193,10 +193,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Size" << YAML::Value << pc.size;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		/*out << (float)pc.color.r;
-		out << (float)pc.color.g;
-		out << (float)pc.color.b;
-		out << (float)pc.color.a;*/
+		out << (float)pc.color.x;
+		out << (float)pc.color.y;
+		out << (float)pc.color.z;
+		out << (float)pc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -416,12 +416,12 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = cameraComponent["BackgroundColor"];
 				if (colorArray)
 				{
-					/*camera.backgroundColor = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
-					);*/
+					camera.backgroundColor = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
+					);
 				}
 			}
 
@@ -444,12 +444,12 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = circleComponent["Color"];
 				if (colorArray)
 				{
-					/*cc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
-					);*/
+					cc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
+					);
 				}
 			}
 
@@ -461,12 +461,12 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = rectangleComponent["Color"];
 				if (colorArray)
 				{
-					/*rc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
-					);*/
+					rc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
+					);
 				}
 			}
 
@@ -479,12 +479,12 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = polygonShapeComponent["Color"];
 				if (colorArray)
 				{
-					/*pc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
-					);*/
+					pc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
+					);
 				}
 			}
 

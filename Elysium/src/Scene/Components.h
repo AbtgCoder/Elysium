@@ -57,6 +57,17 @@ public:
 	CTransform(const Vec2& p, const Vec2& sc, float a)
 		: Translation(p), Scale(sc), Rotation(a) {}
 	CTransform(CTransform& other) = default;
+
+	glm::mat4 GetTransform() const
+	{
+		glm::mat4 rotation = glm::mat4(glm::quat(glm::vec3(0.0f, 0.0f, Rotation)));
+
+		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(Translation.x, Translation.y, 0.0f))
+			* rotation
+			* glm::scale(glm::mat4(1.0f), glm::vec3(Scale.x, Scale.y, 1.0f));
+
+		return transformMatrix;
+	}
 };
 
 class CParent : public Component
@@ -87,12 +98,11 @@ public:
 class CCamera : public Component
 {
 public:
-	Vec2 size = { 500.0f, 500.0f };
+	Vec2 size = { 20.0f, 20.0f };
 	float zoom = 1.0f; //TODO: only allowed btw 0.5 and 2.0 ??
 	bool primary = true;
 	
 	glm::vec4 backgroundColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-	//sf::Color backgroundColor = { 49, 77, 121, 255};
 
 	CCamera() = default;
 	CCamera(const CCamera&) = default;
@@ -120,7 +130,7 @@ public:
 class CRectangle : public Component
 {
 public:
-	Vec2 size = {50.0, 50.0};
+	Vec2 size = { 1.0f, 1.0f};
 	//sf::Color color = { 255, 255, 255, 255 };
 
 	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -137,7 +147,7 @@ public:
 class CCircle : public Component
 {
 public:
-	float radius = 50.0f;
+	float radius = 1.0f;
 	//sf::Color color = {255, 255, 255, 255};
 	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -152,7 +162,7 @@ class CPolygon : public Component
 {
 public:
 	int sides = 3; // this must be >= 3
-	float size = 50.0f;
+	float size = 1.0f;
 	//sf::Color color = { 255, 255, 255, 255 };
 	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 

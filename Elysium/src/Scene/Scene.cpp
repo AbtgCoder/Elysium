@@ -6,7 +6,15 @@
 #include "Renderer/Texture.h"
 #include "Asset/TextureImporter.h"
 
+#include "Renderer/Renderer2D.h"
+
 #include "Scripts/RotateEntity.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 #include <windows.h>
 
@@ -250,6 +258,18 @@ Entity Scene::GetEntityByUUID(Elysium::UUID id)
 	}
 }
 
+Entity Scene::GetEntityByEntityID(size_t id)
+{
+	//TODO: assert valid id probably
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.id() == id)
+		{
+			return e;
+		}
+	}
+}
+
 void Scene::DestroyEntity(Entity entity)
 {
 	auto& parentComponent = entity.getComponent<CParent>();
@@ -315,7 +335,6 @@ ScriptableEntity* TryLoadScript()
 	return createFunc();
 }
 
-
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");
@@ -347,7 +366,7 @@ void Scene::OnRuntimeStart()
 			auto& rb2d = e.getComponent<CRigidBody>();
 
 			PhysicsBody* body = new PhysicsBody();
-			body->m_position = { transform.GlobalTranslation.x / PPM, -1 * transform.GlobalTranslation.y / PPM };
+			body->m_position = { transform.GlobalTranslation.x, transform.GlobalTranslation.y };
 			body->m_rotation = transform.GlobalRotation / DEG_PER_RAD;
 		//	body->m_velocity = transform.velocity;
 		//	body->m_angularVelocity = transform.angularVelocity;
@@ -358,7 +377,7 @@ void Scene::OnRuntimeStart()
 			{
 				auto& bb2d = e.getComponent<CBoundingBox>();
 				PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x / PPM, bb2d.halfSize.y * transform.GlobalScale.y / PPM, bb2d.offset / PPM, 0.0f);
+				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x, bb2d.halfSize.y * transform.GlobalScale.y, bb2d.offset, 0.0f);
 				body->m_shape = boxShape;
 			}
 			else if (e.hasComponent<CPolygonCollider>())
@@ -369,7 +388,7 @@ void Scene::OnRuntimeStart()
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
 					Vec2 point = vertices[i];
-					points.push_back({ point.x / PPM, -1 * point.y / PPM });
+					points.push_back({ point.x, point.y });
 				}
 				PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
 				polyShape->Set(points);
@@ -379,7 +398,7 @@ void Scene::OnRuntimeStart()
 			{
 				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
 				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
-				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x / PPM;
+				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x;
 				body->m_shape = circleShape;
 			}
 
@@ -423,7 +442,7 @@ void Scene::OnRuntimeStart()
 			}
 			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().GlobalTranslation;
 			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
-			joint->Set(body1, body2, Vec2(anchorWorldPos.x / PPM, - anchorWorldPos.y / PPM));
+			joint->Set(body1, body2, Vec2(anchorWorldPos.x, anchorWorldPos.y));
 			// TODO: add softness & bias to the joint component ??
 			joint->m_softness = 0.00098884f;
 			joint->m_biasFactor = 0.130132;
@@ -538,7 +557,7 @@ void Scene::OnUpdateRuntime(float dt)
 						//TODO: fix this for when entity e has a parent....
 						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
 					//	e.getComponent<CTransform>().velocity = body->m_velocity;
-						e.getComponent<CTransform>().Translation = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
+						e.getComponent<CTransform>().Translation = { body->m_position.x, body->m_position.y };
 						e.getComponent<CTransform>().Rotation = body->m_rotation * DEG_PER_RAD;
 					//	e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
 					}
@@ -577,7 +596,7 @@ void Scene::OnUpdateRuntime(float dt)
 
 		UpdateTransforms();
 
-		RenderScene();
+		//RenderScene();
 
 	}
 	else
@@ -588,75 +607,44 @@ void Scene::OnUpdateRuntime(float dt)
 	
 }
 
-void Scene::OnUpdateEditor()
+void Scene::OnUpdateEditor(EditorCamera& camera)
 {
 	// Update transforms..
 	UpdateTransforms();
 
 	// Render Scene
-	RenderScene();
+	RenderScene(camera);
 }
-
-#if 0
-void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
-{
-#if 0
-	if (!m_bomb)
-	{
-		m_bomb = AddEntity("runtime_bomb");
-		auto& rb2d = m_bomb.addComponent<CRigidBody>();
-		auto& transform = m_bomb.getComponent<CTransform>();
-		int xmin = 900, xmax = 1500, ymin = 100, ymax = 400;
-		transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
-		transform.angle = rand() % (360 + 1);
-		int vmin = -6, vmax = 6;
-		transform.velocity = Vec2(rand() % (vmax - vmin + 1) +vmin, rand() % (vmax - vmin + 1) + vmin);
-		transform.angularVelocity = rand() % (vmax*2 - vmin*2 + 1) + vmin*2;
-		auto& rectangle = m_bomb.addComponent<CRectangle>();
-		rectangle.color = sf::Color(0, 255, 0, 255);
-		auto& bb2d = m_bomb.addComponent<CBoundingBox>(rectangle.size);
-		
-		PhysicsBody* body = new PhysicsBody();
-		body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
-		body->m_rotation = transform.angle / DEG_PER_RAD;
-		body->m_velocity = transform.velocity;
-		body->m_angularVelocity = transform.angularVelocity;
-		body->m_type = PhysicsBodyType::dynamicBody;
-		rb2d.runtimeBody = body;
-
-		PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-		boxShape->SetAsBox(bb2d.halfSize.x * transform.scale.x / PPM, bb2d.halfSize.y * transform.scale.y / PPM, bb2d.offset / PPM, 0.0f);
-		body->m_shape = boxShape;
-		body->ResetMassData(5.7f);
-
-		m_PhysicsWorld->AddBody(body);
-		return;
-	}
-	auto& transform = m_bomb.getComponent<CTransform>();
-	int xmin = 100, xmax = 1000, ymin = 200, ymax = 800;
-	transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
-	transform.angle = rand() % (360 + 1);
-	int vmin = -6, vmax = 6;
-	transform.velocity = Vec2(rand() % (vmax - vmin + 1) + vmin, rand() % (vmax - vmin + 1) + vmin);
-	transform.angularVelocity = rand() % (vmax * 2 - vmin * 2 + 1) + vmin * 2;
-	auto& rb2d = m_bomb.getComponent<CRigidBody>();
-	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-	body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
-	body->m_rotation = transform.angle / DEG_PER_RAD;
-	body->m_velocity = transform.velocity;
-	body->m_angularVelocity = transform.angularVelocity;
-#endif
-}
-#endif
 
 void Scene::Step(int frames)
 {
 	m_StepFrames = frames;
 }
 
-void Scene::RenderScene()
+void Scene::RenderScene(EditorCamera& camera)
 {
+	Renderer2D::BeginScene(camera);
 
+	for (auto entity : m_entityManager.GetEntities())
+	{
+		auto transform = entity.getComponent<CTransform>();
+
+		if (entity.hasComponent<CRectangle>())
+		{
+			auto rect = entity.getComponent<CRectangle>();
+			Renderer2D::DrawRotatedQuad({ transform.Translation.x, transform.Translation.y }, { rect.size.x, rect.size.y }, transform.Rotation, rect.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CSpriteRenderer>())
+		{
+			Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+		}
+	}
+
+	Renderer2D::EndScene();
+
+
+#if 0
 	CCamera* mainCamera = nullptr;
 	CTransform cameraTransform;
 	for (auto e : m_entityManager.GetEntities())
@@ -673,8 +661,6 @@ void Scene::RenderScene()
 		}
 	}
 
-
-#if 0
 
 	for (auto e : m_entityManager.GetEntities())
 		{
