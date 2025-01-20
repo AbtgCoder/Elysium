@@ -14,5 +14,6 @@ void main()
 	gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 
 	v_Color = a_Color;
+
 	v_EntityID = a_EntityID;
 }

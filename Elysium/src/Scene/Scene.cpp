@@ -637,7 +637,17 @@ void Scene::RenderScene(EditorCamera& camera)
 
 		if (entity.hasComponent<CSpriteRenderer>())
 		{
-			Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+			auto& src = entity.getComponent<CSpriteRenderer>();
+
+			if (src.texture != 0)
+			{
+				std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
+				Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), (int)entity.id());
+			}
+			else
+			{
+				Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+			}
 		}
 	}
 

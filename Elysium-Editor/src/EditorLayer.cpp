@@ -87,8 +87,10 @@ void EditorLayer::OnUpdate(float ts)
 
 	// render
 	// reset renderer stats
+	Renderer2D::ResetStats();
 	// bind framebuffer
 	m_Framebuffer->Bind();
+
 	// rendercommand -> clear
 	RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
 	RenderCommand::Clear();
@@ -100,25 +102,19 @@ void EditorLayer::OnUpdate(float ts)
 	{
 		case SceneState::Edit:
 		{
-			/*m_SceneView.setSize(m_viewportSize.x, m_viewportSize.y);
-			m_SceneView.zoom(m_SceneViewZoom);
-			m_rt.setView(m_SceneView);
-			m_rt.clear();*/
+			m_EditorCamera.OnUpdate(ts);
+
 			if (m_ActiveScene)
 				m_ActiveScene->OnUpdateEditor(m_EditorCamera);
 			break;
 		}
 		case SceneState::Play:
 		{
-			/*m_rt.clear();*/
 			if (m_ActiveScene)
 				m_ActiveScene->OnUpdateRuntime(ts);
 			break;
 		}
 	}
-
-	m_EditorCamera.OnUpdate(ts);
-
 
 	// hovered/selected entity
 	auto [mx, my] = ImGui::GetMousePos();
@@ -133,12 +129,6 @@ void EditorLayer::OnUpdate(float ts)
 		// read pixel data
 		int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
 		m_HoveredEntity = pixelData == -1 ? Entity() : m_ActiveScene->GetEntityByEntityID(pixelData);
-		
-		//std::cout << pixelData << "\n";
-		/*if (m_HoveredEntity)
-		{
-			Logger::Log(m_HoveredEntity.getComponent<CTag>().tag, "editor");
-		}*/
 	}
 
 	// overlay render

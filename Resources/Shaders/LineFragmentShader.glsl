@@ -6,6 +6,8 @@ out int o_EntityID;  // this is written into the second texture attached to fram
 in vec4 v_Color;
 flat in int v_EntityID;
 
+uniform sampler2D u_Textures[32];
+
 void main()
 {
 	FragColor = v_Color;

@@ -1,10 +1,14 @@
 #include "EditorAssetManager.h"
+
+#include "core/Logger.h"
+
 #include "AssetImporter.h"
 #include "Project/Project.h"
 
 #include <yaml-cpp/yaml.h>
 
 #include <fstream>
+
 
 static std::map<std::filesystem::path, AssetType> s_AssetExtensionMap = {
 	{".elysium", AssetType::Scene},
@@ -15,8 +19,7 @@ static AssetType GetAssetTypeFromFileExtension(const std::filesystem::path& exte
 {
 	if (s_AssetExtensionMap.find(extension) == s_AssetExtensionMap.end())
 	{
-		std::cout << extension << "\n";
-		// log error/warning: couldnt find assetype for this file extension
+		Logger::Log("file extension not valid", "Asset Manager", LOG_TYPE::WARNING);
 		return AssetType::None;
 	}
 	return s_AssetExtensionMap.at(extension);

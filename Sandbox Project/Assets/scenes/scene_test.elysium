@@ -21,9 +21,6 @@ Entities:
       HasParent: false
       ParentID: 0
       Children: []
-    RectangleShape:
-      Size: [3, 3]
-      Color: [0, 255, 0, 255]
     SpriteRenderer:
       TextureHandle: 12438653369529251365
       Layer: 0

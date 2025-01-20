@@ -1,5 +1,7 @@
 #include "SceneHierarchyPanel.h"
 
+#include "core/Logger.h"
+
 #include "Asset/AssetManager.h"
 #include "Renderer/Texture.h"
 #include "core/Logger.h"
@@ -446,7 +448,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 					}
 					else
 					{
-						// log warning: wrong asset type
+						Logger::Log("not a valid drag drop payload!", "editor layer", LOG_TYPE::WARNING);
 					}
 					ImGui::EndDragDropTarget();
 				}

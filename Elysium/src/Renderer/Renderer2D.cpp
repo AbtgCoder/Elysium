@@ -1,8 +1,12 @@
 #include "Renderer/Renderer2D.h"
 
+#include "core/Logger.h"
+
 #include "RenderCommand.h"
 #include "Renderer/VertexArray.h"
 #include "Renderer/Shader.h"
+
+#include "Asset/AssetManager.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,10 +14,14 @@
 
 #include <glad/glad.h>
 
+#include <array>
+
 struct QuadVertex
 {
 	glm::vec3 Position;
 	glm::vec4 Color;
+	glm::vec2 TexCoord;
+	float TexIndex;
 
 	// editor-only
 	int entityID;
@@ -33,6 +41,7 @@ struct Renderer2DData
 	static const uint32_t MaxQuads = 20000;
 	static const uint32_t MaxVertices = MaxQuads * 4;
 	static const uint32_t MaxIndices = MaxQuads * 6;
+	static const uint32_t MaxTextureSlots = 32;
 
 	// Quads
 	std::shared_ptr<VertexArray> QuadVertexArray;
@@ -52,6 +61,11 @@ struct Renderer2DData
 	LineVertex* LineVertexBufferPtr = nullptr;
 	float LineWidth = 3.0f;
 	
+	// textures
+	std::shared_ptr<Texture2D> WhiteTexture;
+	std::array<std::shared_ptr<Texture2D>, MaxTextureSlots> TextureSlots;
+	uint32_t TextureSlotIndex = 1; // 0 = white texture
+
 	Renderer2D::Statistics Stats;
 };
 
@@ -66,6 +80,8 @@ void Renderer2D::Init()
 	s_RenderData.QuadVertexBuffer->SetLayout({
 		{ShaderDataType::Float3, "a_Position"},		// dont need the names here for opengl but might need it for directX
 		{ShaderDataType::Float4, "a_Color"},
+		{ShaderDataType::Float2, "a_TexCoord"},
+		{ShaderDataType::Float, "a_TexIndex"},
 		{ShaderDataType::Int, "a_EntityID"}
 		});
 	s_RenderData.QuadVertexArray->AddVertexBuffer(s_RenderData.QuadVertexBuffer);
@@ -117,6 +133,22 @@ void Renderer2D::Init()
 	s_RenderData.LineVertexBufferBase = new LineVertex[s_RenderData.MaxVertices];
 
 	s_RenderData.LineShader = Shader::Create("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/LineVertexShader.glsl", "D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/LineFragmentShader.glsl");
+
+	// textures
+	s_RenderData.WhiteTexture = Texture2D::Create(TextureSpecification());
+	uint32_t whiteTextureData = 0xffffffff; // all white texture
+	s_RenderData.WhiteTexture->SetData(Buffer(&whiteTextureData, sizeof(uint32_t)));
+	// set first texture slot to 0
+	s_RenderData.TextureSlots[0] = s_RenderData.WhiteTexture;
+
+	int32_t samplers[s_RenderData.MaxTextureSlots];
+	for (uint32_t i = 0; i < s_RenderData.MaxTextureSlots; i++)
+	{
+		samplers[i] = i;
+	}
+	s_RenderData.QuadShader->Bind();
+	s_RenderData.QuadShader->SetIntArray("u_Textures", samplers, 32);
+
 }
 
 void Renderer2D::Shutdown()
@@ -132,6 +164,8 @@ void Renderer2D::BeginScene(const EditorCamera& camera)
 
 	s_RenderData.LineVertexCount = 0;
 	s_RenderData.LineVertexBufferPtr = s_RenderData.LineVertexBufferBase;
+
+	s_RenderData.TextureSlotIndex = 1;
 
 	s_RenderData.QuadShader->Bind();
 	s_RenderData.QuadShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
@@ -153,6 +187,12 @@ void Renderer2D::Flush()
 		uint32_t dataSize = (uint32_t)((uint8_t*)s_RenderData.QuadVertexBufferPtr - (uint8_t*)s_RenderData.QuadVertexBufferBase);
 		s_RenderData.QuadVertexBuffer->SetData(s_RenderData.QuadVertexBufferBase, dataSize); // upload the quad vertex buffer array to the vertex buffer
 
+		// bind textures
+		for (uint32_t i = 0; i < s_RenderData.TextureSlotIndex; i++)
+		{
+			s_RenderData.TextureSlots[i]->Bind(i);
+		}
+		
 		s_RenderData.QuadShader->Bind();
 		RenderCommand::DrawIndexed(s_RenderData.QuadVertexArray, s_RenderData.QuadIndexCount);
 		// update stats
@@ -173,11 +213,6 @@ void Renderer2D::Flush()
 	}
 }
 
-void Renderer2D::DrawTriangle()
-{
-}
-
-
 
 void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color,  int entityID)
 {
@@ -185,6 +220,14 @@ void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, cons
 		* glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
 	
 	DrawQuad(transform, color, entityID);
+}
+
+void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const std::shared_ptr<Texture2D>& texture, const glm::vec4& tintColor, int entityID)
+{
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.0f))
+		* glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
+
+	DrawQuad(transform, texture, tintColor, entityID);
 }
 
 void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color, int entityID)
@@ -197,13 +240,63 @@ void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& siz
 
 void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID)
 {
-
 	constexpr size_t quadVertexCount = 4;
+	const float textureIndex = 0.0f; // white texture
+	constexpr glm::vec2 textureCoords[] = { {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f} };
+	
 	for (size_t i = 0; i < quadVertexCount; i++)
 	{
 		// set the data for each quad vertex
 		s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
 		s_RenderData.QuadVertexBufferPtr->Color = color;
+		s_RenderData.QuadVertexBufferPtr->TexCoord = textureCoords[i];
+		s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
+
+		// set entity id
+		s_RenderData.QuadVertexBufferPtr->entityID = entityID;
+
+		// update the pointer to the next position in the quad vertex array
+		s_RenderData.QuadVertexBufferPtr++;
+	}
+
+	s_RenderData.QuadIndexCount += 6;
+
+	// update stats
+	s_RenderData.Stats.QuadCount++;
+}
+
+void Renderer2D::DrawQuad(const glm::mat4& transform, const std::shared_ptr<Texture2D> texture, const glm::vec4& tintColor, int entityID)
+{
+	constexpr size_t quadVertexCount = 4;
+	constexpr glm::vec2 textureCoords[] = { {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f} };
+
+	float textureIndex = 0.0f;
+	for (uint32_t i = 1; i < s_RenderData.TextureSlotIndex; i++)
+	{
+		if (*s_RenderData.TextureSlots[i] == *texture) // we wont create another sampler if we are just using the same texture, we just upload it once and then use that texture wherever needed
+		{
+			textureIndex = (float)i;
+			break;
+		}
+	}
+
+	if (textureIndex == 0.0f)
+	{
+		textureIndex = (float)s_RenderData.TextureSlotIndex;
+		s_RenderData.TextureSlots[s_RenderData.TextureSlotIndex] = texture;
+		s_RenderData.TextureSlotIndex++;
+	}
+
+	//s_RenderData.TextureSlots[1] = texture;
+
+
+	for (size_t i = 0; i < quadVertexCount; i++)
+	{
+		// set the data for each quad vertex
+		s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
+		s_RenderData.QuadVertexBufferPtr->Color = tintColor;
+		s_RenderData.QuadVertexBufferPtr->TexCoord = textureCoords[i];
+		s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
 
 		// set entity id
 		s_RenderData.QuadVertexBufferPtr->entityID = entityID;
