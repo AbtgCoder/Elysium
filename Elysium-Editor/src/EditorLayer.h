@@ -85,23 +85,10 @@ private:
 	bool m_ViewportFocused = false, m_ViewportHovered = false;
 
 	// Gizmo stuff
-	bool m_gizmoHoverX = false;
-	bool m_gizmoSelectX = false;
-	Vec2 m_lastGizmoPosX;
-	bool m_gizmoHoverY = false;
-	bool m_gizmoSelectY = false;
-	Vec2 m_lastGizmoPosY;
-	float m_scalingFactor = 0.05f;
-	bool m_gizmoRotateHover = false;
-	bool m_gizmoRotateSelect = false;
-	float m_rotationFactor = 0.05;
-	Vec2 m_lastGizmoRotatePos;
-	bool m_gizmoSelectSquare = false;
-	bool m_gizmoHoverSquare = false;
-	Vec2 m_lastGizmoSquarePos;
-	int m_gizmoType = GIZMO_OPERATION::TRANSLATE;
+	int m_GizmoType = -1;
+	float m_GizmoScaleFactor = 0.01;
+	float m_GizmoRotationFactor = 0.01;
 
-	
 	// Debug stuff
 	bool m_drawGrid = false;
 	const Vec2 m_gridSize = { 64, 64 };

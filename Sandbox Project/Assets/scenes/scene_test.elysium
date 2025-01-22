@@ -11,10 +11,10 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [0, 0]
+      Translation: [-0.0128348023, 0.0385214984]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [0, 0]
+      GlobalTranslation: [-0.0128348023, 0.0385214984]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -90,10 +90,10 @@ Entities:
     Tag:
       Tag: Tile2
     Transform:
-      Translation: [6.5999999, -3.0999999]
+      Translation: [6.60280752, -3.23328543]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [6.5999999, -3.0999999]
+      GlobalTranslation: [6.60280752, -3.23328543]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -233,16 +233,16 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [2.70000005, -3]
+      Translation: [2.11117554, -2.75054932]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [2.70000005, -3]
+      GlobalTranslation: [2.11117554, -2.75054932]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
-      Children: [13890830768999544706]
+      Children: [13890830768999544706, 11192484903683650386]
     RectangleShape:
       Size: [1, 1]
       Color: [0.167483628, 0.617911279, 0.833333313, 255]
@@ -256,7 +256,7 @@ Entities:
       Translation: [0, 0.400000006]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [2.70000005, -2.5999999]
+      GlobalTranslation: [2.11117554, -2.35054922]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -266,3 +266,20 @@ Entities:
     CircleShape:
       Radius: 22.1599998
       Color: [27, 167, 27, 255]
+  - Entity: 11192484903683650386
+    Tag:
+      Tag: Empty Entity
+    Transform:
+      Translation: [1.10000002, 0.850000024]
+      Rotation: 0
+      Scale: [1, 1]
+      GlobalTranslation: [3.21117544, -1.90054929]
+      GlobalRotation: 0
+      GlobalScale: [1, 1]
+    ParentComponent:
+      HasParent: true
+      ParentID: 2476516049887498935
+      Children: []
+    RectangleShape:
+      Size: [0.400000006, 0.400000006]
+      Color: [1, 1, 1, 1]

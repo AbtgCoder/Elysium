@@ -23,6 +23,7 @@ IncludeDir["Glad"] = "%{wks.location}/Elysium/vendor/Glad/include"
 IncludeDir["ImGui"] = "%{wks.location}/Elysium/vendor/imgui"
 IncludeDir["stb_image"] = "%{wks.location}/Elysium/vendor/stb_image"
 IncludeDir["glm"] = "%{wks.location}/Elysium/vendor/glm"
+IncludeDir["ImGuizmo"] = "%{wks.location}/Elysium/vendor/ImGuizmo"
 
 group "Dependencies"
    include "Elysium/vendor/GLFW"

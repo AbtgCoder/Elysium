@@ -60,11 +60,11 @@ public:
 
 	glm::mat4 GetTransform() const
 	{
-		glm::mat4 rotation = glm::mat4(glm::quat(glm::vec3(0.0f, 0.0f, Rotation)));
+		glm::mat4 rotation = glm::mat4(glm::quat(glm::vec3(0.0f, 0.0f,GlobalRotation)));
 
-		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(Translation.x, Translation.y, 0.0f))
+		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(GlobalTranslation.x, GlobalTranslation.y, 0.0f))
 			* rotation
-			* glm::scale(glm::mat4(1.0f), glm::vec3(Scale.x, Scale.y, 1.0f));
+			* glm::scale(glm::mat4(1.0f), glm::vec3(GlobalScale.x, GlobalScale.y, 1.0f));
 
 		return transformMatrix;
 	}

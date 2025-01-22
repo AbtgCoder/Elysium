@@ -632,7 +632,7 @@ void Scene::RenderScene(EditorCamera& camera)
 		if (entity.hasComponent<CRectangle>())
 		{
 			auto rect = entity.getComponent<CRectangle>();
-			Renderer2D::DrawRotatedQuad({ transform.Translation.x, transform.Translation.y }, { rect.size.x, rect.size.y }, transform.Rotation, rect.color, (int)entity.id());
+			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, rect.color, (int)entity.id());
 		}
 
 		if (entity.hasComponent<CSpriteRenderer>())

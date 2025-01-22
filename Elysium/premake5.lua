@@ -17,7 +17,9 @@ project "Elysium"
 
             "vendor/glm/glm/**.hpp",
             "vendor/glm/glm/**.inl",
-
+            
+            "vendor/ImGuizmo/ImGuizmo.h",
+            "vendor/ImGuizmo/ImGuizmo.cpp",
 
             "Elysium/*.rc",
             "Elysium/resource.h",
@@ -40,6 +42,7 @@ project "Elysium"
             "%{IncludeDir.ImGui}",
             "%{IncludeDir.stb_image}",
             "%{IncludeDir.glm}",
+            "%{IncludeDir.ImGuizmo}"
 
         }
         

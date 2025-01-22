@@ -21,8 +21,11 @@
 #include <imgui/imgui.h>
 #include <ImGui/imgui_internal.h>
 
+#include "ImGuizmo.h"
+
 #include <cmath>
 #include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
 
 EditorLayer::EditorLayer()
 	: Layer("EditorLayer")
@@ -256,7 +259,6 @@ void EditorLayer::OnImGuiRender()
 
 	if (m_SceneState == SceneState::Edit)
 	{
-#if 0
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
@@ -271,9 +273,7 @@ void EditorLayer::OnImGuiRender()
 				}
 				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
 				// spawn entity with sprite renderer component
-				Vec2 viewportPos = windowToViewport(m_mousePos);
-				//Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-				Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
+				Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
 				newEntity.getComponent<CTag>().tag = relativePath.stem().string();
 				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
@@ -294,169 +294,67 @@ void EditorLayer::OnImGuiRender()
 			ImGui::EndDragDropTarget();
 
 		}
-#endif
-
+		
 
 		// Gizmos
-#if 0
+
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
+		// editor camera
+		const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
+		glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
+
+		//ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::identity<glm::mat4>()), 100.0f);
+
 		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-		if (m_inspectedEntity)
+
+		if (m_inspectedEntity && m_GizmoType != -1)
 		{
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
-			static const ImU32 selectionColor = 0xFF20AACC;
-			Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().GlobalTranslation;
-			sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
-			ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
-			static const float lineLength = 80.0f;
-			static const float lineThickness = 4.0f;
-			static const float arrowSize = 6.0f;
-			static const float rectSize = 6.0f;
-			static const float circleRadius = 80.0f;
-			static const float squareSize = 20.0f;
+			// entity transform
+			auto& tc = m_inspectedEntity.getComponent<CTransform>();
+			glm::mat4 transform = tc.GetTransform();
 
-			if (m_gizmoType == GIZMO_OPERATION::ROTATE)
+			// snapping
+			bool snap = Input::IsKeyPressed(Key::LeftControl);
+			float snapValue = 0.5; // snap to 0.5m for translation/scale
+			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+				snapValue = 45.0f; // snap to 45 degrees for rotation
+
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+			if (ImGuizmo::IsUsing())
 			{
-				// circle
-				ImU32 color = (m_gizmoRotateSelect || m_gizmoRotateHover) ? selectionColor : directionColor[2];
-				drawList->AddCircle(origin, circleRadius, color, 64);
-				// convex poly filled
-				ImVec2 circleArcPoints[32 + 1];
-				circleArcPoints[0] = origin;
-				float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().GlobalRotation + 180.0f, 360.0f);
-				if (startAngle < 0)
-					startAngle += 360.0f;
-				startAngle -= 180.0f;
-				float endAngle = m_gizmoRotateSelect  ? - 1 * atan2(windowToViewport(m_mousePos).y - pixel.y, windowToViewport(m_mousePos).x - pixel.x) * 180.0 / 3.14 : startAngle;
+				glm::mat4 localTransform = glm::mat4(transform);
 
-				float angle_step = (endAngle - startAngle) / 32;
-				for (unsigned int i = 1; i < 32; i++)
+				auto& parent = m_inspectedEntity.getComponent<CParent>();
+				if (parent.HasParent)
 				{
-					float angle = startAngle + angle_step * i;
-					float costheta = cos(angle * 3.14 / 180.0);
-					float sintheta = sin(angle * 3.14 / 180.0);
-					circleArcPoints[i] = ImVec2(origin.x + circleRadius * costheta, origin.y - circleRadius * sintheta);
-				}
-				drawList->AddConvexPolyFilled(circleArcPoints, 32, 0x8020AACC);
-				drawList->AddPolyline(circleArcPoints, 32, color, true, 2);
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x - circleRadius, origin.y - circleRadius), ImVec2(origin.x + circleRadius, origin.y + circleRadius)))
-				{
-					m_gizmoRotateHover = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoRotateSelect = true;
-						m_lastGizmoRotatePos = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoRotateSelect && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoRotateSelect = false;
-					}
-				}
-				else
-				{
-					m_gizmoRotateHover = false;
-				}
-			}
-			else
-			{
-				// X-translation gizmo
-				ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
-				// line
-				ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
-				drawList->AddLine(origin, endPointX, colorX, lineThickness);
-				// Y-translation gizmo
-				ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
-				// line
-				ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
-				drawList->AddLine(origin, endPointY, colorY, lineThickness);
-				if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-				{
-					// X-arrow
-					ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
-					float d = sqrtf(ImLengthSqr(dir));
-					dir.x = dir.x / d * arrowSize;
-					dir.y = dir.y / d * arrowSize;
-					ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
-					ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
-					drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
-					// Y-arrow
-					dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
-					d = sqrtf(ImLengthSqr(dir));
-					dir.x = dir.x / d * arrowSize;
-					dir.y = dir.y / d * arrowSize;
-					orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
-					a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
-					drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
-				}
-				else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-				{
-					// X-square
-					drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2 * rectSize, endPointX.y + rectSize), colorX);
-					// Y-square	
-					drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
-				}
-				ImU32 colorSquare = (m_gizmoSelectSquare || m_gizmoHoverSquare) ? selectionColor : directionColor[2];
-				drawList->AddRectFilled(ImVec2(origin.x + lineThickness/2.0f, origin.y - squareSize - lineThickness/2.0f), ImVec2(origin.x + squareSize + lineThickness/2.0, origin.y - lineThickness/2.0f), colorSquare);
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
-				{
-					m_gizmoHoverX = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectX = true;
-						m_lastGizmoPosX = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectX = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverX = false;
+					const auto& parentTransformComponent = m_ActiveScene->GetEntityByUUID(parent.ParentID).getComponent<CTransform>();
+					const glm::mat4& parentTransform = parentTransformComponent.GetTransform();
+					localTransform = glm::inverse(parentTransform) * localTransform;
+					/*
+					since imguizmo returns a transform in global space and we want the local transform,
+					we need to multiply by the inverse of the parent's global transform in order to revert
+					the changes from the parent transform
+				*/
 				}
 
-				if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
-				{
-					m_gizmoHoverY = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectY = true;
-						m_lastGizmoPosY = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectY = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverY = false;
-				}
+				// decompose local transform
+				float decomposedPosition[3];
+				float decomposedRotation[3];
+				float decomposedScale[3];
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localTransform), decomposedPosition, decomposedRotation, decomposedScale);
 
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x + lineThickness / 2.0f, origin.y - squareSize - lineThickness / 2.0f), ImVec2(origin.x + squareSize + lineThickness / 2.0, origin.y - lineThickness / 2.0f)))
-				{
-					m_gizmoHoverSquare = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectSquare = true;
-						m_lastGizmoSquarePos = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectSquare && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectSquare = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverSquare = false;
-				}
+				tc.Translation = { decomposedPosition[0], decomposedPosition[1] };
+				tc.Scale = { decomposedScale[0], decomposedScale[1] };
+				tc.Rotation = decomposedRotation[2];
 			}
 
 		}
-#endif
-
 	}
 
 	ImGui::End(); // end "Viewport"
@@ -480,7 +378,7 @@ void EditorLayer::OnOverlayRender()
 			if (inspectedEntity.hasComponent<CRectangle>())
 			{
 				auto rect = inspectedEntity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedRect({ transform.Translation.x, transform.Translation.y }, { rect.size.x, rect.size.y }, transform.Rotation, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
 			}
 
 			if (inspectedEntity.hasComponent<CSpriteRenderer>())
@@ -507,6 +405,73 @@ void EditorLayer::OnEvent(Event& event)
 
 bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 {
+	if (e.IsRepeat())
+		return false;
+
+	bool control = Input::IsKeyPressed(Key::LeftControl) || Input::IsKeyPressed(Key::RightControl);
+	bool shift = Input::IsKeyPressed(Key::LeftShift) || Input::IsKeyPressed(Key::RightShift);
+
+	switch (e.GetKeyCode())
+	{
+		// shortcuts
+		case Key::N:
+		{
+			if (control)
+				NewScene();
+			break;
+		}
+		case Key::O:
+		{
+			if (control)
+			{
+				OpenProject();
+			}
+			break;
+		}
+		case Key::S:
+		{
+			if (control)
+			{
+				if (shift)
+				{
+					//TODO: save scene as
+				}
+				else
+				{
+					SaveScene();
+				}
+			}
+			break;
+		}
+
+
+		// gizmos
+		case Key::Q:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = -1;
+			break;
+		}
+		case Key::W:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			break;
+		}
+		case Key::E:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			break;
+		}
+		case Key::R:
+		{
+			if (!control && !ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			break;
+		}
+	}
+
 	return false;
 }
 
@@ -514,7 +479,7 @@ bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
 {
 	if (e.GetMouseButton() == Mouse::ButtonLeft)
 	{
-		if (m_ViewportHovered && !Input::IsKeyPressed(Key::LeftAlt))
+		if (m_ViewportHovered && !ImGuizmo::IsOver() && !Input::IsKeyPressed(Key::LeftAlt))
 		{
 			m_SceneHierarchyPanel.SetInspectedEntity(m_HoveredEntity);
 		}

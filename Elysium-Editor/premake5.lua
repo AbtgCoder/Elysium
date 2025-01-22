@@ -11,7 +11,6 @@ project "Elysium-Editor"
             "src/**.h",
             "src/**.cpp",
         }
-        --removefiles {"%{prj.name}/imgui/imgui_demo.cpp"}
 
         includedirs
         {
@@ -19,7 +18,7 @@ project "Elysium-Editor"
             "%{wks.location}/Elysium/vendor",
 
             "%{IncludeDir.glm}",
-
+            "%{IncludeDir.ImGuizmo}",
         }
 
         links
