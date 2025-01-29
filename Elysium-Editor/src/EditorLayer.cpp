@@ -34,18 +34,6 @@ EditorLayer::EditorLayer()
 
 void EditorLayer::OnAttach()
 {
-	//registerAction(sf::Keyboard::G, "TOGGLE_GRID");
-	//registerAction(sf::Keyboard::Escape, "QUIT");
-	//registerAction(sf::Keyboard::Delete, "DELETE");
-	//registerAction(sf::Keyboard::D, "DUPLICATE");
-	////registerAction(sf::Keyboard::P, "PLAY_Scene");
-	//registerAction(sf::Keyboard::LAlt, "ALT");
-	//registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
-	//registerAction(sf::Keyboard::R, "SCALE_GIZMO");
-	//registerAction(sf::Keyboard::E, "ROTATION_GIZMO");
-	//registerAction(sf::Keyboard::Space, "LAUNCH_BOMB");
-
-
 	m_IconPlay = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
 	m_IconPause = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
 	m_IconStep = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
@@ -77,6 +65,7 @@ void EditorLayer::OnDetach()
 void EditorLayer::OnUpdate(float ts)
 {
 	// scene viewport resize
+	m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 
 	// frame buffer resize
 	if (FramebufferSpecification spec = m_Framebuffer->GetSpecification();
@@ -337,10 +326,10 @@ void EditorLayer::OnImGuiRender()
 					const glm::mat4& parentTransform = parentTransformComponent.GetTransform();
 					localTransform = glm::inverse(parentTransform) * localTransform;
 					/*
-					since imguizmo returns a transform in global space and we want the local transform,
-					we need to multiply by the inverse of the parent's global transform in order to revert
-					the changes from the parent transform
-				*/
+						since imguizmo returns a transform in global space and we want the local transform,
+						we need to multiply by the inverse of the parent's global transform in order to revert
+						the changes from the parent transform
+					*/
 				}
 
 				// decompose local transform
@@ -439,6 +428,25 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 				else
 				{
 					SaveScene();
+				}
+			}
+			break;
+		}
+
+
+		// scene controls
+		case Key::D:
+		{
+			if (control)
+			{
+				if (m_SceneState == SceneState::Edit)
+				{
+					Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+					if (inspectedEntity)
+					{
+						Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
+						m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+					}
 				}
 			}
 			break;
@@ -812,6 +820,8 @@ void EditorLayer::NewScene()
 		// Add Main Camera
 		auto camera = scene->AddEntity("Main Camera");
 		camera.addComponent<CCamera>();
+		auto& cameraComponent = camera.getComponent<CCamera>();
+		cameraComponent.Camera.SetProjectionType(SceneCamera::ProjectionType::Orthographic);
 
 		SceneImporter::SaveScene(scene, relativePath);
 		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
@@ -901,227 +911,3 @@ void EditorLayer::OnSceneStop()
 	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
 	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
 }
-
-
-#if 0
-
-void EditorLayer::sDoAction(const Action& action)
-{
-	if (action.name() == "MOUSE_MOVE")
-	{
-		m_mousePos = action.pos();
-		Vec2 viewportPos = windowToViewport(m_mousePos);
-		Vec2 deltaPos = m_lastSceneViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-
-		if (m_SceneViewMoving)
-		{
-			m_SceneView.setCenter(m_SceneView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
-		}
-
-		// Gizmo System
-		if (m_gizmoSelectX && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoPosX;
-			m_lastGizmoPosX = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation.x += deltaPos.x;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale.x += m_scalingFactor * deltaPos.x;
-			}
-		}
-		else if (m_gizmoSelectY && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoPosY;
-			m_lastGizmoPosY = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation.y += deltaPos.y;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale.y += m_scalingFactor * deltaPos.y;
-			}
-		}
-		else if (m_gizmoSelectSquare && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoSquarePos;
-			m_lastGizmoSquarePos = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation += deltaPos;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale += deltaPos * m_scalingFactor;
-			}
-		}
-		else if (m_gizmoRotateSelect && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoRotatePos;
-			m_lastGizmoRotatePos = viewportPos;
-			float deltaRotation = atan2(deltaPos.y, deltaPos.x) * 180.0 / 3.14;
-			float newAngle = m_inspectedEntity.getComponent<CTransform>().Rotation + m_rotationFactor * deltaRotation;
-			m_inspectedEntity.getComponent<CTransform>().Rotation = newAngle;
-		}
-	}
-
-	if (action.name() == "MOUSE_WHEEL_SCROLL")
-	{
-		if (!m_SceneViewMoving && m_altPressed)
-		{
-			float delta = action.pos().x;
-			if (delta <= -1)
-			{
-				m_SceneViewZoom = std::min(2.0f, m_SceneViewZoom + 0.1f);
-			}
-			else if (delta >= 1)
-			{
-				m_SceneViewZoom = std::max(0.5f, m_SceneViewZoom - 0.1f);
-			}
-		}
-	}
-
-	if (action.type() == "START")
-	{
-		if (action.name() == "TOGGLE_GRID")
-		{
-			m_drawGrid = !m_drawGrid;
-		}
-		else if (action.name() == "ALT")
-		{
-			m_altPressed = true;
-		}
-		else if (action.name() == "TRANSLATE_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::TRANSLATE;
-		}
-		else if (action.name() == "SCALE_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::SCALE;
-		}
-		else if (action.name() == "ROTATION_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::ROTATE;
-		}
-		else if (action.name() == "DELETE")
-		{
-			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-			if (inspectedEntity)
-			{
-				m_SceneHierarchyPanel.SetInspectedEntity({});
-				m_ActiveScene->DestroyEntity(inspectedEntity);
-			}
-		}
-		else if (action.name() == "DUPLICATE")
-		{
-			if (m_SceneState == SceneState::Edit)
-			{
-				Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-				if (inspectedEntity)
-				{
-					Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
-					m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
-				}
-			}
-		}
-		else if (action.name() == "LEFT_CLICK")
-		{
-			Vec2 viewportPos = windowToViewport(m_mousePos);
-			Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-
-			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
-			{
-				Entity entity = m_ActiveScene->GetEntityIfClicked(worldPos);
-				if (entity)
-				{
-					m_SceneHierarchyPanel.SetInspectedEntity(entity);
-				}
-				else
-				{
-					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY || m_gizmoRotateHover || m_gizmoRotateSelect || m_gizmoSelectSquare || m_gizmoHoverSquare))
-					{
-						m_SceneHierarchyPanel.SetInspectedEntity({});
-
-					}
-				}
-			}
-
-			if (m_altPressed)
-			{
-				m_SceneViewMoving = true;
-				m_lastSceneViewPos = worldPos;
-			}
-
-		}
-		else if (action.name() == "QUIT")
-		{
-			if (m_SceneState == SceneState::Play)
-				OnSceneStop();
-			SaveScene();
-			SaveProject();
-			m_hasEnded = true;
-			onEnd();
-		}
-		
-	}
-	
-	if (action.type() == "END")
-	{
-		if (action.name() == "LAUNCH_BOMB")
-		{
-			if (m_SceneState == SceneState::Play)
-			{
-				m_ActiveScene->LaunchBomb(m_rt);
-			}
-		}
-		if (action.name() == "ALT")
-		{
-			m_altPressed = false;
-			m_SceneViewMoving = false;
-		}
-		if (action.name() == "LEFT_CLICK")
-		{
-			if (m_altPressed)
-			{
-				m_SceneViewMoving = false;
-			}
-			if (m_gizmoSelectX)
-			{
-				m_gizmoSelectX = false;
-			}
-			if (m_gizmoSelectY)
-			{
-				m_gizmoSelectY = false;
-			}
-			if (m_gizmoRotateSelect)
-			{
-				m_gizmoRotateSelect = false;
-			}
-			if (m_gizmoSelectSquare)
-			{
-				m_gizmoSelectSquare = false;
-			}
-		}
-		else if (action.name() == "PLAY_Scene")
-		{
-			// Scene state, Scene play
-			if (m_SceneState == SceneState::Edit)
-			{
-				m_SceneState = SceneState::Play;
-			}
-			else if (m_SceneState == SceneState::Play)
-				m_SceneState = SceneState::Edit;
-		}
-	}
-}
-
-void EditorLayer::onEnd()
-{
-	//TODO: Save editor settings: viewport size , zoom etc ig...
-	//m_game->quit();
-}
-
-#endif

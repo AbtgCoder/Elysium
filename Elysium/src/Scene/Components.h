@@ -5,6 +5,8 @@
 #include "Math/Vec2.h"
 #include "core/UUID.h"
 
+#include "Scene/SceneCamera.h"
+
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -98,10 +100,9 @@ public:
 class CCamera : public Component
 {
 public:
-	Vec2 size = { 20.0f, 20.0f };
-	float zoom = 1.0f; //TODO: only allowed btw 0.5 and 2.0 ??
+	SceneCamera Camera;
 	bool primary = true;
-	
+
 	glm::vec4 backgroundColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 
 	CCamera() = default;

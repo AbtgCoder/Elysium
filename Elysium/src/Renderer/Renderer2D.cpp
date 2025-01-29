@@ -174,6 +174,26 @@ void Renderer2D::BeginScene(const EditorCamera& camera)
 	s_RenderData.LineShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
 }
 
+void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
+{
+	s_RenderData.QuadIndexCount = 0;
+	s_RenderData.QuadVertexBufferPtr = s_RenderData.QuadVertexBufferBase;
+
+	s_RenderData.LineVertexCount = 0;
+	s_RenderData.LineVertexBufferPtr = s_RenderData.LineVertexBufferBase;
+
+	s_RenderData.TextureSlotIndex = 1;
+
+	glm::mat4 viewProjection = camera.GetProjection() * glm::inverse(transform);
+	viewProjection[3][3] = 10.0f;
+
+	s_RenderData.QuadShader->Bind();
+	s_RenderData.QuadShader->SetMat4("u_ViewProjection", viewProjection);
+
+	s_RenderData.LineShader->Bind();
+	s_RenderData.LineShader->SetMat4("u_ViewProjection", viewProjection);
+}
+
 void Renderer2D::EndScene()
 {
 	Flush();

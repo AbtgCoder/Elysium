@@ -24,8 +24,6 @@
 #define DEG_PER_RAD 57.2957795F
 
 
-//sf::Texture g_cameraIconTexture = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/CameraIcon2.png")->GetSFMLTexture();
-//sf::Sprite g_cameraIconSprite = sf::Sprite(g_cameraIconTexture);
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -35,22 +33,6 @@ Scene::Scene()
 Scene::Scene(const std::string& name)
 	: m_Name(name)
 {
-	//m_PhysicsRect.setFillColor(sf::Color::Transparent);
-	//m_PhysicsRect.setOutlineColor(sf::Color::White);
-	//m_PhysicsRect.setOutlineThickness(1);
-
-	//m_PhysicsPoly.setFillColor(sf::Color::Transparent);
-	//m_PhysicsPoly.setOutlineColor(sf::Color::White);
-	//m_PhysicsPoly.setOutlineThickness(1);
-
-	//m_CircleShape.setFillColor(sf::Color::Transparent);
-	////m_CircleShape.setOutlineColor(sf::Color::White);
-	////m_CircleShape.setOutlineThickness(1);
-	//m_CircleShape.setPointCount(30);
-
-	//m_RectangleShape.setFillColor(sf::Color::Transparent);
-	/*m_RectangleShape.setOutlineColor(sf::Color::White);
-	m_RectangleShape.setOutlineThickness(1);*/
 
 }
 
@@ -200,51 +182,6 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 	return duplicateEntity;
 }
 
-
-static bool IsInside(Vec2 pos, Entity e)
-{
-	/*sf::Vector2u s;
-	if (e.hasComponent<CSpriteRenderer>())
-	{
-		s = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture().getSize();
-	}
-	else if (e.hasComponent<CCircle>())
-	{
-		s.x = 2 * e.getComponent<CCircle>().radius;
-		s.y = 2 * e.getComponent<CCircle>().radius;
-	}
-	else if (e.hasComponent<CRectangle>())
-	{
-		s.x = e.getComponent<CRectangle>().size.x;
-		s.y = e.getComponent<CRectangle>().size.y;
-	}
-	else if (e.hasComponent<CCamera>())
-	{
-		s = g_cameraIconTexture.getSize() + sf::Vector2u(10.0f, 10.0f);
-	}
-	Vec2 ePos = e.getComponent<CTransform>().GlobalTranslation;
-	if (pos.x > ePos.x - s.x / 2 &&
-		pos.x < ePos.x + s.x / 2 &&
-		pos.y > ePos.y - s.y / 2 &&
-		pos.y < ePos.y + s.y / 2)
-	{
-		return true;
-	}*/
-	return false;
-}
-
-Entity Scene::GetEntityIfClicked(Vec2 mousePos)
-{
-	for (auto entity : m_entityManager.GetEntities())
-	{
-		if (IsInside(mousePos, entity))
-		{
-			return entity;
-		}
-	}
-
-	return {};
-}
 
 Entity Scene::GetEntityByUUID(Elysium::UUID id)
 {
@@ -556,10 +493,8 @@ void Scene::OnUpdateRuntime(float dt)
 					{
 						//TODO: fix this for when entity e has a parent....
 						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-					//	e.getComponent<CTransform>().velocity = body->m_velocity;
 						e.getComponent<CTransform>().Translation = { body->m_position.x, body->m_position.y };
 						e.getComponent<CTransform>().Rotation = body->m_rotation * DEG_PER_RAD;
-					//	e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
 					}
 				}
 			}
@@ -569,16 +504,16 @@ void Scene::OnUpdateRuntime(float dt)
 
 
 	// Rendering
-	CCamera* mainCamera = nullptr;
+	Camera* mainCamera = nullptr;
 	CTransform cameraTransform;
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.hasComponent<CCamera>())
 		{
-			auto camera = e.getComponent<CCamera>();
+			auto& camera = e.getComponent<CCamera>();
 			if (camera.primary)
 			{
-				mainCamera = &camera;
+				mainCamera = &camera.Camera;
 				cameraTransform = e.getComponent<CTransform>();
 				break;
 			}
@@ -587,17 +522,37 @@ void Scene::OnUpdateRuntime(float dt)
 
 	if (mainCamera)
 	{
-		/*m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
-		m_cameraView.setCenter(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
-		m_cameraView.zoom(mainCamera->zoom);
-		m_cameraView.setRotation(cameraTransform.GlobalRotation);
-		renderTexture.setView(m_cameraView);
-		renderTexture.clear(mainCamera->backgroundColor);*/
-
 		UpdateTransforms();
 
-		//RenderScene();
+		Renderer2D::BeginScene(*mainCamera, cameraTransform.GetTransform());
 
+		for (auto entity : m_entityManager.GetEntities())
+		{
+			auto transform = entity.getComponent<CTransform>();
+
+			if (entity.hasComponent<CRectangle>())
+			{
+				auto rect = entity.getComponent<CRectangle>();
+				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, rect.color, (int)entity.id());
+			}
+
+			if (entity.hasComponent<CSpriteRenderer>())
+			{
+				auto& src = entity.getComponent<CSpriteRenderer>();
+
+				if (src.texture != 0)
+				{
+					std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
+					Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), (int)entity.id());
+				}
+				else
+				{
+					Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+				}
+			}
+		}
+
+		Renderer2D::EndScene();
 	}
 	else
 	{
@@ -614,6 +569,24 @@ void Scene::OnUpdateEditor(EditorCamera& camera)
 
 	// Render Scene
 	RenderScene(camera);
+}
+
+void Scene::OnViewportResize(uint32_t width, uint32_t height)
+{
+	if (m_ViewportWidth == width && m_ViewportHeight == height)
+		return;
+
+	m_ViewportWidth = width;
+	m_ViewportHeight = height;
+
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& cameraComponent = e.getComponent<CCamera>();
+			cameraComponent.Camera.SetViewportSize(width, height);
+		}
+	}
 }
 
 void Scene::Step(int frames)

@@ -142,8 +142,18 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Camera";
 		out << YAML::BeginMap;
 		auto& camera = entity.getComponent<CCamera>();
-		out << YAML::Key << "Size" << YAML::Value << camera.size;
-		out << YAML::Key << "Zoom" << YAML::Value << camera.zoom;
+
+		out << YAML::Key << "Camera" << YAML::Value;
+		out << YAML::BeginMap; // scene camera
+		out << YAML::Key << "ProjectionType" << YAML::Value << (int)camera.Camera.GetProjectionType();
+		out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.Camera.GetPerspectiveVerticalFOV();
+		out << YAML::Key << "PerspectiveNear" << YAML::Value << camera.Camera.GetPerspectiveNearClip();
+		out << YAML::Key << "PerspectiveFar" << YAML::Value << camera.Camera.GetPerspectiveFarClip();
+		out << YAML::Key << "OrthographicSize" << YAML::Value << camera.Camera.GetOrthographicSize();
+		out << YAML::Key << "OrthographicNear" << YAML::Value << camera.Camera.GetOrthographicNearClip();
+		out << YAML::Key << "OrthographicFar" << YAML::Value << camera.Camera.GetOrthographicFarClip();
+		out << YAML::EndMap;
+
 		out << YAML::Key << "Primary" << YAML::Value << camera.primary;
 		out << YAML::Key << "BackgroundColor" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
@@ -386,11 +396,8 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<Vec2>();
 				tc.GlobalRotation = transformComponent["GlobalRotation"].as<float>();
 				tc.GlobalScale = transformComponent["GlobalScale"].as<Vec2>();
-				//tc.velocity = transformComponent["Velocity"].as<Vec2>();
-				//tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
 			}
 
-			//deserializedEntity.addComponent<CParent>();
 
 			auto parentComponent = entity["ParentComponent"];
 			if (parentComponent)
@@ -410,8 +417,18 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			if (cameraComponent)
 			{
 				auto& camera = deserializedEntity.addComponent<CCamera>();
-				camera.size = cameraComponent["Size"].as<Vec2>();
-				camera.zoom = cameraComponent["Zoom"].as<float>();
+
+				auto& cameraProps = cameraComponent["Camera"];
+				camera.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
+
+				camera.Camera.SetPerspectiveVerticalFOV(cameraProps["PerspectiveFOV"].as<float>());
+				camera.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
+				camera.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
+
+				camera.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
+				camera.Camera.SetOrthographicNearClip(cameraProps["OrthographicNear"].as<float>());
+				camera.Camera.SetOrthographicFarClip(cameraProps["OrthographicFar"].as<float>());
+
 				camera.primary = cameraComponent["Primary"].as<bool>();
 				auto colorArray = cameraComponent["BackgroundColor"];
 				if (colorArray)

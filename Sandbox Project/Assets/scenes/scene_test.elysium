@@ -62,10 +62,6 @@ Entities:
         Elements: [[29, 31], [31, 29], [28, -31], [-31, -31], [-31, 28]]
     Rigidbody2D:
       BodyType: Static
-    Joint:
-      Entity1ID: 4163440874578799761
-      Entity2ID: 3835143888492085499
-      AnchorPosition: [0, 0]
   - Entity: 5365315938177892065
     Tag:
       Tag: Player
@@ -208,8 +204,14 @@ Entities:
       ParentID: 0
       Children: []
     Camera:
-      Size: [30, 30]
-      Zoom: 2
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 1
+        OrthographicNear: -1
+        OrthographicFar: 1
       Primary: true
       BackgroundColor: [10, 10, 10, 255]
   - Entity: 7923484610642854400

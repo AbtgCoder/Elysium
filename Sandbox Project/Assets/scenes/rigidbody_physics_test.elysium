@@ -11,10 +11,10 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [821, 257]
+      Translation: [0, 0]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [821, 257]
+      GlobalTranslation: [0, 0]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -23,7 +23,7 @@ Entities:
       Children: []
     CircleShape:
       Radius: 50
-      Color: []
+      Color: [10, 10, 100, 255]
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
@@ -49,7 +49,7 @@ Entities:
       Children: []
     CircleShape:
       Radius: 50
-      Color: []
+      Color: [10, 10, 10, 255]
     CircleCollider:
       Radius: 50
     PhysicsMaterial:
@@ -63,18 +63,18 @@ Entities:
     Tag:
       Tag: Rectangle_bottom
     Transform:
-      Translation: [422.399994, 840]
+      Translation: [-8.36454391, -0.314990997]
       Rotation: 0
-      Scale: [1.00000203, 1]
-      GlobalTranslation: [422.399994, 840]
+      Scale: [1.03000593, 1.02999997]
+      GlobalTranslation: [-8.36454391, -0.314990997]
       GlobalRotation: 0
-      GlobalScale: [1.00000203, 1]
+      GlobalScale: [1.03000593, 1.02999997]
     ParentComponent:
       HasParent: false
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [1500, 50]
+      Size: [1, 5]
       Color: [0.84803921, 0.555333614, 0.137182787, 255]
     PhysicsMaterial:
       Mass: 1
@@ -260,7 +260,7 @@ Entities:
     PolygonShape:
       Sides: 5
       Size: 50
-      Color: []
+      Color: [12, 12, 12, 255]
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 0.200000003
@@ -278,10 +278,10 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [324, 471.700012]
+      Translation: [0, 0]
       Rotation: 0
       Scale: [1, 1]
-      GlobalTranslation: [324, 471.700012]
+      GlobalTranslation: [0, 0]
       GlobalRotation: 0
       GlobalScale: [1, 1]
     ParentComponent:
@@ -289,7 +289,13 @@ Entities:
       ParentID: 0
       Children: []
     Camera:
-      Size: [770, 779.900024]
-      Zoom: 1
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
       Primary: true
-      BackgroundColor: []
+      BackgroundColor: [10, 10, 10, 255]

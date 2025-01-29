@@ -26,7 +26,6 @@ public:
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
 	//Entity DuplicateEntity(Entity entity);
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
-	Entity GetEntityIfClicked(Vec2 mousePos);
 	Entity GetEntityByUUID(Elysium::UUID id);
 	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
@@ -44,6 +43,7 @@ public:
 	void UpdateTransforms();
 	void OnUpdateRuntime(float dt);
 	void OnUpdateEditor(EditorCamera& camera);
+	void OnViewportResize(uint32_t width, uint32_t height);
 
 	// Physics
 	//void LaunchBomb(sf::RenderTexture& renderTexture);
@@ -57,15 +57,6 @@ public:
 private:
 
 	Entity m_player = {};
-
-	// debug stuff
-	//sf::RectangleShape m_PhysicsRect;
-	//sf::ConvexShape m_PhysicsPoly;
-	//
-	//// drawing
-	//sf::CircleShape m_CircleShape;
-	//sf::RectangleShape m_RectangleShape;
-	//sf::Texture m_Texture;
 
 	void RenderScene(EditorCamera& camera);
 private:
@@ -87,7 +78,7 @@ private:
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
-	//sf::View m_cameraView;
+	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 	// shader test
 	//sf::Shader m_Shader;
