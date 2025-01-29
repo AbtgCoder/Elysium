@@ -11,12 +11,12 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0, 0]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [0, 0]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -37,12 +37,12 @@ Entities:
     Tag:
       Tag: Circle2
     Transform:
-      Translation: [827, 479.017761]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [827, 479.017761]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -63,12 +63,12 @@ Entities:
     Tag:
       Tag: Rectangle_bottom
     Transform:
-      Translation: [-8.36454391, -0.314990997]
-      Rotation: 0
-      Scale: [1.03000593, 1.02999997]
-      GlobalTranslation: [-8.36454391, -0.314990997]
-      GlobalRotation: 0
-      GlobalScale: [1.03000593, 1.02999997]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -90,12 +90,12 @@ Entities:
     Tag:
       Tag: rectangle2
     Transform:
-      Translation: [341, 728]
-      Rotation: 13.6000004
-      Scale: [1, 1]
-      GlobalTranslation: [341, 728]
-      GlobalRotation: 13.6000004
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -117,12 +117,12 @@ Entities:
     Tag:
       Tag: rectangle_left
     Transform:
-      Translation: [-392, 314]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [-392, 314]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -144,12 +144,12 @@ Entities:
     Tag:
       Tag: rectangle_right
     Transform:
-      Translation: [1088, 474]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [1088, 474]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -171,12 +171,12 @@ Entities:
     Tag:
       Tag: rectangle_top
     Transform:
-      Translation: [461, -61]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [461, -61]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -198,12 +198,12 @@ Entities:
     Tag:
       Tag: rectangle_tabele_top
     Transform:
-      Translation: [241, 556]
-      Rotation: 155.199997
-      Scale: [1, 1]
-      GlobalTranslation: [241, 556]
-      GlobalRotation: 155.199997
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -225,12 +225,12 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [740, 451]
-      Rotation: 46.7933922
-      Scale: [1, 1]
-      GlobalTranslation: [740, 451]
-      GlobalRotation: 46.7933922
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -247,12 +247,12 @@ Entities:
     Tag:
       Tag: polygon
     Transform:
-      Translation: [245, 325]
-      Rotation: 173.5
-      Scale: [1, 1]
-      GlobalTranslation: [245, 325]
-      GlobalRotation: 173.5
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -278,12 +278,12 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [0, 0]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [0, 0]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0

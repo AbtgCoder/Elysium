@@ -118,7 +118,7 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	entity.addComponent<CId>(Elysium::UUID());
 	entity.addComponent<CParent>();
 	entity.addComponent<CTag>("Tile");
-	entity.addComponent<CTransform>(pos);
+	entity.addComponent<CTransform>(glm::vec3(pos.x, pos.y, 0.0f));
 	entity.addComponent<CSpriteRenderer>();
 	entity.getComponent<CSpriteRenderer>().texture = textureHandle;
 	return entity;
@@ -304,7 +304,7 @@ void Scene::OnRuntimeStart()
 
 			PhysicsBody* body = new PhysicsBody();
 			body->m_position = { transform.GlobalTranslation.x, transform.GlobalTranslation.y };
-			body->m_rotation = transform.GlobalRotation / DEG_PER_RAD;
+			body->m_rotation = transform.GlobalRotation.z;
 		//	body->m_velocity = transform.velocity;
 		//	body->m_angularVelocity = transform.angularVelocity;
 			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
@@ -377,7 +377,7 @@ void Scene::OnRuntimeStart()
 			{
 				continue;
 			}
-			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().GlobalTranslation;
+			Vec2 anchorWorldPos = jointComponent.anchorPos + Vec2(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
 			joint->Set(body1, body2, Vec2(anchorWorldPos.x, anchorWorldPos.y));
 			// TODO: add softness & bias to the joint component ??
@@ -426,9 +426,9 @@ void Scene::UpdateTransforms()
 			continue;
 		}
 
-		Vec2 globalPosition = transform.Translation;
-		float globalOrientation = transform.Rotation;
-		Vec2 globalScale = transform.Scale;
+		glm::vec3 globalPosition = transform.Translation;
+		glm::vec3 globalOrientation = transform.Rotation;
+		glm::vec3 globalScale = transform.Scale;
 
 		auto parentComponent = e.getComponent<CParent>();
 		while (parentComponent.HasParent)
@@ -493,8 +493,10 @@ void Scene::OnUpdateRuntime(float dt)
 					{
 						//TODO: fix this for when entity e has a parent....
 						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-						e.getComponent<CTransform>().Translation = { body->m_position.x, body->m_position.y };
-						e.getComponent<CTransform>().Rotation = body->m_rotation * DEG_PER_RAD;
+						auto& transform = e.getComponent<CTransform>();
+						transform.Translation.x = body->m_position.x;
+						transform.Translation.y = body->m_position.y;
+						transform.Rotation.z = body->m_rotation;
 					}
 				}
 			}
@@ -533,7 +535,7 @@ void Scene::OnUpdateRuntime(float dt)
 			if (entity.hasComponent<CRectangle>())
 			{
 				auto rect = entity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, rect.color, (int)entity.id());
+				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
 			}
 
 			if (entity.hasComponent<CSpriteRenderer>())
@@ -605,7 +607,7 @@ void Scene::RenderScene(EditorCamera& camera)
 		if (entity.hasComponent<CRectangle>())
 		{
 			auto rect = entity.getComponent<CRectangle>();
-			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, rect.color, (int)entity.id());
+			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
 		}
 
 		if (entity.hasComponent<CSpriteRenderer>())

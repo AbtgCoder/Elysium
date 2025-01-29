@@ -303,11 +303,11 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CTransform>("Transform", m_InspectedEntity, [](auto& component)
 			{
-				DrawVec2Control("Translation", component.Translation, 0.0f, 80.0f);
-				DrawFloatControl("Rotation", component.Rotation, 0.0f, 360.0f);
-			//	DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
-				DrawVec2Control("Scale", component.Scale, 0.0f, 80.0f);
-				//DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
+				DrawVec3Control("Translation", component.Translation, 0.0f, 100.0f);
+				glm::vec3 rotation = glm::degrees(component.Rotation);
+				DrawVec3Control("Rotation", rotation, 0.0f, 100.0f);
+				component.Rotation = glm::radians(rotation);
+				DrawVec3Control("Scale", component.Scale, 1.0f, 100.0f);
 			});
 
 		DrawComponentGUI<CCamera>("Camera", m_InspectedEntity, [](auto& component)

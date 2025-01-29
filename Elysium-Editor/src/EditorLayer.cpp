@@ -338,9 +338,9 @@ void EditorLayer::OnImGuiRender()
 				float decomposedScale[3];
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localTransform), decomposedPosition, decomposedRotation, decomposedScale);
 
-				tc.Translation = { decomposedPosition[0], decomposedPosition[1] };
-				tc.Scale = { decomposedScale[0], decomposedScale[1] };
-				tc.Rotation = decomposedRotation[2];
+				tc.Translation = { decomposedPosition[0], decomposedPosition[1], decomposedPosition[2]};
+				tc.Scale = { decomposedScale[0], decomposedScale[1], decomposedScale[2]};
+				tc.Rotation = { decomposedRotation[0], decomposedRotation[1], decomposedRotation[2] };
 			}
 
 		}
@@ -367,7 +367,7 @@ void EditorLayer::OnOverlayRender()
 			if (inspectedEntity.hasComponent<CRectangle>())
 			{
 				auto rect = inspectedEntity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
 			}
 
 			if (inspectedEntity.hasComponent<CSpriteRenderer>())

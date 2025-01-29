@@ -11,12 +11,12 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [-0.0128348023, 0.0385214984]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [-0.0128348023, 0.0385214984]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-2.39450455, -1.69809341, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-2.39450455, -1.69809341, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -36,12 +36,12 @@ Entities:
     Tag:
       Tag: Tile1
     Transform:
-      Translation: [2.29999995, 1.60000002]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [2.29999995, 1.60000002]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-2, -2.72912788, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-2, -2.72912788, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -66,12 +66,12 @@ Entities:
     Tag:
       Tag: Player
     Transform:
-      Translation: [-7.0999999, 2.4000001]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [-7.0999999, 2.4000001]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-4.23490524, 0.379045397, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-4.23490524, 0.379045397, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -86,12 +86,12 @@ Entities:
     Tag:
       Tag: Tile2
     Transform:
-      Translation: [6.60280752, -3.23328543]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [6.60280752, -3.23328543]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-0.968229294, -2.73362541, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-0.968229294, -2.73362541, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -111,12 +111,12 @@ Entities:
     Tag:
       Tag: Tile
     Transform:
-      Translation: [-4, -2.79999995]
-      Rotation: 0.270000011
-      Scale: [1, 1]
-      GlobalTranslation: [-4, -2.79999995]
-      GlobalRotation: 0.270000011
-      GlobalScale: [1, 1]
+      Translation: [1.62863159, -2.08704376, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [1.62863159, -2.08704376, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -141,12 +141,12 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [6, 0]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [6, 0]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [1.98674965, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [1.98674965, 0, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -163,12 +163,12 @@ Entities:
     Tag:
       Tag: Tile
     Transform:
-      Translation: [-5, -0.100000001]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [-5, -0.100000001]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-0.304075211, -1.7143321, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-0.304075211, -1.7143321, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -193,19 +193,19 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [0, 0]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [0, 0]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
       Children: []
     Camera:
       Camera:
-        ProjectionType: 1
+        ProjectionType: 0
         PerspectiveFOV: 0.785398185
         PerspectiveNear: 0.00999999978
         PerspectiveFar: 1000
@@ -218,12 +218,12 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0.400000006, 0.400000006]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [6.4000001, 0.400000006]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [1.98674965, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: true
       ParentID: 11791852490085644340
@@ -235,12 +235,12 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [2.11117554, -2.75054932]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [2.11117554, -2.75054932]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [3.60569191, -1.35758591, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1.39123976, 1]
+      GlobalTranslation: [3.60569191, -1.35758591, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -255,12 +255,12 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0, 0.400000006]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [2.11117554, -2.35054922]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [3.60569191, -1.35758591, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: true
       ParentID: 2476516049887498935
@@ -272,12 +272,12 @@ Entities:
     Tag:
       Tag: Empty Entity
     Transform:
-      Translation: [1.10000002, 0.850000024]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [3.21117544, -1.90054929]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [1.38565063, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [4.99134254, -1.35758591, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: true
       ParentID: 2476516049887498935

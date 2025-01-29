@@ -34,6 +34,31 @@ namespace YAML
 	};
 
 	template<>
+	struct convert<glm::vec3>
+	{
+		static Node encode(const glm::vec3& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.push_back(rhs.z);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+		static bool decode(const Node& node, glm::vec3& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 3)
+			{
+				return false;
+			}
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			rhs.z = node[2].as<float>();
+			return true;
+		}
+	};
+
+	template<>
 	struct convert<Elysium::UUID>
 	{
 		static Node encode(const Elysium::UUID& uuid)
@@ -80,6 +105,14 @@ YAML::Emitter& operator<<(YAML::Emitter& out, const Vec2& v)
 	out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
 	return out;
 }
+
+YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
+{
+	out << YAML::Flow;
+	out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
+	return out;
+}
+
 
 SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
 	: m_Scene(Scene)
@@ -388,14 +421,14 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto transformComponent = entity["Transform"];
 			if (transformComponent)
 			{
-				auto& tc = deserializedEntity.addComponent<CTransform>();
-				tc.Translation = transformComponent["Translation"].as<Vec2>();
-				tc.Rotation = transformComponent["Rotation"].as<float>();
-				tc.Scale = transformComponent["Scale"].as<Vec2>();
+				auto& tc = deserializedEntity.getComponent<CTransform>();
+				tc.Translation = transformComponent["Translation"].as<glm::vec3>();
+				tc.Rotation = transformComponent["Rotation"].as<glm::vec3>();
+				tc.Scale = transformComponent["Scale"].as<glm::vec3>();
 
-				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<Vec2>();
-				tc.GlobalRotation = transformComponent["GlobalRotation"].as<float>();
-				tc.GlobalScale = transformComponent["GlobalScale"].as<Vec2>();
+				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<glm::vec3>();
+				tc.GlobalRotation = transformComponent["GlobalRotation"].as<glm::vec3>();
+				tc.GlobalScale = transformComponent["GlobalScale"].as<glm::vec3>();
 			}
 
 

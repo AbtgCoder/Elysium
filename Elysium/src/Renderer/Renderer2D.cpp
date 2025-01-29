@@ -185,8 +185,7 @@ void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
 	s_RenderData.TextureSlotIndex = 1;
 
 	glm::mat4 viewProjection = camera.GetProjection() * glm::inverse(transform);
-	viewProjection[3][3] = 10.0f;
-
+	
 	s_RenderData.QuadShader->Bind();
 	s_RenderData.QuadShader->SetMat4("u_ViewProjection", viewProjection);
 

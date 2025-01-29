@@ -47,7 +47,7 @@ Vec2 Physics::GetOverlap(Entity a, Entity b)
     Vec2 offsetA = a.getComponent<CBoundingBox>().offset;
     Vec2 offsetB = b.getComponent<CBoundingBox>().offset;
 
-    Vec2 delta = a.getComponent<CTransform>().GlobalTranslation - b.getComponent<CTransform>().GlobalTranslation + (offsetA - offsetB);
+	Vec2 delta = {0.0f, 0.0f}; // = a.getComponent<CTransform>().GlobalTranslation - b.getComponent<CTransform>().GlobalTranslation + (offsetA - offsetB);
     float ox = halfSizeA.x + halfSizeB.x - abs(delta.x);
     float oy = halfSizeA.y + halfSizeB.y - abs(delta.y);
 
@@ -183,6 +183,7 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 {
 	std::vector<Vec2> empty;
 
+#if 0
 
 	std::vector<Vec2> colliderVerticesA = getRotatedRectangleVertices(a.getComponent<CTransform>().GlobalTranslation.x, a.getComponent<CTransform>().GlobalTranslation.y, a.getComponent<CBoundingBox>().size.x, a.getComponent<CBoundingBox>().size.y, a.getComponent<CTransform>().GlobalRotation);
 	std::vector<Vec2> colliderVerticesB = getRotatedRectangleVertices(b.getComponent<CTransform>().GlobalTranslation.x, b.getComponent<CTransform>().GlobalTranslation.y, b.getComponent<CBoundingBox>().size.x, b.getComponent<CBoundingBox>().size.y, b.getComponent<CTransform>().GlobalRotation);
@@ -364,7 +365,6 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 
 	return cp;
 
-#if 0
 	Vec2 overlap = GetOverlap(a, b);
 	if (overlap.x > 0 && overlap.y > 0)
 	{
@@ -409,6 +409,7 @@ std::vector<Vec2> Physics::AABBCollision(Entity a, Entity b)
 	return false;
 #endif
 
+	return empty;
 }
 
 bool Physics::CircleCircleCollision(Entity a, Entity b)

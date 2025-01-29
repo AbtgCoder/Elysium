@@ -45,28 +45,28 @@ public:
 class CTransform : public Component
 {
 public:
-	Vec2 Translation = { 0.0, 0.0 };
-	float Rotation = 0.0f;
-	Vec2 Scale = {1.0, 1.0};
+	glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 Rotation = {0.0f, 0.0f, 0.0f};
+	glm::vec3 Scale = {1.0, 1.0, 1.0f};
 
-	Vec2 GlobalTranslation = {0.0, 0.0};
-	float GlobalRotation = 0.0f;
-	Vec2 GlobalScale = { 1.0, 1.0 };
+	glm::vec3 GlobalTranslation = {0.0f, 0.0f, 0.0f};
+	glm::vec3 GlobalRotation = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 GlobalScale = { 1.0f, 1.0f, 1.0f };
 
 	CTransform() {}
-	CTransform(const Vec2& p)
+	CTransform(const glm::vec3& p)
 		: Translation(p) {}
-	CTransform(const Vec2& p, const Vec2& sc, float a)
+	CTransform(const glm::vec3& p, const glm::vec3& sc, const glm::vec3& a)
 		: Translation(p), Scale(sc), Rotation(a) {}
 	CTransform(CTransform& other) = default;
 
 	glm::mat4 GetTransform() const
 	{
-		glm::mat4 rotation = glm::mat4(glm::quat(glm::vec3(0.0f, 0.0f,GlobalRotation)));
+		glm::mat4 rotation = glm::toMat4(glm::quat(GlobalRotation));
 
-		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(GlobalTranslation.x, GlobalTranslation.y, 0.0f))
+		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), GlobalTranslation)
 			* rotation
-			* glm::scale(glm::mat4(1.0f), glm::vec3(GlobalScale.x, GlobalScale.y, 1.0f));
+			* glm::scale(glm::mat4(1.0f), GlobalScale);
 
 		return transformMatrix;
 	}
