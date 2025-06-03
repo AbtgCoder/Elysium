@@ -65,6 +65,7 @@ struct Renderer2DData
 	std::shared_ptr<Texture2D> WhiteTexture;
 	std::array<std::shared_ptr<Texture2D>, MaxTextureSlots> TextureSlots;
 	uint32_t TextureSlotIndex = 1; // 0 = white texture
+	float PixelsPerUnit = 100.0f; // for scaling the world to pixels(Unity uses this value ig)
 
 	Renderer2D::Statistics Stats;
 };
@@ -308,11 +309,18 @@ void Renderer2D::DrawQuad(const glm::mat4& transform, const std::shared_ptr<Text
 
 	//s_RenderData.TextureSlots[1] = texture;
 
+	float texWidth = (float)texture->GetWidth();
+	float texHeight = (float)texture->GetHeight();
+
+	float worldWidth = texWidth / s_RenderData.PixelsPerUnit; // convert texture width to world units
+	float worldHeight = texHeight / s_RenderData.PixelsPerUnit; // convert texture height to world units
+
+	glm::mat4 scaledTransform = transform * glm::scale(glm::mat4(1.0f), glm::vec3(worldWidth, worldHeight, 1.0f));
 
 	for (size_t i = 0; i < quadVertexCount; i++)
 	{
 		// set the data for each quad vertex
-		s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
+		s_RenderData.QuadVertexBufferPtr->Position = scaledTransform * s_RenderData.QuadVertexPositions[i];
 		s_RenderData.QuadVertexBufferPtr->Color = tintColor;
 		s_RenderData.QuadVertexBufferPtr->TexCoord = textureCoords[i];
 		s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
