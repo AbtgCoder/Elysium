@@ -38,6 +38,9 @@ AssetRegistry:
   - Handle: 10702758249718355508
     FilePath: textures/cloudsmall.png
     Type: AssetType::Texture2D
+  - Handle: 10798807695711001666
+    FilePath: textures/runleft.png
+    Type: AssetType::Texture2D
   - Handle: 10945313050467142036
     FilePath: scenes/rigidbody_physics_test.elysium
     Type: AssetType::Scene

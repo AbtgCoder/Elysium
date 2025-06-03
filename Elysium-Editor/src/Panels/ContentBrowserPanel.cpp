@@ -111,6 +111,8 @@ void ContentBrowserPanel::OnImGuiRender()
 	
 	//ImGui::GetWindowDrawList()->AddLine(ImVec2(ImGui::GetCursorPosX(), ImGui::GetCursorPosY()), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetCursorPosY()), IM_COL32(255, 0, 0, 255), 1.0f);
 
+
+
 	avail = ImGui::GetContentRegionAvail();
 	bool childContent = ImGui::BeginChild("Content", avail);
 	ImGui::SameLine();
@@ -142,8 +144,14 @@ void ContentBrowserPanel::OnImGuiRender()
 			ImVec2 prevCursor = ImGui::GetCursorPos();
 			ImVec2 prevScreenPos = ImGui::GetCursorScreenPos();
 
+			// Calculate item rect
+			ImVec2 itemPos = ImGui::GetCursorScreenPos();
+			ImVec2 itemSize = ImVec2(thumbnailSize + padding * 2, thumbnailSize + 60); // +text space
+			ImRect itemRect(itemPos, ImVec2(itemPos.x + itemSize.x, itemPos.y + itemSize.y));
+
+			// Draw background hover box
 			std::string id = std::string("##") + std::filesystem::absolute(path).generic_string();
-			const bool selected = ImGui::Selectable(id.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(100, 150));
+			const bool selected = ImGui::Selectable(id.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick, itemSize);
 
 			if (selected && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 			{
@@ -178,7 +186,7 @@ void ContentBrowserPanel::OnImGuiRender()
 			ImVec2 startOffset = ImVec2(imguiStyle.FramePadding.x / 2.0f, 0);
 			ImVec2 offsetEnd = ImVec2(startOffset.x, imguiStyle.FramePadding.y / 2.0f);
 			ImU32 rectColor = IM_COL32(19, 19, 19, 255);
-			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 100 + offsetEnd.y), rectColor, 1.0f);
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y - startOffset.y), ImVec2(prevScreenPos.x + itemSize.x + offsetEnd.x, prevScreenPos.y + thumbnailSize + padding + offsetEnd.y), rectColor, 1.0f);
 
 
 			std::shared_ptr<Texture2D> thumbnail = m_DirectoryIcon;
@@ -189,14 +197,37 @@ void ContentBrowserPanel::OnImGuiRender()
 					thumbnail = m_FileIcon;
 			}
 
+			//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+			//ImGui::SetCursorPos(prevCursor);
+			//ImGui::Image((ImTextureID)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, {0, 1}, {1, 0});
+			//ImGui::PopStyleColor();
+
+			// Preserve aspect ratio
+			float aspectRatio = (float)thumbnail->GetWidth() / (float)thumbnail->GetHeight();
+			ImVec2 drawSize;
+			if (aspectRatio >= 1.0f)
+			{
+				drawSize = { thumbnailSize, thumbnailSize / aspectRatio };
+			}
+			else
+			{
+				drawSize = { thumbnailSize * aspectRatio, thumbnailSize };
+			}
+
+			ImVec2 thumbPos = {
+				itemRect.Min.x + (itemSize.x - drawSize.x) / 2.0f,
+				itemRect.Min.y + padding + (thumbnailSize - drawSize.y)
+			};
+
+			//ImGui::SetCursorScreenPos(thumbPos);
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			ImGui::SetCursorPos(prevCursor);
-			ImGui::Image((ImTextureID)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, {0, 1}, {1, 0});
+			ImGui::SetCursorScreenPos(thumbPos);
+			ImGui::Image((ImTextureID)thumbnail->GetRendererID(), drawSize, { 0, 1 }, { 1, 0 });
 			ImGui::PopStyleColor();
 
 
 			rectColor = IM_COL32(255, 255, 255, 16);
-			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y + 100 - startOffset.y), ImVec2(prevScreenPos.x + 100 + offsetEnd.x, prevScreenPos.y + 150 + offsetEnd.y), rectColor, 1.0f);
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(prevScreenPos.x - startOffset.x, prevScreenPos.y + thumbnailSize + padding - startOffset.y), ImVec2(prevScreenPos.x + itemSize.x + offsetEnd.x, prevScreenPos.y + itemSize.y + offsetEnd.y), rectColor, 1.0f);
 
 			std::string visibleName = itemStr;
 			const uint32_t MAX_CHAR_NAME = 20;
@@ -204,6 +235,13 @@ void ContentBrowserPanel::OnImGuiRender()
 			{
 				visibleName = std::string(visibleName.begin(), visibleName.begin() + MAX_CHAR_NAME - 3) + "...";
 			}
+
+			ImVec2 textSize = ImGui::CalcTextSize(visibleName.c_str());
+			ImVec2 textPos = {
+				itemRect.Min.x + (itemSize.x - textSize.x) / 2.0f,
+				itemRect.Min.y + thumbnailSize + padding
+			};
+			ImGui::SetCursorScreenPos(textPos);
 			ImGui::TextWrapped(visibleName.c_str());
 
 
@@ -228,10 +266,11 @@ void ContentBrowserPanel::OnImGuiRender()
 					fileTypeText = "ESM_" + fileTypeText;
 				}
 			}
-			ImVec2 texSize = ImGui::CalcTextSize(fileTypeText.c_str());
-			ImGui::SetCursorPosX(prevCursor.x + 100 + offsetEnd.x - texSize.x);
-			ImGui::SetCursorPosY(prevCursor.y + 150 - ImGui::GetTextLineHeight());
-
+			ImVec2 typeTextSize = ImGui::CalcTextSize(fileTypeText.c_str());
+			ImGui::SetCursorScreenPos({
+				itemRect.Min.x + (itemSize.x - typeTextSize.x) / 2.0f,
+				itemRect.Max.y - ImGui::GetTextLineHeight() - 2.0f
+				});
 			ImGui::TextColored({ 1.0f, 1.0f, 1.0f, 0.5f }, fileTypeText.c_str());
 
 			ImGui::NextColumn();
@@ -256,9 +295,8 @@ void ContentBrowserPanel::OnImGuiRender()
 
 	ImGui::EndChild();
 
+	ImGui::EndChild();
 
-	ImGui::EndChild(); //  end wrapper child
-	
 
 	ImGui::End();
 }
