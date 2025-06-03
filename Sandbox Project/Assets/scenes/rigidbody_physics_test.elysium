@@ -128,7 +128,7 @@ Entities:
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [200, 1200]
+      Size: [200, 100]
       Color: [255, 255, 255, 255]
     PhysicsMaterial:
       Mass: 1

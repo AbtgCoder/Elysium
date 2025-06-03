@@ -287,15 +287,25 @@ void EditorLayer::OnImGuiRender()
 
 		// Gizmos
 
-		ImGuizmo::SetOrthographic(false);
+		//ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
+		ImGuizmo::AllowAxisFlip(true);
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
 
 		// editor camera
 		const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
 		glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
 
-		//ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::identity<glm::mat4>()), 100.0f);
+		// rotate the grid 90 degrees to get the grid in XY plane
+		glm::mat4 gridModelMatrix = glm::rotate(
+			glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0)
+		);
+
+		ImGuizmo::DrawGrid(
+			glm::value_ptr(m_ActiveScene->GetPrimaryCameraViewMatrix()),
+			glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
+			glm::value_ptr(gridModelMatrix), 100.0f);
 
 		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
 

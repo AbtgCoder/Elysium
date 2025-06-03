@@ -193,10 +193,10 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [0, 0, 0]
+      Translation: [0, 0, 10]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [0, 0, 0]
+      GlobalTranslation: [0, 0, 10]
       GlobalRotation: [0, 0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -205,15 +205,15 @@ Entities:
       Children: []
     Camera:
       Camera:
-        ProjectionType: 0
+        ProjectionType: 1
         PerspectiveFOV: 0.785398185
         PerspectiveNear: 0.00999999978
         PerspectiveFar: 1000
-        OrthographicSize: 1
+        OrthographicSize: 10
         OrthographicNear: -1
-        OrthographicFar: 1
+        OrthographicFar: 100
       Primary: true
-      BackgroundColor: [10, 10, 10, 255]
+      BackgroundColor: [0.854901969, 0.572549045, 0.572549045, 0.631372571]
   - Entity: 7923484610642854400
     Tag:
       Tag: Circle

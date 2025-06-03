@@ -30,6 +30,9 @@ public:
 	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
 
+	Camera GetPrimaryCamera();
+	glm::mat4 GetPrimaryCameraViewMatrix();
+
 	bool IsEntityUUIDValid(Elysium::UUID uuid);
 
 	std::vector<Entity>& GetAllPhysicsEntities();

@@ -227,6 +227,40 @@ void Scene::DestroyEntity(Entity entity)
 	entity.destroy();
 }
 
+Camera Scene::GetPrimaryCamera()
+{
+	// Rendering
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& camera = e.getComponent<CCamera>();
+			if (camera.primary)
+			{
+				return camera.Camera;
+			}
+		}
+	}
+	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
+}
+
+glm::mat4 Scene::GetPrimaryCameraViewMatrix()
+{
+	// Rendering
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& camera = e.getComponent<CCamera>();
+			if (camera.primary)
+			{
+				return  glm::inverse(e.getComponent<CTransform>().GetTransform());
+			}
+		}
+	}
+	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
+}
+
 bool Scene::IsEntityUUIDValid(Elysium::UUID uuid)
 {
 	for (auto e : m_entityManager.GetEntities())
