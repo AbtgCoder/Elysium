@@ -62,3 +62,6 @@ AssetRegistry:
   - Handle: 17151686820002597247
     FilePath: textures/bushsmall.png
     Type: AssetType::Texture2D
+  - Handle: 17525485254563730416
+    FilePath: Spritesheets/enemy.esmspritesheet
+    Type: AssetType::SpriteSheet

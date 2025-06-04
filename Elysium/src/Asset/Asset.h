@@ -9,7 +9,8 @@ enum class AssetType : uint16_t
 	None = 0,
 	//Texture,
 	Scene,
-	Texture2D
+	Texture2D,
+	SpriteSheet
 };
 
 std::string_view AssetTypeToString(AssetType type);

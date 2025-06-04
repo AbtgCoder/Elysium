@@ -83,8 +83,6 @@ private:
 
 	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
-	// shader test
-	//sf::Shader m_Shader;
 
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;

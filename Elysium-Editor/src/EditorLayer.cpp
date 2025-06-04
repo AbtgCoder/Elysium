@@ -226,6 +226,7 @@ void EditorLayer::OnImGuiRender()
 	m_ContentBrowserPanel->OnImGuiRender();
 	m_PhysicsConfigPanel.OnImGuiRender();
 	m_LoggerPanel.OnImGuiRender();
+	m_SpriteSheetEditorPanel.OnImGuiRender();
 
 	// Viewport 
 	ImGui::Begin("Viewport");
@@ -246,25 +247,30 @@ void EditorLayer::OnImGuiRender()
 	uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
 	ImGui::Image((ImTextureID)(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
+	bool showImportSpritePopup = false;
 	if (m_SceneState == SceneState::Edit)
 	{
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
 			{
+				showImportSpritePopup = true;
 				char* file = (char*)payload->Data;
-				std::string fullPath = std::string(file, 256);
-				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
-				AssetHandle handle = 0;
-				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
-				{
-					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
-				}
-				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
-				// spawn entity with sprite renderer component
-				Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
-				newEntity.getComponent<CTag>().tag = relativePath.stem().string();
-				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+				m_DraggedInFilePath = std::string(file, 256);
+
+				//char* file = (char*)payload->Data;
+				//std::string fullPath = std::string(file, 256);
+				//auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+				//AssetHandle handle = 0;
+				//if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+				//{
+				//	Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+				//}]=
+				//handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+				//// spawn entity with sprite renderer component
+				//Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
+				//newEntity.getComponent<CTag>().tag = relativePath.stem().string();
+				//m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
 			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Scene"))
 			{
@@ -285,75 +291,126 @@ void EditorLayer::OnImGuiRender()
 		}
 		
 
-		// Gizmos
-
-		//ImGuizmo::SetOrthographic(false);
-		ImGuizmo::SetDrawlist();
-		ImGuizmo::AllowAxisFlip(true);
-		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-
-
-		// editor camera
-		const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
-		glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
-
-		// rotate the grid 90 degrees to get the grid in XY plane
-		glm::mat4 gridModelMatrix = glm::rotate(
-			glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0)
-		);
-
-		ImGuizmo::DrawGrid(
-			glm::value_ptr(m_ActiveScene->GetPrimaryCameraViewMatrix()),
-			glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
-			glm::value_ptr(gridModelMatrix), 100.0f);
-
-		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-
-		if (m_inspectedEntity && m_GizmoType != -1)
+		if (showImportSpritePopup)
 		{
-			// entity transform
-			auto& tc = m_inspectedEntity.getComponent<CTransform>();
-			glm::mat4 transform = tc.GetTransform();
+			ImGui::OpenPopup("Import_Sprite");
+		}
 
-			// snapping
-			bool snap = Input::IsKeyPressed(Key::LeftControl);
-			float snapValue = 0.5; // snap to 0.5m for translation/scale
-			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
-				snapValue = 45.0f; // snap to 45 degrees for rotation
+		if (ImGui::IsPopupOpen("Import_Sprite"))
+		{
+			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+			//ImGui::SetNextWindowSize(ImVec2(1000, 700));
 
-			float snapValues[3] = { snapValue, snapValue, snapValue };
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(32.0f, 32.0f));
 
-			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
-
-			if (ImGuizmo::IsUsing())
+			if (ImGui::BeginPopupModal("Import_Sprite", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
 			{
-				glm::mat4 localTransform = glm::mat4(transform);
+				static int importType = 0;
+				ImGui::RadioButton("Single Sprite", &importType, 0);
+				ImGui::RadioButton("Sprite Sheet", &importType, 1);
 
-				auto& parent = m_inspectedEntity.getComponent<CParent>();
-				if (parent.HasParent)
+				if (ImGui::Button("Continue"))
 				{
-					const auto& parentTransformComponent = m_ActiveScene->GetEntityByUUID(parent.ParentID).getComponent<CTransform>();
-					const glm::mat4& parentTransform = parentTransformComponent.GetTransform();
-					localTransform = glm::inverse(parentTransform) * localTransform;
-					/*
-						since imguizmo returns a transform in global space and we want the local transform,
-						we need to multiply by the inverse of the parent's global transform in order to revert
-						the changes from the parent transform
-					*/
+					if (importType == 0)
+					{
+						auto relativePath = std::filesystem::relative(m_DraggedInFilePath, Project::GetActiveAssetDirectory());
+						AssetHandle handle = 0;
+						if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+						{
+							Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+						}
+						handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+						// spawn entity with sprite renderer component
+						Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
+						newEntity.getComponent<CTag>().tag = relativePath.stem().string();
+						m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+					}
+					else
+					{
+						// Open sprite sheet editor
+						m_SpriteSheetEditorPanel.SetSpriteSheetTexture(m_DraggedInFilePath);
+						m_SpriteSheetEditorPanel.Open();
+					}
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopStyleVar(2);
+		}
+
+		// Gizmos
+		{
+			//ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::AllowAxisFlip(true);
+			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
+
+			// editor camera
+			const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
+			glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
+
+			// rotate the grid 90 degrees to get the grid in XY plane
+			glm::mat4 gridModelMatrix = glm::rotate(
+				glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0)
+			);
+
+			ImGuizmo::DrawGrid(
+				glm::value_ptr(m_ActiveScene->GetPrimaryCameraViewMatrix()),
+				glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
+				glm::value_ptr(gridModelMatrix), 100.0f);
+
+			m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+
+			if (m_inspectedEntity && m_GizmoType != -1)
+			{
+				// entity transform
+				auto& tc = m_inspectedEntity.getComponent<CTransform>();
+				glm::mat4 transform = tc.GetTransform();
+
+				// snapping
+				bool snap = Input::IsKeyPressed(Key::LeftControl);
+				float snapValue = 0.5; // snap to 0.5m for translation/scale
+				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+					snapValue = 45.0f; // snap to 45 degrees for rotation
+
+				float snapValues[3] = { snapValue, snapValue, snapValue };
+
+				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+				if (ImGuizmo::IsUsing())
+				{
+					glm::mat4 localTransform = glm::mat4(transform);
+
+					auto& parent = m_inspectedEntity.getComponent<CParent>();
+					if (parent.HasParent)
+					{
+						const auto& parentTransformComponent = m_ActiveScene->GetEntityByUUID(parent.ParentID).getComponent<CTransform>();
+						const glm::mat4& parentTransform = parentTransformComponent.GetTransform();
+						localTransform = glm::inverse(parentTransform) * localTransform;
+						/*
+							since imguizmo returns a transform in global space and we want the local transform,
+							we need to multiply by the inverse of the parent's global transform in order to revert
+							the changes from the parent transform
+						*/
+					}
+
+					// decompose local transform
+					float decomposedPosition[3];
+					float decomposedRotation[3];
+					float decomposedScale[3];
+					ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localTransform), decomposedPosition, decomposedRotation, decomposedScale);
+
+					tc.Translation = { decomposedPosition[0], decomposedPosition[1], decomposedPosition[2] };
+					tc.Scale = { decomposedScale[0], decomposedScale[1], decomposedScale[2] };
+					tc.Rotation = { decomposedRotation[0], decomposedRotation[1], decomposedRotation[2] };
 				}
 
-				// decompose local transform
-				float decomposedPosition[3];
-				float decomposedRotation[3];
-				float decomposedScale[3];
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localTransform), decomposedPosition, decomposedRotation, decomposedScale);
-
-				tc.Translation = { decomposedPosition[0], decomposedPosition[1], decomposedPosition[2]};
-				tc.Scale = { decomposedScale[0], decomposedScale[1], decomposedScale[2]};
-				tc.Rotation = { decomposedRotation[0], decomposedRotation[1], decomposedRotation[2] };
 			}
-
 		}
+		
 	}
 
 	ImGui::End(); // end "Viewport"

@@ -15,7 +15,7 @@
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/PhysicsConfigPanel.h"
 #include "Panels/LoggerPanel.h"
-
+#include "Panels/SpriteSheetEditorPanel.h"
 
 #include <filesystem>
 
@@ -110,6 +110,9 @@ private:
 	std::unique_ptr<ContentBrowserPanel> m_ContentBrowserPanel;
 	PhysicsConfigPanel m_PhysicsConfigPanel;
 	LoggerPanel m_LoggerPanel;
+	SpriteSheetEditorPanel m_SpriteSheetEditorPanel;
+
+	std::string m_DraggedInFilePath = "";
 	
 	std::shared_ptr<Texture2D> m_IconPlay;
 	std::shared_ptr<Texture2D> m_IconPause;

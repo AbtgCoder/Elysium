@@ -1,0 +1,11 @@
+SpriteSheet: enemy
+Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/enemy.png
+SubSprites:
+  - Subsprite: 0
+    Name: enemy_0
+    Position: [0, 0]
+    Size: [64, 64]
+  - Subsprite: 1
+    Name: enemy_1
+    Position: [64, 0]
+    Size: [64, 64]
