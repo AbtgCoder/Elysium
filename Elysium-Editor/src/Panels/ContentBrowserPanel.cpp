@@ -197,11 +197,6 @@ void ContentBrowserPanel::OnImGuiRender()
 					thumbnail = m_FileIcon;
 			}
 
-			//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			//ImGui::SetCursorPos(prevCursor);
-			//ImGui::Image((ImTextureID)thumbnail->GetRendererID(), { thumbnailSize, thumbnailSize }, {0, 1}, {1, 0});
-			//ImGui::PopStyleColor();
-
 			// Preserve aspect ratio
 			float aspectRatio = (float)thumbnail->GetWidth() / (float)thumbnail->GetHeight();
 			ImVec2 drawSize;

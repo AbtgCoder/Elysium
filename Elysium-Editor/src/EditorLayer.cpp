@@ -227,6 +227,7 @@ void EditorLayer::OnImGuiRender()
 	m_PhysicsConfigPanel.OnImGuiRender();
 	m_LoggerPanel.OnImGuiRender();
 	m_SpriteSheetEditorPanel.OnImGuiRender();
+	m_AssetManagerPanel.OnImGuiRender();
 
 	// Viewport 
 	ImGui::Begin("Viewport");
@@ -865,6 +866,7 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 		else if (startScene)
 			OpenScene(startScene);
 		m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>(Project::GetActive());
+		m_AssetManagerPanel.Refresh();
 	}
 	else
 	{

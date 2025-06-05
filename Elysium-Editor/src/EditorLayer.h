@@ -16,6 +16,7 @@
 #include "Panels/PhysicsConfigPanel.h"
 #include "Panels/LoggerPanel.h"
 #include "Panels/SpriteSheetEditorPanel.h"
+#include "Panels/AssetManagerPanel.h"
 
 #include <filesystem>
 
@@ -111,6 +112,7 @@ private:
 	PhysicsConfigPanel m_PhysicsConfigPanel;
 	LoggerPanel m_LoggerPanel;
 	SpriteSheetEditorPanel m_SpriteSheetEditorPanel;
+	AssetManagerPanel m_AssetManagerPanel;
 
 	std::string m_DraggedInFilePath = "";
 	

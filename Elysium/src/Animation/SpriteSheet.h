@@ -29,6 +29,9 @@ public:
 	virtual AssetType GetType() const { return AssetType::SpriteSheet; }
 
 	std::shared_ptr<Texture2D> GetTexture() { return m_Texture; }
+
+	std::string GetTexturePath() { return m_SourcePath; }
+
 private:
 	std::shared_ptr<Texture2D> m_Texture = nullptr;
 	std::vector<SubSprite> m_SubSprites;

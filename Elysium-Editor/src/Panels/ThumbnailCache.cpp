@@ -1,6 +1,7 @@
 #include "ThumbnailCache.h"
 
 #include "Asset/TextureImporter.h"
+#include "Asset/SpriteSheetImporter.h"
 
 #include <chrono>
 
@@ -30,8 +31,20 @@ std::shared_ptr<Texture2D> ThumbnailCache::GetOrCreateThumbnail(const std::files
 	}
 	
 	//TODO: support other extensions...
-	if (path.extension() != ".png")
+	std::string fileExtension = path.extension().string();
+	if (fileExtension == ".png")
+	{
+		absolutePath = absolutePath;
+	}
+	else if (fileExtension == ".esmspritesheet")
+	{
+		auto spriteSheet = SpriteSheetImporter::LoadSpriteSheet(absolutePath);
+		absolutePath = spriteSheet->GetTexturePath();
+	}
+	else
+	{
 		return nullptr;
+	}
 
 	std::shared_ptr<Texture2D> texture = TextureImporter::LoadTexture2D(absolutePath);
 	if (!texture)
