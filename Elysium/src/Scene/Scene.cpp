@@ -140,7 +140,7 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		duplicateParentComponent.ParentID = newParentID.value();
 
 		// Add duplicate entity to the new parent's Children list
-		auto& newParent = GetEntityByUUID(newParentID.value());
+		auto newParent = GetEntityByUUID(newParentID.value());
 		newParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
 	else if (originalParentComponent.HasParent) {
@@ -149,7 +149,7 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		duplicateParentComponent.ParentID = originalParentComponent.ParentID;
 
 		// Add duplicate entity to the original parent's Children list
-		auto& originalParent = GetEntityByUUID(originalParentComponent.ParentID);
+		auto originalParent = GetEntityByUUID(originalParentComponent.ParentID);
 		originalParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
 	else {

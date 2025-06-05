@@ -84,7 +84,7 @@ struct ScopedBuffer
 	template<typename T>
 	T* As()
 	{
-		return m_Buffer.As<T>()
+		return m_Buffer.As<T>();
 	}
 
 	operator bool() const { return m_Buffer; }

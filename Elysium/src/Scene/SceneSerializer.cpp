@@ -451,7 +451,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			{
 				auto& camera = deserializedEntity.addComponent<CCamera>();
 
-				auto& cameraProps = cameraComponent["Camera"];
+				auto cameraProps = cameraComponent["Camera"];
 				camera.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
 
 				camera.Camera.SetPerspectiveVerticalFOV(cameraProps["PerspectiveFOV"].as<float>());
