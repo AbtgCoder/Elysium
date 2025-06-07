@@ -175,6 +175,10 @@ void ContentBrowserPanel::OnImGuiRender()
 					{
 						dragType = "_Scene";
 					}
+					else if (extension == ".esmspritesheet")
+					{
+						dragType = "_Spritesheet";
+					}
 					ImGui::SetDragDropPayload(dragType.c_str(), (void*)(pathBuffer), sizeof(pathBuffer));
 					ImGui::Text(itemStr.c_str());
 					ImGui::EndDragDropSource();

@@ -4,7 +4,6 @@
 
 #include "Asset/AssetManager.h"
 #include "Renderer/Texture.h"
-#include "core/Logger.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
 #include "../Helper/ImGuiHelper.h"
@@ -295,6 +294,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
+			DisplayAddComponentEntry<CAnimator>("Animator");
 			ImGui::EndPopup();
 		}
 
@@ -505,6 +505,8 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 				DrawIntControl("Layer", component.layer, -1, 10);
 			});
+
+		DrawComponentGUI<CAnimator>("Animator", m_InspectedEntity, [](auto& component) {});
 
 		DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_InspectedEntity, [](auto& component)
 			{

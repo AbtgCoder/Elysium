@@ -10,7 +10,8 @@ enum class AssetType : uint16_t
 	//Texture,
 	Scene,
 	Texture2D,
-	SpriteSheet
+	SpriteSheet,
+	AnimationClip // or animation clip 2d or animation or animation 2d ??
 };
 
 std::string_view AssetTypeToString(AssetType type);

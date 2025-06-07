@@ -7,6 +7,8 @@
 
 #include "Scene/SceneCamera.h"
 
+#include "Animation/AnimationController.h"
+
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -107,6 +109,16 @@ public:
 
 	CCamera() = default;
 	CCamera(const CCamera&) = default;
+};
+
+class CAnimator : public Component
+{
+public:
+	AnimationController Controller;
+
+	CAnimator() = default;
+	CAnimator(const AnimationController& controller)
+		: Controller(controller) {}
 };
 
 // forward declaration

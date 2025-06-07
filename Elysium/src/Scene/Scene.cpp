@@ -84,7 +84,8 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 			CPhysicsMaterial,
 			CJoint,
 			CCamera,
-			CNativeScriptComponent
+			CNativeScriptComponent,
+			CAnimator
 		>(e, runtimeEntity);
 
 	}
@@ -536,6 +537,16 @@ void Scene::OnUpdateRuntime(float dt)
 			}
 
 		}
+		
+		// Animation
+		for (auto e : m_entityManager.GetEntities())
+		{
+			if (e.hasComponent<CAnimator>())
+			{
+				auto& animController = e.getComponent<CAnimator>().Controller;
+				animController.Update(dt);
+			}
+		}
 	}
 
 
@@ -572,14 +583,34 @@ void Scene::OnUpdateRuntime(float dt)
 				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
 			}
 
-			if (entity.hasComponent<CSpriteRenderer>())
+			bool renderSpriteFromSpriteRenderer = true;
+			if (entity.hasComponent<CAnimator>())
+			{
+				auto& animController = entity.getComponent<CAnimator>().Controller;
+
+				if (animController.m_States.contains(animController.m_CurrentState))
+				{
+					const auto& clip = animController.m_States.at(animController.m_CurrentState).Clip;
+					if (clip && clip->m_SpriteSheetTexture)
+					{
+						renderSpriteFromSpriteRenderer = false;
+
+						auto animFrame = animController.GetCurrentFrame();
+
+						// draw quad with texture and frames's uv coordinates
+						Renderer2D::DrawQuad(transform.GetTransform(), clip->m_SpriteSheetTexture, glm::vec4(1.0f), animFrame.UVmin, animFrame.UVMax, (int)entity.id());
+					}
+				}
+
+			}
+			if (entity.hasComponent<CSpriteRenderer>() && renderSpriteFromSpriteRenderer)
 			{
 				auto& src = entity.getComponent<CSpriteRenderer>();
 
 				if (src.texture != 0)
 				{
 					std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
-					Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), (int)entity.id());
+					Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f),(int)entity.id());
 				}
 				else
 				{
@@ -602,6 +633,8 @@ void Scene::OnUpdateEditor(EditorCamera& camera)
 {
 	// Update transforms..
 	UpdateTransforms();
+
+	//TODO: maybe need some way to play animations in editing mode...
 
 	// Render Scene
 	RenderScene(camera);

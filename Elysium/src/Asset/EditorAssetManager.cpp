@@ -13,7 +13,8 @@
 static std::map<std::filesystem::path, AssetType> s_AssetExtensionMap = {
 	{".elysium", AssetType::Scene},
 	{".png", AssetType::Texture2D},
-	{".esmspritesheet", AssetType::SpriteSheet}
+	{".esmspritesheet", AssetType::SpriteSheet},
+	{".esmanim", AssetType::AnimationClip}
 };
 
 static AssetType GetAssetTypeFromFileExtension(const std::filesystem::path& extension)
@@ -120,6 +121,7 @@ std::shared_ptr<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 		if (!asset)
 		{
 			// log error: asset import failed
+			return nullptr;
 		}
 		m_LoadedAssets[handle] = asset;
 	}

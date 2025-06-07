@@ -287,8 +287,67 @@ void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color, in
 
 void Renderer2D::DrawQuad(const glm::mat4& transform, const std::shared_ptr<Texture2D> texture, const glm::vec4& tintColor, int entityID)
 {
+	DrawQuad(transform, texture, tintColor, { 0.0f, 0.0f }, { 1.0f, 1.0f }, entityID);
+
+#if 0
+
 	constexpr size_t quadVertexCount = 4;
 	constexpr glm::vec2 textureCoords[] = { {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f} };
+
+	float textureIndex = 0.0f;
+	for (uint32_t i = 1; i < s_RenderData.TextureSlotIndex; i++)
+	{
+		if (*s_RenderData.TextureSlots[i] == *texture) // we wont create another sampler if we are just using the same texture, we just upload it once and then use that texture wherever needed
+		{
+			textureIndex = (float)i;
+			break;
+		}
+	}
+
+	if (textureIndex == 0.0f)
+	{
+		textureIndex = (float)s_RenderData.TextureSlotIndex;
+		s_RenderData.TextureSlots[s_RenderData.TextureSlotIndex] = texture;
+		s_RenderData.TextureSlotIndex++;
+	}
+
+	//s_RenderData.TextureSlots[1] = texture;
+
+	float texWidth = (float)texture->GetWidth();
+	float texHeight = (float)texture->GetHeight();
+
+	float worldWidth = texWidth / s_RenderData.PixelsPerUnit; // convert texture width to world units
+	float worldHeight = texHeight / s_RenderData.PixelsPerUnit; // convert texture height to world units
+
+	glm::mat4 scaledTransform = transform * glm::scale(glm::mat4(1.0f), glm::vec3(worldWidth, worldHeight, 1.0f));
+
+	for (size_t i = 0; i < quadVertexCount; i++)
+	{
+		// set the data for each quad vertex
+		s_RenderData.QuadVertexBufferPtr->Position = scaledTransform * s_RenderData.QuadVertexPositions[i];
+		s_RenderData.QuadVertexBufferPtr->Color = tintColor;
+		s_RenderData.QuadVertexBufferPtr->TexCoord = textureCoords[i];
+		s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
+
+		// set entity id
+		s_RenderData.QuadVertexBufferPtr->entityID = entityID;
+
+		// update the pointer to the next position in the quad vertex array
+		s_RenderData.QuadVertexBufferPtr++;
+	}
+
+	s_RenderData.QuadIndexCount += 6;
+
+	// update stats
+	s_RenderData.Stats.QuadCount++;
+
+#endif
+}
+
+void Renderer2D::DrawQuad(const glm::mat4& transform, const std::shared_ptr<Texture2D> texture, const glm::vec4& tintColor, const glm::vec2& uvMin, const glm::vec2& uvMax, int entityID)
+{
+	constexpr size_t quadVertexCount = 4;
+	glm::vec2 textureCoords[] = { {uvMin.x, uvMin.y}, {uvMax.x, uvMin.y}, {uvMax.x, uvMax.y}, {uvMin.x, uvMax.y} };
 
 	float textureIndex = 0.0f;
 	for (uint32_t i = 1; i < s_RenderData.TextureSlotIndex; i++)

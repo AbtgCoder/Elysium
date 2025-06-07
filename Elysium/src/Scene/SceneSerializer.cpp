@@ -3,7 +3,8 @@
 #include "Core/UUID.h"
 #include "Project/Project.h"
 
-#include <yaml-cpp/yaml.h>
+#include "Asset/AnimationImporter.h"
+#include "Asset/AssetManager.h"
 
 #include <fstream>
 
@@ -119,7 +120,7 @@ SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
 {
 }
 
-static void SerializeEntity(YAML::Emitter& out, Entity entity)
+void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 {
 	out << YAML::BeginMap; // Entity
 	out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<CId>().id;
@@ -255,21 +256,32 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndMap;
 	}
 
-	//if (entity->hasComponent<CAnimation>())
-	//{
-	//	out << YAML::Key << "Animation";
-	//	out << YAML::BeginMap;
-	//
-	//	auto& ac = entity->getComponent<CAnimation>();
-	//	out << YAML::Key << "Texture" << YAML::Value << ac.animation.getName();
-	//	out << YAML::Key << "Speed" << YAML::Value << ac.animSpeed;
-	//	out << YAML::Key << "Frames" << YAML::Value << ac.frameCount;
-	//	out << YAML::Key << "Repeatable" << YAML::Value << ac.repeat;
-	//	out << YAML::Key << "Layer" << YAML::Value << ac.layer;
-	//
-	//	out << YAML::EndMap;
-	//}
-	
+	if (entity.hasComponent<CAnimator>())
+	{
+		out << YAML::Key << "Animator";
+		out << YAML::BeginMap;
+
+		auto& animController = entity.getComponent<CAnimator>().Controller;
+
+		out << YAML::Key << "CurrentState" << YAML::Value << animController.m_CurrentState;
+
+		out << YAML::Key << "AnimationStates" << YAML::BeginSeq;
+		for (auto [stateName, animState] : animController.m_States)
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "Name" << YAML::Value << stateName;
+			// when saving the scene, save the animation clip as well at its proper location..TODO: maybe find a better way to handle this
+			AnimationImporter::SaveAnimationClip(animState.Clip, Project::GetActive()->GetEditorAssetManager()->GetFilePath(animState.Clip->Handle));
+			out << YAML::Key << "AnimationClipHandle" << YAML::Value << animState.Clip->Handle; //NOTE: this should always be a valid asset handle, as whenever we add the clip, we always import it as an asset as well...
+
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
+		out << YAML::EndMap;
+	}
+
 	if (entity.hasComponent<CCircleCollider>())
 	{
 		out << YAML::Key << "CircleCollider";
@@ -484,6 +496,29 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 					src.texture = spriteRendererComponent["TextureHandle"].as<AssetHandle>();
 				}
 				src.layer = spriteRendererComponent["Layer"].as<int>();
+			}
+
+			auto animatorComponent = entity["Animator"];
+			if (animatorComponent)
+			{
+				auto& animComponent = deserializedEntity.addComponent<CAnimator>();
+
+				AnimationController animController;
+				animController.m_CurrentState = animatorComponent["CurrentState"].as<std::string>();
+
+				auto animStates = animatorComponent["AnimationStates"];
+				if (animStates)
+				{
+					for (auto animState : animStates)
+					{
+						animController.AddState(
+							animState["Name"].as<std::string>(),
+							AssetManager::GetAsset<AnimationClip>(animState["AnimationClipHandle"].as<AssetHandle>())
+						);
+					}
+				}
+
+				animComponent.Controller = animController;
 			}
 
 			auto circleComponent = entity["CircleShape"];

@@ -8,7 +8,9 @@
 
 std::shared_ptr<Texture2D> TextureImporter::ImportTexture2D(AssetHandle handle, const AssetMetadata& metadata)
 {
-	return LoadTexture2D(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	auto texture = LoadTexture2D(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	texture->Handle = handle;
+	return texture;
 }
 
 std::shared_ptr<Texture2D> TextureImporter::LoadTexture2D(const std::filesystem::path& path)

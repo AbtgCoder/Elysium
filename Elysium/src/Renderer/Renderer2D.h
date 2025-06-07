@@ -21,6 +21,8 @@ public:
 
 	static void DrawQuad(const glm::mat4& transform, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
 	static void DrawQuad(const glm::mat4& transform, const std::shared_ptr<Texture2D> texture, const glm::vec4& tintColor = glm::vec4(1.0f), int entityID = -1);
+	static void DrawQuad(const glm::mat4& transform, const std::shared_ptr<Texture2D> texture, const glm::vec4& tintColor = glm::vec4(1.0f), const glm::vec2& uvMin = glm::vec2(0.0f, 0.0f), const glm::vec2& uvMax = glm::vec2(1.0f, 1.0f), int entityID = -1);
+
 
 	static void DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
 

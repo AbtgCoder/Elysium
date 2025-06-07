@@ -79,6 +79,13 @@ Entities:
     SpriteRenderer:
       TextureHandle: 6392853097170261536
       Layer: 0
+    Animator:
+      CurrentState: run
+      AnimationStates:
+        - Name: run
+          AnimationClipHandle: 2125454497768711909
+        - Name: jump
+          AnimationClipHandle: 4015087165318153660
     AABB:
       Offset: [0, 0]
       Size: [60, 73]

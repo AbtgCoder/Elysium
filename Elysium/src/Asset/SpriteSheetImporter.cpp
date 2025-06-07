@@ -5,7 +5,9 @@
 
 std::shared_ptr<SpriteSheet> SpriteSheetImporter::ImportSpriteSheet(AssetHandle handle, const AssetMetadata& metadata)
 {
-	return LoadSpriteSheet(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	auto ss = LoadSpriteSheet(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	ss->Handle = handle;
+	return ss;
 }
 
 std::shared_ptr<SpriteSheet> SpriteSheetImporter::LoadSpriteSheet(const std::filesystem::path& path)

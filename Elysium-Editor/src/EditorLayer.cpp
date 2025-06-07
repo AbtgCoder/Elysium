@@ -228,6 +228,7 @@ void EditorLayer::OnImGuiRender()
 	m_LoggerPanel.OnImGuiRender();
 	m_SpriteSheetEditorPanel.OnImGuiRender();
 	m_AssetManagerPanel.OnImGuiRender();
+	m_AnimationPanel.OnImGuiRender();
 
 	// Viewport 
 	ImGui::Begin("Viewport");
@@ -341,6 +342,10 @@ void EditorLayer::OnImGuiRender()
 			ImGui::PopStyleVar(2);
 		}
 
+		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+		m_AnimationPanel.SetInspectedEntity(m_inspectedEntity); //TODO: doing this every frame seems really bad.. need a way to set this from the scene hierarchy panel...
+
+
 		// Gizmos
 		{
 			//ImGuizmo::SetOrthographic(false);
@@ -363,7 +368,8 @@ void EditorLayer::OnImGuiRender()
 				glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
 				glm::value_ptr(gridModelMatrix), 100.0f);
 
-			m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+
+
 
 			if (m_inspectedEntity && m_GizmoType != -1)
 			{
@@ -558,6 +564,7 @@ bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
 		if (m_ViewportHovered && !ImGuizmo::IsOver() && !Input::IsKeyPressed(Key::LeftAlt))
 		{
 			m_SceneHierarchyPanel.SetInspectedEntity(m_HoveredEntity);
+			m_AnimationPanel.SetInspectedEntity(m_HoveredEntity);
 		}
 	}
 	return false;

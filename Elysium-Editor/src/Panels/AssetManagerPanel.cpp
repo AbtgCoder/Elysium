@@ -29,7 +29,8 @@ void AssetManagerPanel::OnImGuiRender()
 		AssetType::None,
 		AssetType::Scene,
 		AssetType::Texture2D,
-		AssetType::SpriteSheet
+		AssetType::SpriteSheet,
+		AssetType::AnimationClip
 	};
 
 	const char* currentTypeStr = AssetTypeToString(selectedType).data();

@@ -15,7 +15,7 @@ struct ProjectConfig
 	std::filesystem::path AssetDirectory; // relative to ProjectDirectory
 	std::filesystem::path AssetRegistryPath; // relative to AssetDirectory
 
-	AssetHandle lastOpenedScene; // for editor only (maybe find a better way to do this)
+	AssetHandle lastOpenedScene; // for editor only (TODO: maybe find a better way to do this)
 };
 
 class Project

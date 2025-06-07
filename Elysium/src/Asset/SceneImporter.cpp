@@ -5,7 +5,9 @@
 
 std::shared_ptr<Scene> SceneImporter::ImportScene(AssetHandle handle, const AssetMetadata& metadata)
 {
-	return LoadScene(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	auto scene = LoadScene(Project::GetActiveAssetDirectory() / metadata.FilePath);
+	scene->Handle = handle;
+	return scene;
 }
 
 std::shared_ptr<Scene> SceneImporter::LoadScene(const std::filesystem::path& path)

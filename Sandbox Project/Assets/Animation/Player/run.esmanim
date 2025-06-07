@@ -1,0 +1,20 @@
+AnimationClip: run
+SpriteSheetTexture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runright.png
+Loop: true
+Frames:
+  - Frame: 0
+    UVMin: [0, 0]
+    UVMax: [0.25, 0.972222209]
+    Duration: 0.0799999982
+  - Frame: 1
+    UVMin: [0.25, 0]
+    UVMax: [0.5, 0.972222209]
+    Duration: 0.0833333358
+  - Frame: 2
+    UVMin: [0.5, 0]
+    UVMax: [0.75, 0.972222209]
+    Duration: 0.0833333358
+  - Frame: 3
+    UVMin: [0.75, 0]
+    UVMax: [1, 0.972222209]
+    Duration: 0.0833333358

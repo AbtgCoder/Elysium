@@ -39,4 +39,5 @@ private:
 
 	friend class SpriteSheetEditorPanel;
 	friend class SpriteSheetSerializer;
+	friend class AnimationPanel;
 };
