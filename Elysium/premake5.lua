@@ -44,7 +44,9 @@ project "Elysium"
             "%{IncludeDir.ImGui}",
             "%{IncludeDir.stb_image}",
             "%{IncludeDir.glm}",
-            "%{IncludeDir.ImGuizmo}"
+            "%{IncludeDir.ImGuizmo}",
+            "%{IncludeDir.mono}"
+
 
         }
         
@@ -58,13 +60,20 @@ project "Elysium"
 
             "opengl32",        -- OpenGL
 
+            "%{Library.mono}",
         }
 
 
         filter "system:windows"
             systemversion "latest"
             defines { "WINDOWS" }
-           -- links { "opengl32", "winmm", "gdi32" }
+            links 
+            {
+                "%{Library.WinSock}",
+                "%{Library.Winmm}",
+                "%{Library.WinVersion}",
+                "%{Library.BCrypt}"
+            }
 
         filter "configurations:Debug"
             defines { "DEBUG" }

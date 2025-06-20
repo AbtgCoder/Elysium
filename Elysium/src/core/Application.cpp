@@ -4,6 +4,8 @@
 #include "Renderer/RenderCommand.h"
 #include "Renderer/Renderer2D.h"
 
+#include "Scripting/ScriptEngine.h"
+
 #include "core/Logger.h"
 
 #include <GLFW/glfw3.h>
@@ -23,6 +25,9 @@ Application::Application(const std::string& name)
 	RenderCommand::Init();
 	Renderer2D::Init();
 
+	// initialize Script Engine
+	ScriptEngine::Init();
+
 	// create and push imgui layer
 	m_ImGuiLayer = new ImGuiLayer();
 	PushOverlay(m_ImGuiLayer);
@@ -32,6 +37,8 @@ Application::Application(const std::string& name)
 Application::~Application()
 {
 	Renderer2D::Shutdown();
+
+	ScriptEngine::Shutdown();
 }
 
 void Application::PushLayer(Layer* layer)
