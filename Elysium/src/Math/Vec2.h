@@ -1,6 +1,8 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include <ostream>
+
+#include <vector>
 
 class Vec2
 {
@@ -11,8 +13,6 @@ public:
 	Vec2() : x(0), y(0) {}
 	Vec2(float xin, float yin);
 	Vec2(const Vec2& v) = default;
-	Vec2(sf::Vector2f v);
-	Vec2(sf::Vector2i v);
 
 	void Set(float xin, float yin) { x = xin; y = yin; }
 

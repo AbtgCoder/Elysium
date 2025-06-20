@@ -3,11 +3,20 @@
 #include "Scene.h"
 
 #include "Asset/AssetManager.h"
-#include "Core/Texture.h"
+#include "Renderer/Texture.h"
 #include "Asset/TextureImporter.h"
+
+#include "Renderer/Renderer2D.h"
 
 #include "Scripts/RotateEntity.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
+#include <windows.h>
 
 // Pixels per meter. Box2D uses metric units, so we need to define a conversion
 #define PPM 30.0F
@@ -15,8 +24,6 @@
 #define DEG_PER_RAD 57.2957795F
 
 
-sf::Texture g_cameraIconTexture = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/CameraIcon2.png")->GetSFMLTexture();
-sf::Sprite g_cameraIconSprite = sf::Sprite(g_cameraIconTexture);
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -26,22 +33,6 @@ Scene::Scene()
 Scene::Scene(const std::string& name)
 	: m_Name(name)
 {
-	m_PhysicsRect.setFillColor(sf::Color::Transparent);
-	m_PhysicsRect.setOutlineColor(sf::Color::White);
-	m_PhysicsRect.setOutlineThickness(1);
-
-	m_PhysicsPoly.setFillColor(sf::Color::Transparent);
-	m_PhysicsPoly.setOutlineColor(sf::Color::White);
-	m_PhysicsPoly.setOutlineThickness(1);
-
-	m_CircleShape.setFillColor(sf::Color::Transparent);
-	//m_CircleShape.setOutlineColor(sf::Color::White);
-	//m_CircleShape.setOutlineThickness(1);
-	m_CircleShape.setPointCount(30);
-
-	m_RectangleShape.setFillColor(sf::Color::Transparent);
-	/*m_RectangleShape.setOutlineColor(sf::Color::White);
-	m_RectangleShape.setOutlineThickness(1);*/
 
 }
 
@@ -92,7 +83,9 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 			CRigidBody,
 			CPhysicsMaterial,
 			CJoint,
-			CCamera
+			CCamera,
+			CNativeScriptComponent,
+			CAnimator
 		>(e, runtimeEntity);
 
 	}
@@ -126,7 +119,7 @@ Entity Scene::AddEntityWithSprite(Vec2 pos, AssetHandle textureHandle)
 	entity.addComponent<CId>(Elysium::UUID());
 	entity.addComponent<CParent>();
 	entity.addComponent<CTag>("Tile");
-	entity.addComponent<CTransform>(pos);
+	entity.addComponent<CTransform>(glm::vec3(pos.x, pos.y, 0.0f));
 	entity.addComponent<CSpriteRenderer>();
 	entity.getComponent<CSpriteRenderer>().texture = textureHandle;
 	return entity;
@@ -148,7 +141,7 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		duplicateParentComponent.ParentID = newParentID.value();
 
 		// Add duplicate entity to the new parent's Children list
-		auto& newParent = GetEntityByUUID(newParentID.value());
+		auto newParent = GetEntityByUUID(newParentID.value());
 		newParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
 	else if (originalParentComponent.HasParent) {
@@ -157,7 +150,7 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		duplicateParentComponent.ParentID = originalParentComponent.ParentID;
 
 		// Add duplicate entity to the original parent's Children list
-		auto& originalParent = GetEntityByUUID(originalParentComponent.ParentID);
+		auto originalParent = GetEntityByUUID(originalParentComponent.ParentID);
 		originalParent.getComponent<CParent>().Children.push_back(duplicateEntity.getComponent<CId>().id);
 	}
 	else {
@@ -191,57 +184,24 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 }
 
 
-static bool IsInside(Vec2 pos, Entity e)
-{
-	sf::Vector2u s;
-	if (e.hasComponent<CSpriteRenderer>())
-	{
-		s = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture().getSize();
-	}
-	else if (e.hasComponent<CCircle>())
-	{
-		s.x = 2 * e.getComponent<CCircle>().radius;
-		s.y = 2 * e.getComponent<CCircle>().radius;
-	}
-	else if (e.hasComponent<CRectangle>())
-	{
-		s.x = e.getComponent<CRectangle>().size.x;
-		s.y = e.getComponent<CRectangle>().size.y;
-	}
-	else if (e.hasComponent<CCamera>())
-	{
-		s = g_cameraIconTexture.getSize() + sf::Vector2u(10.0f, 10.0f);
-	}
-	Vec2 ePos = e.getComponent<CTransform>().GlobalTranslation;
-	if (pos.x > ePos.x - s.x / 2 &&
-		pos.x < ePos.x + s.x / 2 &&
-		pos.y > ePos.y - s.y / 2 &&
-		pos.y < ePos.y + s.y / 2)
-	{
-		return true;
-	}
-	return false;
-}
-
-Entity Scene::GetEntityIfClicked(Vec2 mousePos)
-{
-	for (auto entity : m_entityManager.GetEntities())
-	{
-		if (IsInside(mousePos, entity))
-		{
-			return entity;
-		}
-	}
-
-	return {};
-}
-
 Entity Scene::GetEntityByUUID(Elysium::UUID id)
 {
 	//TODO: assert valid id probably
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.getComponent<CId>().id == id)
+		{
+			return e;
+		}
+	}
+}
+
+Entity Scene::GetEntityByEntityID(size_t id)
+{
+	//TODO: assert valid id probably
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.id() == id)
 		{
 			return e;
 		}
@@ -266,6 +226,40 @@ void Scene::DestroyEntity(Entity entity)
 	}
 
 	entity.destroy();
+}
+
+Camera Scene::GetPrimaryCamera()
+{
+	// Rendering
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& camera = e.getComponent<CCamera>();
+			if (camera.primary)
+			{
+				return camera.Camera;
+			}
+		}
+	}
+	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
+}
+
+glm::mat4 Scene::GetPrimaryCameraViewMatrix()
+{
+	// Rendering
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& camera = e.getComponent<CCamera>();
+			if (camera.primary)
+			{
+				return  glm::inverse(e.getComponent<CTransform>().GetTransform());
+			}
+		}
+	}
+	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
 }
 
 bool Scene::IsEntityUUIDValid(Elysium::UUID uuid)
@@ -293,6 +287,26 @@ std::vector<Entity>& Scene::GetAllPhysicsEntities()
 	return physicsEntities;
 }
 
+ScriptableEntity* TryLoadScript()
+{
+	std::string userScriptPath = "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/bin/Release-windows-x86_64/Sandbox/Sandbox.dll";
+	HMODULE library = LoadLibraryA(userScriptPath.c_str());
+	if (!library)
+	{
+		Logger::Log("couldnt load game scripts!", "Scene", LOG_TYPE::CRITICAL);
+		return nullptr;
+	}
+	using ScriptCreateFunc = ScriptableEntity* (*)();
+	std::string funcName = "CreateScript";
+	auto createFunc = (ScriptCreateFunc)GetProcAddress(library, funcName.c_str());
+	if (!createFunc)
+	{
+		Logger::Log("failed to find CreateScript function in the game scripts..", "Scene", LOG_TYPE::CRITICAL);
+		return nullptr;
+	}
+	return createFunc();
+}
+
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");
@@ -307,8 +321,10 @@ void Scene::OnRuntimeStart()
 		if (e.hasComponent<CNativeScriptComponent>())
 		{
 			auto& nsc = e.getComponent<CNativeScriptComponent>();
-			nsc.instance = nsc.InstantiateScript();
+			//nsc.instance = nsc.InstantiateScript();
+			nsc.instance = TryLoadScript();
 			nsc.instance->m_Entity = e;
+			nsc.instance->m_EntityManager = &m_entityManager;
 			nsc.instance->OnCreate();
 		}
 	}
@@ -323,8 +339,8 @@ void Scene::OnRuntimeStart()
 			auto& rb2d = e.getComponent<CRigidBody>();
 
 			PhysicsBody* body = new PhysicsBody();
-			body->m_position = { transform.GlobalTranslation.x / PPM, -1 * transform.GlobalTranslation.y / PPM };
-			body->m_rotation = transform.GlobalRotation / DEG_PER_RAD;
+			body->m_position = { transform.GlobalTranslation.x, transform.GlobalTranslation.y };
+			body->m_rotation = transform.GlobalRotation.z;
 		//	body->m_velocity = transform.velocity;
 		//	body->m_angularVelocity = transform.angularVelocity;
 			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
@@ -334,7 +350,7 @@ void Scene::OnRuntimeStart()
 			{
 				auto& bb2d = e.getComponent<CBoundingBox>();
 				PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x / PPM, bb2d.halfSize.y * transform.GlobalScale.y / PPM, bb2d.offset / PPM, 0.0f);
+				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x, bb2d.halfSize.y * transform.GlobalScale.y, bb2d.offset, 0.0f);
 				body->m_shape = boxShape;
 			}
 			else if (e.hasComponent<CPolygonCollider>())
@@ -345,7 +361,7 @@ void Scene::OnRuntimeStart()
 				for (size_t i = 0; i < vertices.size(); i++)
 				{
 					Vec2 point = vertices[i];
-					points.push_back({ point.x / PPM, -1 * point.y / PPM });
+					points.push_back({ point.x, point.y });
 				}
 				PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
 				polyShape->Set(points);
@@ -355,7 +371,7 @@ void Scene::OnRuntimeStart()
 			{
 				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
 				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
-				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x / PPM;
+				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x;
 				body->m_shape = circleShape;
 			}
 
@@ -397,9 +413,9 @@ void Scene::OnRuntimeStart()
 			{
 				continue;
 			}
-			Vec2 anchorWorldPos = jointComponent.anchorPos + e.getComponent<CTransform>().GlobalTranslation;
+			Vec2 anchorWorldPos = jointComponent.anchorPos + Vec2(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
-			joint->Set(body1, body2, Vec2(anchorWorldPos.x / PPM, - anchorWorldPos.y / PPM));
+			joint->Set(body1, body2, Vec2(anchorWorldPos.x, anchorWorldPos.y));
 			// TODO: add softness & bias to the joint component ??
 			joint->m_softness = 0.00098884f;
 			joint->m_biasFactor = 0.130132;
@@ -420,7 +436,9 @@ void Scene::OnRuntimeStop()
 		{
 			auto& nsc = e.getComponent<CNativeScriptComponent>();
 			nsc.instance->OnDestroy();
-			nsc.DestroyScript(&nsc);
+			delete nsc.instance;
+			nsc.instance = nullptr;
+			//nsc.DestroyScript(&nsc);
 		}
 	}
 
@@ -444,9 +462,9 @@ void Scene::UpdateTransforms()
 			continue;
 		}
 
-		Vec2 globalPosition = transform.Translation;
-		float globalOrientation = transform.Rotation;
-		Vec2 globalScale = transform.Scale;
+		glm::vec3 globalPosition = transform.Translation;
+		glm::vec3 globalOrientation = transform.Rotation;
+		glm::vec3 globalScale = transform.Scale;
 
 		auto parentComponent = e.getComponent<CParent>();
 		while (parentComponent.HasParent)
@@ -464,7 +482,7 @@ void Scene::UpdateTransforms()
 	}
 }
 
-void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
+void Scene::OnUpdateRuntime(float dt)
 {
 	if (!m_IsPaused || m_StepFrames-- > 0)
 	{
@@ -511,29 +529,39 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 					{
 						//TODO: fix this for when entity e has a parent....
 						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-					//	e.getComponent<CTransform>().velocity = body->m_velocity;
-						e.getComponent<CTransform>().Translation = { body->m_position.x * PPM, -1 * body->m_position.y * PPM };
-						e.getComponent<CTransform>().Rotation = body->m_rotation * DEG_PER_RAD;
-					//	e.getComponent<CTransform>().angularVelocity = body->m_angularVelocity;
+						auto& transform = e.getComponent<CTransform>();
+						transform.Translation.x = body->m_position.x;
+						transform.Translation.y = body->m_position.y;
+						transform.Rotation.z = body->m_rotation;
 					}
 				}
 			}
 
 		}
+		
+		// Animation
+		for (auto e : m_entityManager.GetEntities())
+		{
+			if (e.hasComponent<CAnimator>())
+			{
+				auto& animController = e.getComponent<CAnimator>().Controller;
+				animController.Update(dt);
+			}
+		}
 	}
 
 
 	// Rendering
-	CCamera* mainCamera = nullptr;
+	Camera* mainCamera = nullptr;
 	CTransform cameraTransform;
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.hasComponent<CCamera>())
 		{
-			auto camera = e.getComponent<CCamera>();
+			auto& camera = e.getComponent<CCamera>();
 			if (camera.primary)
 			{
-				mainCamera = &camera;
+				mainCamera = &camera.Camera;
 				cameraTransform = e.getComponent<CTransform>();
 				break;
 			}
@@ -542,17 +570,57 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 
 	if (mainCamera)
 	{
-		m_cameraView.setSize(mainCamera->size.x, mainCamera->size.y);
-		m_cameraView.setCenter(cameraTransform.GlobalTranslation.x, cameraTransform.GlobalTranslation.y);
-		m_cameraView.zoom(mainCamera->zoom);
-		m_cameraView.setRotation(cameraTransform.GlobalRotation);
-		renderTexture.setView(m_cameraView);
-		renderTexture.clear(mainCamera->backgroundColor);
-
 		UpdateTransforms();
 
-		RenderScene(renderTexture);
+		Renderer2D::BeginScene(*mainCamera, cameraTransform.GetTransform());
 
+		for (auto entity : m_entityManager.GetEntities())
+		{
+			auto transform = entity.getComponent<CTransform>();
+
+			if (entity.hasComponent<CRectangle>())
+			{
+				auto rect = entity.getComponent<CRectangle>();
+				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+			}
+
+			bool renderSpriteFromSpriteRenderer = true;
+			if (entity.hasComponent<CAnimator>())
+			{
+				auto& animController = entity.getComponent<CAnimator>().Controller;
+
+				if (animController.m_States.contains(animController.m_CurrentState))
+				{
+					const auto& clip = animController.m_States.at(animController.m_CurrentState).Clip;
+					if (clip && clip->m_SpriteSheetTexture)
+					{
+						renderSpriteFromSpriteRenderer = false;
+
+						auto animFrame = animController.GetCurrentFrame();
+
+						// draw quad with texture and frames's uv coordinates
+						Renderer2D::DrawQuad(transform.GetTransform(), clip->m_SpriteSheetTexture, glm::vec4(1.0f), animFrame.UVmin, animFrame.UVMax, (int)entity.id());
+					}
+				}
+
+			}
+			if (entity.hasComponent<CSpriteRenderer>() && renderSpriteFromSpriteRenderer)
+			{
+				auto& src = entity.getComponent<CSpriteRenderer>();
+
+				if (src.texture != 0)
+				{
+					std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
+					Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f),(int)entity.id());
+				}
+				else
+				{
+					Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+				}
+			}
+		}
+
+		Renderer2D::EndScene();
 	}
 	else
 	{
@@ -562,63 +630,33 @@ void Scene::OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt)
 	
 }
 
-void Scene::OnUpdateEditor(sf::RenderTexture& renderTexture)
+void Scene::OnUpdateEditor(EditorCamera& camera)
 {
 	// Update transforms..
 	UpdateTransforms();
 
+	//TODO: maybe need some way to play animations in editing mode...
+
 	// Render Scene
-	RenderScene(renderTexture);
+	RenderScene(camera);
 }
 
-void Scene::LaunchBomb(sf::RenderTexture& renderTexture)
+void Scene::OnViewportResize(uint32_t width, uint32_t height)
 {
-#if 0
-	if (!m_bomb)
-	{
-		m_bomb = AddEntity("runtime_bomb");
-		auto& rb2d = m_bomb.addComponent<CRigidBody>();
-		auto& transform = m_bomb.getComponent<CTransform>();
-		int xmin = 900, xmax = 1500, ymin = 100, ymax = 400;
-		transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
-		transform.angle = rand() % (360 + 1);
-		int vmin = -6, vmax = 6;
-		transform.velocity = Vec2(rand() % (vmax - vmin + 1) +vmin, rand() % (vmax - vmin + 1) + vmin);
-		transform.angularVelocity = rand() % (vmax*2 - vmin*2 + 1) + vmin*2;
-		auto& rectangle = m_bomb.addComponent<CRectangle>();
-		rectangle.color = sf::Color(0, 255, 0, 255);
-		auto& bb2d = m_bomb.addComponent<CBoundingBox>(rectangle.size);
-		
-		PhysicsBody* body = new PhysicsBody();
-		body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
-		body->m_rotation = transform.angle / DEG_PER_RAD;
-		body->m_velocity = transform.velocity;
-		body->m_angularVelocity = transform.angularVelocity;
-		body->m_type = PhysicsBodyType::dynamicBody;
-		rb2d.runtimeBody = body;
-
-		PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-		boxShape->SetAsBox(bb2d.halfSize.x * transform.scale.x / PPM, bb2d.halfSize.y * transform.scale.y / PPM, bb2d.offset / PPM, 0.0f);
-		body->m_shape = boxShape;
-		body->ResetMassData(5.7f);
-
-		m_PhysicsWorld->AddBody(body);
+	if (m_ViewportWidth == width && m_ViewportHeight == height)
 		return;
+
+	m_ViewportWidth = width;
+	m_ViewportHeight = height;
+
+	for (auto e : m_entityManager.GetEntities())
+	{
+		if (e.hasComponent<CCamera>())
+		{
+			auto& cameraComponent = e.getComponent<CCamera>();
+			cameraComponent.Camera.SetViewportSize(width, height);
+		}
 	}
-	auto& transform = m_bomb.getComponent<CTransform>();
-	int xmin = 100, xmax = 1000, ymin = 200, ymax = 800;
-	transform.pos = Vec2(rand() % (xmax - xmin + 1) + xmin, rand() % (ymax - ymin + 1) + ymin);
-	transform.angle = rand() % (360 + 1);
-	int vmin = -6, vmax = 6;
-	transform.velocity = Vec2(rand() % (vmax - vmin + 1) + vmin, rand() % (vmax - vmin + 1) + vmin);
-	transform.angularVelocity = rand() % (vmax * 2 - vmin * 2 + 1) + vmin * 2;
-	auto& rb2d = m_bomb.getComponent<CRigidBody>();
-	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-	body->m_position = { transform.pos.x / PPM, -1 * transform.pos.y / PPM };
-	body->m_rotation = transform.angle / DEG_PER_RAD;
-	body->m_velocity = transform.velocity;
-	body->m_angularVelocity = transform.angularVelocity;
-#endif
 }
 
 void Scene::Step(int frames)
@@ -626,9 +664,40 @@ void Scene::Step(int frames)
 	m_StepFrames = frames;
 }
 
-void Scene::RenderScene(sf::RenderTexture& renderTexture)
+void Scene::RenderScene(EditorCamera& camera)
 {
+	Renderer2D::BeginScene(camera);
 
+	for (auto entity : m_entityManager.GetEntities())
+	{
+		auto transform = entity.getComponent<CTransform>();
+
+		if (entity.hasComponent<CRectangle>())
+		{
+			auto rect = entity.getComponent<CRectangle>();
+			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CSpriteRenderer>())
+		{
+			auto& src = entity.getComponent<CSpriteRenderer>();
+
+			if (src.texture != 0)
+			{
+				std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
+				Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), (int)entity.id());
+			}
+			else
+			{
+				Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+			}
+		}
+	}
+
+	Renderer2D::EndScene();
+
+
+#if 0
 	CCamera* mainCamera = nullptr;
 	CTransform cameraTransform;
 	for (auto e : m_entityManager.GetEntities())
@@ -644,6 +713,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 			}
 		}
 	}
+
 
 	for (auto e : m_entityManager.GetEntities())
 		{
@@ -691,12 +761,12 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 				{
 					if (e.getComponent<CSpriteRenderer>().texture != 0)
 					{
-						/*m_Texture = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
+						m_Texture = AssetManager::GetAsset<Texture>(e.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 						sf::Sprite sprite = sf::Sprite(m_Texture);
 						sprite.setOrigin(m_Texture.getSize().x / 2.0f, m_Texture.getSize().y / 2.0f);
 						sprite.setPosition(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
 						sprite.setRotation(-1 * e.getComponent<CTransform>().GlobalRotation);
-						renderTexture.draw(sprite);*/
+						renderTexture.draw(sprite);
 					}
 				}
 				else if (e.hasComponent<CCircle>())
@@ -850,5 +920,7 @@ void Scene::RenderScene(sf::RenderTexture& renderTexture)
 		renderTexture.draw(m_RectangleShape);
 	}
 	
+
+#endif
 	
 }

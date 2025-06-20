@@ -23,13 +23,15 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [X] Basic 2D Rigidbody physics
 - [X] Hinge Joint
 
-  
-### Features currently in development
-- [ ] Basic Scripting Support
-- [ ] Prefabs
-- [ ] Editor Improvements
+### Animation System  
+- [X] Add and play simple 2d sprite sheet based Animation
+- [ ] Animation state Transitions
+- [ ] Multiple animation tracks: position, scale, etc
+- [ ] Event support
+- [ ] multiple animation layers support
+- [ ] Enhanced editing tools which make creating Animations easier
 
 ### Features to come
-- [ ] Complete 2D rendering using Vulkan and/or OpenGL (currently all graphics are being rendered using SFMl, plan is to get rid of that completely)
 - [ ] Complete Scripting Capabilities
-
+- [ ] Prefabs
+- [ ] Upgraded Physics engine capabilities, with proper contact management, contact listeners, broadphase detection, raycast etc...

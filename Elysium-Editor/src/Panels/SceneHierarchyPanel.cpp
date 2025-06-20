@@ -1,11 +1,14 @@
 #include "SceneHierarchyPanel.h"
 
-#include "Asset/AssetManager.h"
-#include "core/Texture.h"
 #include "core/Logger.h"
+
+#include "Asset/AssetManager.h"
+#include "Renderer/Texture.h"
 #include "Physics/graham_scan.h"
 #include "Utils/StringUtils.h"
 #include "../Helper/ImGuiHelper.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& Scene)
 {
@@ -64,6 +67,7 @@ void SceneHierarchyPanel::DrawComponentGUI(const std::string& name, Entity entit
 	}
 }
 
+#if 0
 std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity e)
 {
 	sf::Texture tex = entityTex; 
@@ -131,6 +135,7 @@ std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity 
 	return colliderVertices;
 	
 }
+#endif
 
 std::vector<Vec2> generatePolygonColliderVertices(int numSides, float radius)
 {
@@ -198,7 +203,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 		}
 
 		// Right click on blank space
-		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_NoOpenOverItems))
 		{
 			Entity entity;
 			if (ImGui::MenuItem("Create Empty Entity"))
@@ -231,6 +236,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 
 	ImGui::Begin("Entity Inspector");
+
 	if (m_InspectedEntity)
 	{
 		auto& tag = m_InspectedEntity.getComponent<CTag>().tag;
@@ -255,12 +261,12 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CTransform>("Transform");
 			if (m_InspectedEntity.hasComponent<CSpriteRenderer>())
 			{
-				if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
+				/*if (m_InspectedEntity.getComponent<CSpriteRenderer>().texture != 0)
 				{
 					sf::Texture tex = AssetManager::GetAsset<Texture>(m_InspectedEntity.getComponent<CSpriteRenderer>().texture)->GetSFMLTexture();
 					DisplayAddComponentEntry<CBoundingBox>("Box Collider 2D", Vec2(tex.getSize().x, tex.getSize().y));
 					DisplayAddComponentEntry<CPolygonCollider>("Polygon Collider 2D", Vec2(tex.getSize().x, tex.getSize().y), generatePolygonColliderVertices(tex, m_InspectedEntity));
-				}
+				}*/
 			}
 			else if (m_InspectedEntity.hasComponent<CCircle>())
 			{
@@ -288,6 +294,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CSpriteRenderer>("Sprite Renderer");
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
+			DisplayAddComponentEntry<CAnimator>("Animator");
 			ImGui::EndPopup();
 		}
 
@@ -296,33 +303,70 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CTransform>("Transform", m_InspectedEntity, [](auto& component)
 			{
-				DrawVec2Control("Translation", component.Translation, 0.0f, 80.0f);
-				DrawFloatControl("Rotation", component.Rotation, 0.0f, 360.0f);
-			//	DrawVec2Control("Velocity", component.velocity, 0.0f, 80.0f);
-				DrawVec2Control("Scale", component.Scale, 0.0f, 80.0f);
-				//DrawFloatControl("Angular velocity", component.angularVelocity, -100.0f, 100.0f, 130.0f);
+				DrawVec3Control("Translation", component.Translation, 0.0f, 100.0f);
+				glm::vec3 rotation = glm::degrees(component.Rotation);
+				DrawVec3Control("Rotation", rotation, 0.0f, 100.0f);
+				component.Rotation = glm::radians(rotation);
+				DrawVec3Control("Scale", component.Scale, 1.0f, 100.0f);
 			});
 
 		DrawComponentGUI<CCamera>("Camera", m_InspectedEntity, [](auto& component)
 			{
-				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
-				DrawFloatControl("Zoom", component.zoom, 0.5f, 2.0f);
+				auto& camera = component.Camera;
+
 				ImGui::Checkbox("Primary", &component.primary);
 
-				float colorArray[4];
-				colorArray[0] = component.backgroundColor.r / 255.0f;
-				colorArray[1] = component.backgroundColor.g / 255.0f;
-				colorArray[2] = component.backgroundColor.b / 255.0f;
-				colorArray[3] = component.backgroundColor.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
+				const char* projectionTypeStrings[] = { "Perspective", "Orthographic" };
+				const char* currentProjectionTypeString = projectionTypeStrings[(int)camera.GetProjectionType()];
+				if (ImGui::BeginCombo("Projection", currentProjectionTypeString))
 				{
-					component.backgroundColor = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
+					for (int i = 0; i < 2; i++)
+					{
+						bool isSelected = currentProjectionTypeString == projectionTypeStrings[i];
+						if (ImGui::Selectable(projectionTypeStrings[i], isSelected))
+						{
+							currentProjectionTypeString = projectionTypeStrings[i];
+							camera.SetProjectionType((SceneCamera::ProjectionType)i);
+						}
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
 				}
+
+				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+				{
+					float perspectiveVerticalFov = glm::degrees(camera.GetPerspectiveVerticalFOV());
+					if (ImGui::DragFloat("Vertical FOV", &perspectiveVerticalFov))
+						camera.SetPerspectiveVerticalFOV(glm::radians(perspectiveVerticalFov));
+
+					float perspectiveNear = camera.GetPerspectiveNearClip();
+					if (ImGui::DragFloat("Near", &perspectiveNear))
+						camera.SetPerspectiveNearClip(perspectiveNear);
+
+					float perspectiveFar = camera.GetPerspectiveFarClip();
+					if (ImGui::DragFloat("Far", &perspectiveFar))
+						camera.SetPerspectiveFarClip(perspectiveFar);
+				}
+				
+				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+				{
+					float orthoSize = camera.GetOrthographicSize();
+					if (ImGui::DragFloat("Size", &orthoSize))
+						camera.SetOrthographicSize(orthoSize);
+
+					float orthoNear = camera.GetOrthographicNearClip();
+					if (ImGui::DragFloat("Near", &orthoNear))
+						camera.SetOrthographicNearClip(orthoNear);
+
+					float orthoFar = camera.GetOrthographicFarClip();
+					if (ImGui::DragFloat("Far", &orthoFar))
+						camera.SetOrthographicFarClip(orthoFar);
+				}
+
+
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.backgroundColor));
 			});
 
 		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 
@@ -331,58 +375,22 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 		DrawComponentGUI<CCircle>("Circle Shape", m_InspectedEntity, [](auto& component) 
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawFloatControl("Radius", component.radius, 0.0f, 200.0f);
 			});
 
 		DrawComponentGUI<CRectangle>("Rectangle Shape", m_InspectedEntity, [](auto& component)
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawVec2Control("Size", component.size, 0.0f, 80.0f);
 			});
 
 		DrawComponentGUI<CPolygon>("Polygon Shape", m_InspectedEntity, [](auto& component)
 			{
-				float colorArray[4];
-				colorArray[0] = component.color.r / 255.0f;
-				colorArray[1] = component.color.g / 255.0f;
-				colorArray[2] = component.color.b / 255.0f;
-				colorArray[3] = component.color.a / 255.0f;
-				if (ImGui::ColorEdit4("Color", colorArray))
-				{
-					component.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0] * 255),
-						static_cast<sf::Uint8>(colorArray[1] * 255),
-						static_cast<sf::Uint8>(colorArray[2] * 255),
-						static_cast<sf::Uint8>(colorArray[3] * 255)
-					);
-				}
+				ImGui::ColorEdit4("Color", glm::value_ptr(component.color));
+
 				DrawIntControl("Sides", component.sides, 3, 10);
 				DrawFloatControl("Size", component.size, 0.0f, 200.0f);
 			});
@@ -456,7 +464,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 				if (component.texture != 0)
 				{
 					if (AssetManager::IsAssetHandleValid(component.texture)
-						&& AssetManager::GetAssetType(component.texture) == AssetType::Texture)
+						&& AssetManager::GetAssetType(component.texture) == AssetType::Texture2D)
 					{
 						const std::filesystem::path& textureFilepath = Project::GetActive()->GetEditorAssetManager()->GetFilePath(component.texture);
 						label = textureFilepath.filename().string();
@@ -490,13 +498,15 @@ void SceneHierarchyPanel::OnImGuiRender()
 					}
 					else
 					{
-						// log warning: wrong asset type
+						Logger::Log("not a valid drag drop payload!", "editor layer", LOG_TYPE::WARNING);
 					}
 					ImGui::EndDragDropTarget();
 				}
 
 				DrawIntControl("Layer", component.layer, -1, 10);
 			});
+
+		DrawComponentGUI<CAnimator>("Animator", m_InspectedEntity, [](auto& component) {});
 
 		DrawComponentGUI<CBoundingBox>("Box Collider 2D", m_InspectedEntity, [](auto& component)
 			{
@@ -517,6 +527,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 					}
 				}
 			});
+
 
 	}
 

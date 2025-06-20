@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Project/Project.h"
-#include "Core/Texture.h"
+#include "Renderer/Texture.h"
 #include "ThumbnailCache.h"
 
 #include <filesystem>
@@ -23,8 +23,8 @@ private:
 	std::filesystem::path m_BaseDirectory;
 	std::filesystem::path m_CurrentDirectory;
 
-	std::shared_ptr<Texture> m_DirectoryIcon;
-	std::shared_ptr<Texture> m_FileIcon;
+	std::shared_ptr<Texture2D> m_DirectoryIcon;
+	std::shared_ptr<Texture2D> m_FileIcon;
 
 	std::string m_SearchQuery = "";
 

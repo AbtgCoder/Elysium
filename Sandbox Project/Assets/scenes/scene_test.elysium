@@ -11,19 +11,16 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [593, 571]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [593, 571]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-3.78999996, -1.69809341, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-3.78999996, -1.69809341, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
       Children: []
-    RectangleShape:
-      Size: [50, 50]
-      Color: [0, 255, 0, 255]
     SpriteRenderer:
       TextureHandle: 12438653369529251365
       Layer: 0
@@ -39,12 +36,12 @@ Entities:
     Tag:
       Tag: Tile1
     Transform:
-      Translation: [342.5, 531.5]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [342.5, 531.5]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-1.82476807, 0.09970662, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-1.82476807, 0.09970662, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -65,20 +62,16 @@ Entities:
         Elements: [[29, 31], [31, 29], [28, -31], [-31, -31], [-31, 28]]
     Rigidbody2D:
       BodyType: Static
-    Joint:
-      Entity1ID: 4163440874578799761
-      Entity2ID: 3835143888492085499
-      AnchorPosition: [0, 0]
   - Entity: 5365315938177892065
     Tag:
       Tag: Player
     Transform:
-      Translation: [224, 408.599365]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [224, 408.599365]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-4.45972824, 0.379045397, 3.63797881e-12]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-4.45972824, 0.379045397, 3.63797881e-12]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -86,6 +79,13 @@ Entities:
     SpriteRenderer:
       TextureHandle: 6392853097170261536
       Layer: 0
+    Animator:
+      CurrentState: run
+      AnimationStates:
+        - Name: run
+          AnimationClipHandle: 2125454497768711909
+        - Name: jump
+          AnimationClipHandle: 4015087165318153660
     AABB:
       Offset: [0, 0]
       Size: [60, 73]
@@ -93,12 +93,12 @@ Entities:
     Tag:
       Tag: Tile2
     Transform:
-      Translation: [103.000061, 471.500122]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [103.000061, 471.500122]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-0.442515343, 0.257940292, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-0.442515343, 0.257940292, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -118,12 +118,12 @@ Entities:
     Tag:
       Tag: Tile
     Transform:
-      Translation: [912.999939, 639.499878]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [912.999939, 639.499878]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [1.62863159, -2.08704376, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [1.62863159, -2.08704376, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -148,19 +148,19 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [506, 342]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [506, 342]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [2.18702126, 0.513198853, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [2.18702126, 0.513198853, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
       Children: [7923484610642854400]
     RectangleShape:
-      Size: [50, 50]
-      Color: [27, 167, 27, 255]
+      Size: [1, 1]
+      Color: [0.787273586, 0.852941155, 0.108708203, 255]
     AABB:
       Offset: [0, 0]
       Size: [50, 50]
@@ -170,12 +170,12 @@ Entities:
     Tag:
       Tag: Tile
     Transform:
-      Translation: [93.999939, 639.499878]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [93.999939, 639.499878]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [-0.304075211, -1.7143321, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [-0.304075211, -1.7143321, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
@@ -200,74 +200,95 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [324, 471.700012]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [324, 471.700012]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 10]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 10]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
       Children: []
     Camera:
-      Size: [705, 500]
-      Zoom: 2
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 100
       Primary: true
-      BackgroundColor: [49, 77, 121, 255]
+      BackgroundColor: [0.854901969, 0.572549045, 0.572549045, 0.631372571]
   - Entity: 7923484610642854400
     Tag:
       Tag: Circle
     Transform:
-      Translation: [99, -50]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [605, 292]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [2.18702126, 0.513198853, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: true
       ParentID: 11791852490085644340
       Children: []
     CircleShape:
       Radius: 22.1599998
-      Color: [255, 255, 255, 255]
+      Color: [27, 167, 27, 255]
   - Entity: 2476516049887498935
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [86, 341]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [86, 341]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [3.60569191, -1.35758591, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1.39123976, 1]
+      GlobalTranslation: [3.60569191, -1.35758591, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0
-      Children: [13890830768999544706]
+      Children: [13890830768999544706, 11192484903683650386]
     RectangleShape:
-      Size: [50, 50]
-      Color: [27, 167, 27, 255]
+      Size: [1, 1]
+      Color: [0.167483628, 0.617911279, 0.833333313, 255]
     AABB:
       Offset: [0, 0]
       Size: [50, 50]
-    Rigidbody2D:
-      BodyType: Dynamic
   - Entity: 13890830768999544706
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0, -87]
-      Rotation: 0
-      Scale: [1, 1]
-      GlobalTranslation: [86, 254]
-      GlobalRotation: 0
-      GlobalScale: [1, 1]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [3.60569191, -1.35758591, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: true
       ParentID: 2476516049887498935
       Children: []
     CircleShape:
       Radius: 22.1599998
-      Color: [255, 255, 255, 255]
+      Color: [27, 167, 27, 255]
+  - Entity: 11192484903683650386
+    Tag:
+      Tag: Empty Entity
+    Transform:
+      Translation: [1.38565063, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [4.99134254, -1.35758591, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1.39123976, 1]
+    ParentComponent:
+      HasParent: true
+      ParentID: 2476516049887498935
+      Children: []
+    RectangleShape:
+      Size: [0.400000006, 0.400000006]
+      Color: [1, 1, 1, 1]

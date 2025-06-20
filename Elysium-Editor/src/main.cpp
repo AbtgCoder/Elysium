@@ -9,7 +9,7 @@ public:
 	Editor(const std::string& name)
 		: Application(name)
 	{
-		changeLayer("Editor_Layer", std::make_shared<EditorLayer>(), true);
+		PushLayer(new EditorLayer());
 	}
 };
 

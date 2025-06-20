@@ -1,6 +1,7 @@
 #include "ThumbnailCache.h"
 
 #include "Asset/TextureImporter.h"
+#include "Asset/SpriteSheetImporter.h"
 
 #include <chrono>
 
@@ -11,7 +12,7 @@ ThumbnailCache::ThumbnailCache(std::shared_ptr<Project> project)
 	m_ThumbnailCachePath = m_Project->GetAssetDirectory() / "Thumbnail.cache";
 }
 
-std::shared_ptr<Texture> ThumbnailCache::GetOrCreateThumbnail(const std::filesystem::path& path)
+std::shared_ptr<Texture2D> ThumbnailCache::GetOrCreateThumbnail(const std::filesystem::path& path)
 {
 	// 1. Read file timestamp
 	// 2. Compare hashed timestamp with existing cached image (in memory first,TODO: then from cache file)
@@ -30,10 +31,22 @@ std::shared_ptr<Texture> ThumbnailCache::GetOrCreateThumbnail(const std::filesys
 	}
 	
 	//TODO: support other extensions...
-	if (path.extension() != ".png")
+	std::string fileExtension = path.extension().string();
+	if (fileExtension == ".png")
+	{
+		absolutePath = absolutePath;
+	}
+	else if (fileExtension == ".esmspritesheet")
+	{
+		auto spriteSheet = SpriteSheetImporter::LoadSpriteSheet(absolutePath);
+		absolutePath = spriteSheet->GetTexturePath();
+	}
+	else
+	{
 		return nullptr;
+	}
 
-	std::shared_ptr<Texture> texture = TextureImporter::LoadTexture(absolutePath);
+	std::shared_ptr<Texture2D> texture = TextureImporter::LoadTexture2D(absolutePath);
 	if (!texture)
 		return nullptr;
 

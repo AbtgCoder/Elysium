@@ -3,7 +3,8 @@
 #include "Core/UUID.h"
 #include "Project/Project.h"
 
-#include <yaml-cpp/yaml.h>
+#include "Asset/AnimationImporter.h"
+#include "Asset/AssetManager.h"
 
 #include <fstream>
 
@@ -29,6 +30,31 @@ namespace YAML
 			}
 			rhs.x = node[0].as<float>();
 			rhs.y = node[1].as<float>();
+			return true;
+		}
+	};
+
+	template<>
+	struct convert<glm::vec3>
+	{
+		static Node encode(const glm::vec3& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.push_back(rhs.z);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+		static bool decode(const Node& node, glm::vec3& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 3)
+			{
+				return false;
+			}
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			rhs.z = node[2].as<float>();
 			return true;
 		}
 	};
@@ -81,12 +107,20 @@ YAML::Emitter& operator<<(YAML::Emitter& out, const Vec2& v)
 	return out;
 }
 
+YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
+{
+	out << YAML::Flow;
+	out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
+	return out;
+}
+
+
 SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
 	: m_Scene(Scene)
 {
 }
 
-static void SerializeEntity(YAML::Emitter& out, Entity entity)
+void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 {
 	out << YAML::BeginMap; // Entity
 	out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<CId>().id;
@@ -142,15 +176,25 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Camera";
 		out << YAML::BeginMap;
 		auto& camera = entity.getComponent<CCamera>();
-		out << YAML::Key << "Size" << YAML::Value << camera.size;
-		out << YAML::Key << "Zoom" << YAML::Value << camera.zoom;
+
+		out << YAML::Key << "Camera" << YAML::Value;
+		out << YAML::BeginMap; // scene camera
+		out << YAML::Key << "ProjectionType" << YAML::Value << (int)camera.Camera.GetProjectionType();
+		out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.Camera.GetPerspectiveVerticalFOV();
+		out << YAML::Key << "PerspectiveNear" << YAML::Value << camera.Camera.GetPerspectiveNearClip();
+		out << YAML::Key << "PerspectiveFar" << YAML::Value << camera.Camera.GetPerspectiveFarClip();
+		out << YAML::Key << "OrthographicSize" << YAML::Value << camera.Camera.GetOrthographicSize();
+		out << YAML::Key << "OrthographicNear" << YAML::Value << camera.Camera.GetOrthographicNearClip();
+		out << YAML::Key << "OrthographicFar" << YAML::Value << camera.Camera.GetOrthographicFarClip();
+		out << YAML::EndMap;
+
 		out << YAML::Key << "Primary" << YAML::Value << camera.primary;
 		out << YAML::Key << "BackgroundColor" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		out << (float)camera.backgroundColor.r;
-		out << (float)camera.backgroundColor.g;
-		out << (float)camera.backgroundColor.b;
-		out << (float)camera.backgroundColor.a;
+		out << (float)camera.backgroundColor.x;
+		out << (float)camera.backgroundColor.y;
+		out << (float)camera.backgroundColor.z;
+		out << (float)camera.backgroundColor.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -162,10 +206,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Radius" << YAML::Value << cc.radius;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		out << (float)cc.color.r;
-		out << (float)cc.color.g;
-		out << (float)cc.color.b;
-		out << (float)cc.color.a;
+		out << (float)cc.color.x;
+		out << (float)cc.color.y;
+		out << (float)cc.color.z;
+		out << (float)cc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -177,10 +221,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Size" << YAML::Value << rc.size;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		out << (float)rc.color.r;
-		out << (float)rc.color.g;
-		out << (float)rc.color.b;
-		out << (float)rc.color.a;
+		out << (float)rc.color.x;
+		out << (float)rc.color.y;
+		out << (float)rc.color.z;
+		out << (float)rc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -193,10 +237,10 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::Key << "Size" << YAML::Value << pc.size;
 		out << YAML::Key << "Color" << YAML::Value << YAML::Flow;
 		out << YAML::BeginSeq;
-		out << (float)pc.color.r;
-		out << (float)pc.color.g;
-		out << (float)pc.color.b;
-		out << (float)pc.color.a;
+		out << (float)pc.color.x;
+		out << (float)pc.color.y;
+		out << (float)pc.color.z;
+		out << (float)pc.color.w;
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
@@ -212,21 +256,32 @@ static void SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndMap;
 	}
 
-	//if (entity->hasComponent<CAnimation>())
-	//{
-	//	out << YAML::Key << "Animation";
-	//	out << YAML::BeginMap;
-	//
-	//	auto& ac = entity->getComponent<CAnimation>();
-	//	out << YAML::Key << "Texture" << YAML::Value << ac.animation.getName();
-	//	out << YAML::Key << "Speed" << YAML::Value << ac.animSpeed;
-	//	out << YAML::Key << "Frames" << YAML::Value << ac.frameCount;
-	//	out << YAML::Key << "Repeatable" << YAML::Value << ac.repeat;
-	//	out << YAML::Key << "Layer" << YAML::Value << ac.layer;
-	//
-	//	out << YAML::EndMap;
-	//}
-	
+	if (entity.hasComponent<CAnimator>())
+	{
+		out << YAML::Key << "Animator";
+		out << YAML::BeginMap;
+
+		auto& animController = entity.getComponent<CAnimator>().Controller;
+
+		out << YAML::Key << "CurrentState" << YAML::Value << animController.m_CurrentState;
+
+		out << YAML::Key << "AnimationStates" << YAML::BeginSeq;
+		for (auto [stateName, animState] : animController.m_States)
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "Name" << YAML::Value << stateName;
+			// when saving the scene, save the animation clip as well at its proper location..TODO: maybe find a better way to handle this
+			AnimationImporter::SaveAnimationClip(animState.Clip, Project::GetActive()->GetEditorAssetManager()->GetFilePath(animState.Clip->Handle));
+			out << YAML::Key << "AnimationClipHandle" << YAML::Value << animState.Clip->Handle; //NOTE: this should always be a valid asset handle, as whenever we add the clip, we always import it as an asset as well...
+
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
+		out << YAML::EndMap;
+	}
+
 	if (entity.hasComponent<CCircleCollider>())
 	{
 		out << YAML::Key << "CircleCollider";
@@ -378,19 +433,16 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			auto transformComponent = entity["Transform"];
 			if (transformComponent)
 			{
-				auto& tc = deserializedEntity.addComponent<CTransform>();
-				tc.Translation = transformComponent["Translation"].as<Vec2>();
-				tc.Rotation = transformComponent["Rotation"].as<float>();
-				tc.Scale = transformComponent["Scale"].as<Vec2>();
+				auto& tc = deserializedEntity.getComponent<CTransform>();
+				tc.Translation = transformComponent["Translation"].as<glm::vec3>();
+				tc.Rotation = transformComponent["Rotation"].as<glm::vec3>();
+				tc.Scale = transformComponent["Scale"].as<glm::vec3>();
 
-				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<Vec2>();
-				tc.GlobalRotation = transformComponent["GlobalRotation"].as<float>();
-				tc.GlobalScale = transformComponent["GlobalScale"].as<Vec2>();
-				//tc.velocity = transformComponent["Velocity"].as<Vec2>();
-				//tc.angularVelocity = transformComponent["AngularVelocity"].as<float>();
+				tc.GlobalTranslation = transformComponent["GlobalTranslation"].as<glm::vec3>();
+				tc.GlobalRotation = transformComponent["GlobalRotation"].as<glm::vec3>();
+				tc.GlobalScale = transformComponent["GlobalScale"].as<glm::vec3>();
 			}
 
-			//deserializedEntity.addComponent<CParent>();
 
 			auto parentComponent = entity["ParentComponent"];
 			if (parentComponent)
@@ -410,17 +462,27 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 			if (cameraComponent)
 			{
 				auto& camera = deserializedEntity.addComponent<CCamera>();
-				camera.size = cameraComponent["Size"].as<Vec2>();
-				camera.zoom = cameraComponent["Zoom"].as<float>();
+
+				auto cameraProps = cameraComponent["Camera"];
+				camera.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
+
+				camera.Camera.SetPerspectiveVerticalFOV(cameraProps["PerspectiveFOV"].as<float>());
+				camera.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
+				camera.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
+
+				camera.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
+				camera.Camera.SetOrthographicNearClip(cameraProps["OrthographicNear"].as<float>());
+				camera.Camera.SetOrthographicFarClip(cameraProps["OrthographicFar"].as<float>());
+
 				camera.primary = cameraComponent["Primary"].as<bool>();
 				auto colorArray = cameraComponent["BackgroundColor"];
 				if (colorArray)
 				{
-					camera.backgroundColor = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					camera.backgroundColor = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
 					);
 				}
 			}
@@ -436,6 +498,29 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				src.layer = spriteRendererComponent["Layer"].as<int>();
 			}
 
+			auto animatorComponent = entity["Animator"];
+			if (animatorComponent)
+			{
+				auto& animComponent = deserializedEntity.addComponent<CAnimator>();
+
+				AnimationController animController;
+				animController.m_CurrentState = animatorComponent["CurrentState"].as<std::string>();
+
+				auto animStates = animatorComponent["AnimationStates"];
+				if (animStates)
+				{
+					for (auto animState : animStates)
+					{
+						animController.AddState(
+							animState["Name"].as<std::string>(),
+							AssetManager::GetAsset<AnimationClip>(animState["AnimationClipHandle"].as<AssetHandle>())
+						);
+					}
+				}
+
+				animComponent.Controller = animController;
+			}
+
 			auto circleComponent = entity["CircleShape"];
 			if (circleComponent)
 			{
@@ -444,11 +529,11 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = circleComponent["Color"];
 				if (colorArray)
 				{
-					cc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					cc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
 					);
 				}
 			}
@@ -461,11 +546,11 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = rectangleComponent["Color"];
 				if (colorArray)
 				{
-					rc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					rc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
 					);
 				}
 			}
@@ -479,11 +564,11 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto colorArray = polygonShapeComponent["Color"];
 				if (colorArray)
 				{
-					pc.color = sf::Color(
-						static_cast<sf::Uint8>(colorArray[0].as<float>()),
-						static_cast<sf::Uint8>(colorArray[1].as<float>()),
-						static_cast<sf::Uint8>(colorArray[2].as<float>()),
-						static_cast<sf::Uint8>(colorArray[3].as<float>())
+					pc.color = glm::vec4(
+						colorArray[0].as<float>(),
+						colorArray[1].as<float>(),
+						colorArray[2].as<float>(),
+						colorArray[3].as<float>()
 					);
 				}
 			}

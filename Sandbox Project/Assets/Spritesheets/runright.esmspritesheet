@@ -1,0 +1,19 @@
+SpriteSheet: runright
+Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runright.png
+SubSprites:
+  - Subsprite: 0
+    Name: runright_0
+    Position: [0, 0]
+    Size: [64, 70]
+  - Subsprite: 1
+    Name: runright_1
+    Position: [64, 0]
+    Size: [64, 70]
+  - Subsprite: 2
+    Name: runright_2
+    Position: [128, 0]
+    Size: [64, 70]
+  - Subsprite: 3
+    Name: runright_3
+    Position: [192, 0]
+    Size: [64, 70]

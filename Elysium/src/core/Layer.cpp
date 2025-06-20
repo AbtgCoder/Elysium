@@ -1,5 +1,12 @@
 #include "Layer.h"
 
+Layer::Layer(const std::string& name)
+	: m_DebugName(name)
+{
+}
+
+
+#if 0
 Layer::Layer()
 {
 }
@@ -54,3 +61,6 @@ void Layer::setPaused(bool paused)
 {
 	m_paused = paused;
 }
+#endif
+
+

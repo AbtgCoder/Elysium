@@ -1,4 +1,7 @@
 #include "EditorAssetManager.h"
+
+#include "core/Logger.h"
+
 #include "AssetImporter.h"
 #include "Project/Project.h"
 
@@ -6,17 +9,19 @@
 
 #include <fstream>
 
+
 static std::map<std::filesystem::path, AssetType> s_AssetExtensionMap = {
 	{".elysium", AssetType::Scene},
-	{".png", AssetType::Texture}, // TODO: check other image file formats supported by sfml
+	{".png", AssetType::Texture2D},
+	{".esmspritesheet", AssetType::SpriteSheet},
+	{".esmanim", AssetType::AnimationClip}
 };
 
 static AssetType GetAssetTypeFromFileExtension(const std::filesystem::path& extension)
 {
 	if (s_AssetExtensionMap.find(extension) == s_AssetExtensionMap.end())
 	{
-		std::cout << extension << "\n";
-		// log error/warning: couldnt find assetype for this file extension
+		Logger::Log("file extension not valid", "Asset Manager", LOG_TYPE::WARNING);
 		return AssetType::None;
 	}
 	return s_AssetExtensionMap.at(extension);
@@ -116,6 +121,7 @@ std::shared_ptr<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 		if (!asset)
 		{
 			// log error: asset import failed
+			return nullptr;
 		}
 		m_LoadedAssets[handle] = asset;
 	}

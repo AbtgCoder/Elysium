@@ -5,6 +5,18 @@
 #include "Math/Vec2.h"
 #include "core/UUID.h"
 
+#include "Scene/SceneCamera.h"
+
+#include "Animation/AnimationController.h"
+
+#include <vector>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 class Component
 {
 public:
@@ -35,20 +47,31 @@ public:
 class CTransform : public Component
 {
 public:
-	Vec2 Translation = { 0.0, 0.0 };
-	float Rotation = 0.0f;
-	Vec2 Scale = {1.0, 1.0};
+	glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 Rotation = {0.0f, 0.0f, 0.0f};
+	glm::vec3 Scale = {1.0, 1.0, 1.0f};
 
-	Vec2 GlobalTranslation = {0.0, 0.0};
-	float GlobalRotation = 0.0f;
-	Vec2 GlobalScale = { 1.0, 1.0 };
+	glm::vec3 GlobalTranslation = {0.0f, 0.0f, 0.0f};
+	glm::vec3 GlobalRotation = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 GlobalScale = { 1.0f, 1.0f, 1.0f };
 
 	CTransform() {}
-	CTransform(const Vec2& p)
+	CTransform(const glm::vec3& p)
 		: Translation(p) {}
-	CTransform(const Vec2& p, const Vec2& sc, float a)
+	CTransform(const glm::vec3& p, const glm::vec3& sc, const glm::vec3& a)
 		: Translation(p), Scale(sc), Rotation(a) {}
 	CTransform(CTransform& other) = default;
+
+	glm::mat4 GetTransform() const
+	{
+		glm::mat4 rotation = glm::toMat4(glm::quat(GlobalRotation));
+
+		glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), GlobalTranslation)
+			* rotation
+			* glm::scale(glm::mat4(1.0f), GlobalScale);
+
+		return transformMatrix;
+	}
 };
 
 class CParent : public Component
@@ -79,13 +102,23 @@ public:
 class CCamera : public Component
 {
 public:
-	Vec2 size = { 500.0f, 500.0f };
-	float zoom = 1.0f; //TODO: only allowed btw 0.5 and 2.0 ??
+	SceneCamera Camera;
 	bool primary = true;
-	sf::Color backgroundColor = { 49, 77, 121, 255};
+
+	glm::vec4 backgroundColor{ 1.0f, 1.0f, 1.0f, 1.0f };
 
 	CCamera() = default;
 	CCamera(const CCamera&) = default;
+};
+
+class CAnimator : public Component
+{
+public:
+	AnimationController Controller;
+
+	CAnimator() = default;
+	CAnimator(const AnimationController& controller)
+		: Controller(controller) {}
 };
 
 // forward declaration
@@ -110,8 +143,10 @@ public:
 class CRectangle : public Component
 {
 public:
-	Vec2 size = {50.0, 50.0};
-	sf::Color color = { 255, 255, 255, 255 };
+	Vec2 size = { 1.0f, 1.0f};
+	//sf::Color color = { 255, 255, 255, 255 };
+
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	CRectangle() {}
 	CRectangle(float s)
@@ -125,8 +160,11 @@ public:
 class CCircle : public Component
 {
 public:
-	float radius = 50.0f;
-	sf::Color color = {255, 255, 255, 255};
+	float radius = 1.0f;
+	//sf::Color color = {255, 255, 255, 255};
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+
 	CCircle() {}
 	CCircle(float r)
 		: radius(r) {}
@@ -137,8 +175,10 @@ class CPolygon : public Component
 {
 public:
 	int sides = 3; // this must be >= 3
-	float size = 50.0f;
-	sf::Color color = { 255, 255, 255, 255 };
+	float size = 1.0f;
+	//sf::Color color = { 255, 255, 255, 255 };
+	glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
 	CPolygon() = default;
 	CPolygon(const CPolygon&) = default;
 };

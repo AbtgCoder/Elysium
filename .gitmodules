@@ -5,3 +5,12 @@
 	path = Elysium/vendor/imgui
 	url = https://github.com/AbtgCoder/imgui.git
 	branch = docking
+[submodule "Elysium/vendor/GLFW"]
+	path = Elysium/vendor/GLFW
+	url = https://github.com/AbtgCoder/glfw
+[submodule "Elysium/vendor/glm"]
+	path = Elysium/vendor/glm
+	url = https://github.com/g-truc/glm
+[submodule "Elysium/vendor/ImGuizmo"]
+	path = Elysium/vendor/ImGuizmo
+	url = https://github.com/AbtgCoder/ImGuizmo

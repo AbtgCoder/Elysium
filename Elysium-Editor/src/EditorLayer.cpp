@@ -3,6 +3,11 @@
 #include "Core/Application.h"
 #include "core/Logger.h"
 
+#include "core/Input.h"
+
+#include "Renderer/RenderCommand.h"
+#include "Renderer/Renderer2D.h"
+
 #include "Physics/graham_scan.h"
 
 
@@ -13,182 +18,633 @@
 #include "Utils/FileUtils.h"
 #include "Utils/StringUtils.h"
 
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui-SFML.h"
+#include <imgui/imgui.h>
+#include <ImGui/imgui_internal.h>
 
+#include "ImGuizmo.h"
 
 #include <cmath>
 #include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
 
 EditorLayer::EditorLayer()
+	: Layer("EditorLayer")
 {
-	init();
 }
 
-//EditorLayer::EditorLayer(Application* Application)
-//	: Layer(Application)
-//{
-//	init();
-//}
-
-void EditorLayer::init()
+void EditorLayer::OnAttach()
 {
-	registerAction(sf::Keyboard::G, "TOGGLE_GRID");
-	registerAction(sf::Keyboard::Escape, "QUIT");
-	registerAction(sf::Keyboard::Delete, "DELETE");
-	registerAction(sf::Keyboard::D, "DUPLICATE");
-	//registerAction(sf::Keyboard::P, "PLAY_Scene");
-	registerAction(sf::Keyboard::LAlt, "ALT");
-	registerAction(sf::Keyboard::W, "TRANSLATE_GIZMO");
-	registerAction(sf::Keyboard::R, "SCALE_GIZMO");
-	registerAction(sf::Keyboard::E, "ROTATION_GIZMO");
-	registerAction(sf::Keyboard::Space, "LAUNCH_BOMB");
-
-
-	m_IconPlay = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
-	m_IconPause = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
-	m_IconStep = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
-	m_IconStop = TextureImporter::LoadTexture("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
+	m_IconPlay = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
+	m_IconPause = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
+	m_IconStep = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
+	m_IconStop = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
 	
+	// framebuffer
+	FramebufferSpecification fbSpec;
+	fbSpec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth};
+	/*
+		the first attachment is the main scene color buffer
+		second attachment is used to store and read entity ids 
+	*/
+	fbSpec.Width = 1280;
+	fbSpec.Height = 720;
+	m_Framebuffer = Framebuffer::Create(fbSpec);
 
-	// Set ImGui Styles
-	setImGuiStyle();
-
-	// Debug drawing stuff
-	m_gridRect.setSize(sf::Vector2f(m_gridSize.x, m_gridSize.y));
-	m_gridRect.setOrigin(m_gridSize.x / 2, m_gridSize.y / 2);
-	m_gridRect.setFillColor(sf::Color::Transparent);
-	m_gridRect.setOutlineColor(sf::Color::White);
-	m_gridRect.setOutlineThickness(1);
-
+	// camera
+	m_EditorCamera = EditorCamera(30.0f, 1.778f, 0.1f, 1000.0f);
 
 	//OpenProject();
 	OpenProject("D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox.eproject");
 
-	m_SceneView.setCenter(0.0f, 0.0f);
+}
+
+void EditorLayer::OnDetach()
+{
 }
  
-
-void EditorLayer::setImGuiStyle()
+void EditorLayer::OnUpdate(float ts)
 {
+	// scene viewport resize
+	m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 
+	// frame buffer resize
+	if (FramebufferSpecification spec = m_Framebuffer->GetSpecification();
+		m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
+		(spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y))
+	{
+		m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		// camera updates
+		m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
+	}
 
-	auto& colors = ImGui::GetStyle().Colors;
-	colors[ImGuiCol_WindowBg] =  ImVec4{ 28.0f / 255.0f, 28.0f / 255.0f, 28.0f / 255.0f, 1.0f };
-	colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
+	// render
+	// reset renderer stats
+	Renderer2D::ResetStats();
+	// bind framebuffer
+	m_Framebuffer->Bind();
 
-	// Border
-	colors[ImGuiCol_Border] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.29f };
-	colors[ImGuiCol_BorderShadow] = ImVec4{ 0.0f, 0.0f, 0.0f, 0.24f };
+	// rendercommand -> clear
+	RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
+	RenderCommand::Clear();
 
-	// Text
-	colors[ImGuiCol_Text] = ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f };
-	colors[ImGuiCol_TextDisabled] = ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f };
+	// clean our entity ID attachment to -1
+	m_Framebuffer->ClearAttachment(1, -1); 
 
-	// Headers
-	colors[ImGuiCol_Header] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
-	colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
-	colors[ImGuiCol_HeaderActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-
-	// Buttons
-	colors[ImGuiCol_Button] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
-	colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
-	colors[ImGuiCol_ButtonActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_CheckMark] = ImVec4{ 0.74f, 0.58f, 0.98f, 1.0f };
-
-	// Popups
-	colors[ImGuiCol_PopupBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 0.92f };
-
-	// Slider
-	colors[ImGuiCol_SliderGrab] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.54f };
-	colors[ImGuiCol_SliderGrabActive] = ImVec4{ 0.74f, 0.58f, 0.98f, 0.54f };
-
-	// Frame BG
-	colors[ImGuiCol_FrameBg] = ImVec4{ 0.13f, 0.13, 0.17, 1.0f };
-	colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
-	colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-
-	// Tabs
-	colors[ImGuiCol_Tab] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_TabHovered] = ImVec4{ 0.24, 0.24f, 0.32f, 1.0f };
-	colors[ImGuiCol_TabActive] = ImVec4{ 0.2f, 0.22f, 0.27f, 1.0f };
-	colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-
-	// Title
-	colors[ImGuiCol_TitleBg] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-
-	// Scrollbar
-	colors[ImGuiCol_ScrollbarBg] = ImVec4{ 0.1f, 0.1f, 0.13f, 1.0f };
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
-	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4{ 0.24f, 0.24f, 0.32f, 1.0f };
-
-	// Seperator
-	colors[ImGuiCol_Separator] = ImVec4{ 0.44f, 0.37f, 0.61f, 1.0f };
-	colors[ImGuiCol_SeparatorHovered] = ImVec4{ 0.74f, 0.58f, 0.98f, 1.0f };
-	colors[ImGuiCol_SeparatorActive] = ImVec4{ 0.84f, 0.58f, 1.0f, 1.0f };
-
-	// Resize Grip
-	colors[ImGuiCol_ResizeGrip] = ImVec4{ 0.44f, 0.37f, 0.61f, 0.29f };
-	colors[ImGuiCol_ResizeGripHovered] = ImVec4{ 0.74f, 0.58f, 0.98f, 0.29f };
-	colors[ImGuiCol_ResizeGripActive] = ImVec4{ 0.84f, 0.58f, 1.0f, 0.29f };
-
-
-	auto& style = ImGui::GetStyle();
-	style.TabRounding = 4;
-	style.ScrollbarRounding = 9;
-	//style.WindowRounding = 7;
-	style.GrabRounding = 3;
-	style.FrameRounding = 3;
-	style.PopupRounding = 4;
-	style.ChildRounding = 4;
-
-}
-
-Vec2 EditorLayer::windowToViewport(const Vec2& windowPos) const
-{
-	auto viewportPos = windowPos - m_viewportBounds.first;
-	return viewportPos;
-}
- 
-
-void EditorLayer::update(float ts)
-{
-	//ImGui::SFML::Update(m_game->window(), m_game->m_deltaClock.restart());
-	m_rt.create(m_viewportSize.x, m_viewportSize.y);
-	
 	switch (m_SceneState)
 	{
-	case SceneState::Edit:
-	{
-		m_SceneView.setSize(m_viewportSize.x, m_viewportSize.y);
-		m_SceneView.zoom(m_SceneViewZoom);
-		m_rt.setView(m_SceneView);
-		m_rt.clear();
-		if (m_ActiveScene)
-			m_ActiveScene->OnUpdateEditor(m_rt);
-		break;
-	}
-	case SceneState::Play:
-	{
-		m_rt.clear();
-		if (m_ActiveScene)
-			m_ActiveScene->OnUpdateRuntime(m_rt, ts);
-		break;
-	}
+		case SceneState::Edit:
+		{
+			m_EditorCamera.OnUpdate(ts);
+
+			if (m_ActiveScene)
+				m_ActiveScene->OnUpdateEditor(m_EditorCamera);
+			break;
+		}
+		case SceneState::Play:
+		{
+			if (m_ActiveScene)
+				m_ActiveScene->OnUpdateRuntime(ts);
+			break;
+		}
 	}
 
-	
-	sRender();
-	sGUI();
+	// hovered/selected entity
+	auto [mx, my] = ImGui::GetMousePos();
+	mx -= m_ViewportBounds[0].x;
+	my -= m_ViewportBounds[0].y;
+	Vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+	my = viewportSize.y - my;
+	int mouseX = (int)mx;
+	int mouseY = (int)my;
+	if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+	{
+		// read pixel data
+		int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
+		m_HoveredEntity = pixelData == -1 ? Entity() : m_ActiveScene->GetEntityByEntityID(pixelData);
+	}
+
+	// overlay render
+	OnOverlayRender();
+
+	// framebuffer unbind
+	m_Framebuffer->Unbind();
 }
 
-void EditorLayer::sRender()
+
+
+void EditorLayer::OnImGuiRender()
 {
+	static bool dockspaceOpen = true;
+	static bool opt_fullsreen = true;
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	if (opt_fullsreen)
+	{
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->Pos);
+		ImGui::SetNextWindowSize(viewport->Size);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+	}
+
+	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+	{
+		window_flags |= ImGuiWindowFlags_NoBackground;
+	}
+
+	ImGui::Begin("Dockspace demo", &dockspaceOpen, window_flags);
+
+	if (opt_fullsreen)
+	{
+		ImGui::PopStyleVar(2);
+	}
+
+	// DockSpace
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	{
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+	}
+
+	bool createNewProject = false;
+
+	// Menu Bar
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("New  Project", "Ctrl+Shift+N"))
+			{
+				createNewProject = true;
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Open Project", "Ctrl+Shift+O"))
+			{
+				SaveProject();
+				OpenProject();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save Project", "Ctrl+Shift+S"))
+			{
+				SaveProject();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
+			{
+				SaveScene(); // save active Scene
+				OpenScene();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
+			{
+				NewScene();
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
+			{
+				SaveScene();
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
+
+	if (createNewProject)
+		ImGui::OpenPopup("new_project");
+
+	if (ImGui::IsPopupOpen("new_project"))
+		NewProject();
+
+
+	m_SceneHierarchyPanel.OnImGuiRender();
+	m_ContentBrowserPanel->OnImGuiRender();
+	m_PhysicsConfigPanel.OnImGuiRender();
+	m_LoggerPanel.OnImGuiRender();
+	m_SpriteSheetEditorPanel.OnImGuiRender();
+	m_AssetManagerPanel.OnImGuiRender();
+	m_AnimationPanel.OnImGuiRender();
+
+	// Viewport 
+	ImGui::Begin("Viewport");
+	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+	auto viewportOffset = ImGui::GetWindowPos();
+	m_ViewportBounds[0] = {viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y};
+	m_ViewportBounds[1] = {viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y};
+	
+	m_ViewportFocused = ImGui::IsWindowFocused();
+	m_ViewportHovered = ImGui::IsWindowHovered();
+
+	Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
+
+	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+
+	uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
+	ImGui::Image((ImTextureID)(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+	bool showImportSpritePopup = false;
+	if (m_SceneState == SceneState::Edit)
+	{
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
+			{
+				showImportSpritePopup = true;
+				char* file = (char*)payload->Data;
+				m_DraggedInFilePath = std::string(file, 256);
+
+				//char* file = (char*)payload->Data;
+				//std::string fullPath = std::string(file, 256);
+				//auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+				//AssetHandle handle = 0;
+				//if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+				//{
+				//	Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+				//}]=
+				//handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+				//// spawn entity with sprite renderer component
+				//Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
+				//newEntity.getComponent<CTag>().tag = relativePath.stem().string();
+				//m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Scene"))
+			{
+				char* file = (char*)payload->Data;
+				std::string fullPath = std::string(file, 256);
+				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+				AssetHandle handle = 0;
+				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+				{
+					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+				}
+				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+				SaveScene(); // TODO: maybe show a prompt/pop-up for this...
+				OpenScene(handle);
+			}
+			ImGui::EndDragDropTarget();
+
+		}
+		
+
+		if (showImportSpritePopup)
+		{
+			ImGui::OpenPopup("Import_Sprite");
+		}
+
+		if (ImGui::IsPopupOpen("Import_Sprite"))
+		{
+			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+			//ImGui::SetNextWindowSize(ImVec2(1000, 700));
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(32.0f, 32.0f));
+
+			if (ImGui::BeginPopupModal("Import_Sprite", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
+			{
+				static int importType = 0;
+				ImGui::RadioButton("Single Sprite", &importType, 0);
+				ImGui::RadioButton("Sprite Sheet", &importType, 1);
+
+				if (ImGui::Button("Continue"))
+				{
+					if (importType == 0)
+					{
+						auto relativePath = std::filesystem::relative(m_DraggedInFilePath, Project::GetActiveAssetDirectory());
+						AssetHandle handle = 0;
+						if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+						{
+							Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+						}
+						handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+						// spawn entity with sprite renderer component
+						Entity newEntity = m_ActiveScene->AddEntityWithSprite(Vec2(0.0f, 0.0f), handle);
+						newEntity.getComponent<CTag>().tag = relativePath.stem().string();
+						m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+					}
+					else
+					{
+						// Open sprite sheet editor
+						m_SpriteSheetEditorPanel.SetSpriteSheetTexture(m_DraggedInFilePath);
+						m_SpriteSheetEditorPanel.Open();
+					}
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopStyleVar(2);
+		}
+
+		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+		m_AnimationPanel.SetInspectedEntity(m_inspectedEntity); //TODO: doing this every frame seems really bad.. need a way to set this from the scene hierarchy panel...
+
+
+		// Gizmos
+		{
+			//ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::AllowAxisFlip(true);
+			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
+
+			// editor camera
+			const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
+			glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
+
+			// rotate the grid 90 degrees to get the grid in XY plane
+			glm::mat4 gridModelMatrix = glm::rotate(
+				glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1, 0, 0)
+			);
+
+			ImGuizmo::DrawGrid(
+				glm::value_ptr(m_ActiveScene->GetPrimaryCameraViewMatrix()),
+				glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
+				glm::value_ptr(gridModelMatrix), 100.0f);
+
+
+
+
+			if (m_inspectedEntity && m_GizmoType != -1)
+			{
+				// entity transform
+				auto& tc = m_inspectedEntity.getComponent<CTransform>();
+				glm::mat4 transform = tc.GetTransform();
+
+				// snapping
+				bool snap = Input::IsKeyPressed(Key::LeftControl);
+				float snapValue = 0.5; // snap to 0.5m for translation/scale
+				if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+					snapValue = 45.0f; // snap to 45 degrees for rotation
+
+				float snapValues[3] = { snapValue, snapValue, snapValue };
+
+				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+				if (ImGuizmo::IsUsing())
+				{
+					glm::mat4 localTransform = glm::mat4(transform);
+
+					auto& parent = m_inspectedEntity.getComponent<CParent>();
+					if (parent.HasParent)
+					{
+						const auto& parentTransformComponent = m_ActiveScene->GetEntityByUUID(parent.ParentID).getComponent<CTransform>();
+						const glm::mat4& parentTransform = parentTransformComponent.GetTransform();
+						localTransform = glm::inverse(parentTransform) * localTransform;
+						/*
+							since imguizmo returns a transform in global space and we want the local transform,
+							we need to multiply by the inverse of the parent's global transform in order to revert
+							the changes from the parent transform
+						*/
+					}
+
+					// decompose local transform
+					float decomposedPosition[3];
+					float decomposedRotation[3];
+					float decomposedScale[3];
+					ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localTransform), decomposedPosition, decomposedRotation, decomposedScale);
+
+					tc.Translation = { decomposedPosition[0], decomposedPosition[1], decomposedPosition[2] };
+					tc.Scale = { decomposedScale[0], decomposedScale[1], decomposedScale[2] };
+					tc.Rotation = { decomposedRotation[0], decomposedRotation[1], decomposedRotation[2] };
+				}
+
+			}
+		}
+		
+	}
+
+	ImGui::End(); // end "Viewport"
+
+	UI_Toolbar(); // Pause/Play Toolbar
+
+	ImGui::End(); // end "Dockspace demo" 
+
+}
+
+void EditorLayer::OnOverlayRender()
+{
+	if (m_SceneState == SceneState::Edit)
+	{
+		Renderer2D::BeginScene(m_EditorCamera);
+		
+		// draw inspected entity outline
+		if (Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity())
+		{
+			auto transform = inspectedEntity.getComponent<CTransform>();
+			if (inspectedEntity.hasComponent<CRectangle>())
+			{
+				auto rect = inspectedEntity.getComponent<CRectangle>();
+				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			}
+
+			if (inspectedEntity.hasComponent<CSpriteRenderer>())
+			{
+				Renderer2D::DrawRect(transform.GetTransform(), glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+			}
+		}
+
+		Renderer2D::EndScene();
+	}
+}
+
+
+void EditorLayer::OnEvent(Event& event)
+{
+	if (m_SceneState == SceneState::Edit)
+		m_EditorCamera.OnEvent(event);
+
+	EventDispatcher dispatcher(event);
+	dispatcher.Dispatch<KeyPressedEvent>(std::bind(&EditorLayer::OnKeyPressed, this, std::placeholders::_1));
+	dispatcher.Dispatch<MouseButtonPressedEvent>(std::bind(&EditorLayer::OnMouseButtonPressed, this, std::placeholders::_1));
+	dispatcher.Dispatch<WindowDropEvent>(std::bind(&EditorLayer::OnWindowDrop, this, std::placeholders::_1));
+}
+
+bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
+{
+	if (e.IsRepeat())
+		return false;
+
+	bool control = Input::IsKeyPressed(Key::LeftControl) || Input::IsKeyPressed(Key::RightControl);
+	bool shift = Input::IsKeyPressed(Key::LeftShift) || Input::IsKeyPressed(Key::RightShift);
+
+	switch (e.GetKeyCode())
+	{
+		// shortcuts
+		case Key::N:
+		{
+			if (control)
+				NewScene();
+			break;
+		}
+		case Key::O:
+		{
+			if (control)
+			{
+				OpenProject();
+			}
+			break;
+		}
+		case Key::S:
+		{
+			if (control)
+			{
+				if (shift)
+				{
+					//TODO: save scene as
+				}
+				else
+				{
+					SaveScene();
+				}
+			}
+			break;
+		}
+
+
+		// scene controls
+		case Key::D:
+		{
+			if (control)
+			{
+				if (m_SceneState == SceneState::Edit)
+				{
+					Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
+					if (inspectedEntity)
+					{
+						Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
+						m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
+					}
+				}
+			}
+			break;
+		}
+
+
+		// gizmos
+		case Key::Q:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = -1;
+			break;
+		}
+		case Key::W:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			break;
+		}
+		case Key::E:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			break;
+		}
+		case Key::R:
+		{
+			if (!control && !ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			break;
+		}
+	}
+
+	return false;
+}
+
+bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
+{
+	if (e.GetMouseButton() == Mouse::ButtonLeft)
+	{
+		if (m_ViewportHovered && !ImGuizmo::IsOver() && !Input::IsKeyPressed(Key::LeftAlt))
+		{
+			m_SceneHierarchyPanel.SetInspectedEntity(m_HoveredEntity);
+			m_AnimationPanel.SetInspectedEntity(m_HoveredEntity);
+		}
+	}
+	return false;
+}
+
+bool EditorLayer::OnWindowDrop(WindowDropEvent& e)
+{
+	return false;
+}
+
+void EditorLayer::UI_Toolbar()
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+	auto* colors = ImGui::GetStyle().Colors;
+	const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+	const auto& buttonActive = colors[ImGuiCol_ButtonActive];
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+
+	ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+	bool toolbarEnabled = (bool)m_ActiveScene;
+
+	ImVec4 tintColor = ImVec4(1, 1, 1, 1);
+	if (!toolbarEnabled)
+		tintColor.w = 0.5f;
+
+	float size = ImGui::GetWindowHeight() - 4.0f;
+	ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+
+	bool hasPlayButton = true; // either edit or play...
+	bool hasPauseButton = m_SceneState == SceneState::Play;
+
+	if (hasPlayButton)
+	{
+		std::shared_ptr<Texture2D> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
+		if (ImGui::ImageButton("#toolbar_icon", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+		{
+			if (m_SceneState == SceneState::Edit)
+			{
+				OnScenePlay();
+			}
+			else if (m_SceneState == SceneState::Play)
+			{
+				OnSceneStop();
+			}
+		}
+	}
+
+	if (hasPauseButton)
+	{
+		bool isPaused = m_ActiveScene->IsPaused();
+		ImGui::SameLine();
+		{
+			std::shared_ptr<Texture2D> icon = m_IconPause;
+			if (ImGui::ImageButton("#toolbar_icon2", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+			{
+				m_ActiveScene->SetPaused(!isPaused);
+			}
+		}
+
+		// step button
+		if (isPaused)
+		{
+			ImGui::SameLine();
+			{
+				std::shared_ptr<Texture2D> icon = m_IconStep;
+				if (ImGui::ImageButton("#toolbar_icon3", (ImTextureID)(uint64_t)icon->GetRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
+				{
+					m_ActiveScene->Step();
+				}
+			}
+		}
+	}
+
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(3);
+	ImGui::End();
 
 }
 
@@ -296,7 +752,7 @@ void EditorLayer::NewProject()
 
 				if (ImGui::Button("##folderOpen"))
 				{
-					std::string folderPath = WindowsFileUtils::OpenFolder(Application::Get().window().getSystemHandle());
+					std::string folderPath = WindowsFileUtils::OpenFolder();
 					if (!folderPath.empty())
 					{
 						std::replace(folderPath.begin(), folderPath.end(), '\\', '/');
@@ -309,7 +765,7 @@ void EditorLayer::NewProject()
 					}
 				}
 
-				projectFileName =  StringUtils::RemoveWhiteSpace(projectName) + ".eproject";
+				projectFileName = StringUtils::RemoveWhiteSpace(projectName) + ".eproject";
 
 				//finalLocation = location;
 				static std::string projectParentPath = location;
@@ -324,7 +780,7 @@ void EditorLayer::NewProject()
 					ImGui::TextColored(ImVec4(1, 1, 1, 0.4), finalLocation.c_str());
 					ImGui::PopTextWrapPos();
 				}
-				
+
 				ImGui::Dummy({ 1, ImGui::GetContentRegionAvail().y - 42 });
 
 				ImGui::Dummy({ ImGui::GetContentRegionAvail().x - 230 - 16, 38 });
@@ -378,9 +834,9 @@ void EditorLayer::NewProject()
 					}
 					ImGui::CloseCurrentPopup();
 				}
-				
+
 			}
-			
+
 			if (!opened)
 			{
 				ImGui::PopStyleVar();
@@ -396,7 +852,7 @@ void EditorLayer::NewProject()
 
 bool EditorLayer::OpenProject()
 {
-	std::string projectPath = WindowsFileUtils::OpenFile(Application::Get().window().getSystemHandle(), "Elysium Project (*.eproject)\0*.eproject\0");
+	std::string projectPath = WindowsFileUtils::OpenFile("Elysium Project (*.eproject)\0*.eproject\0");
 	if (projectPath.empty())
 		return false;
 
@@ -417,6 +873,7 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 		else if (startScene)
 			OpenScene(startScene);
 		m_ContentBrowserPanel = std::make_unique<ContentBrowserPanel>(Project::GetActive());
+		m_AssetManagerPanel.Refresh();
 	}
 	else
 	{
@@ -431,7 +888,7 @@ void EditorLayer::SaveProject()
 
 void EditorLayer::NewScene()
 {
-	std::string path = WindowsFileUtils::SaveFile(Application::Get().window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::SaveFile("Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
@@ -439,13 +896,15 @@ void EditorLayer::NewScene()
 		// Add Main Camera
 		auto camera = scene->AddEntity("Main Camera");
 		camera.addComponent<CCamera>();
+		auto& cameraComponent = camera.getComponent<CCamera>();
+		cameraComponent.Camera.SetProjectionType(SceneCamera::ProjectionType::Orthographic);
 
 		SceneImporter::SaveScene(scene, relativePath);
 		Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
-		
+
 		// refresh content browser
 		m_ContentBrowserPanel->RefreshAssetTree();
-		
+
 		const auto& assetRegistry = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
 		for (const auto& [handle, metadata] : assetRegistry)
 		{
@@ -460,7 +919,7 @@ void EditorLayer::NewScene()
 
 void EditorLayer::OpenScene()
 {
-	std::string path = WindowsFileUtils::OpenFile(Application::Get().window().getSystemHandle(), "Elysium Scene (*.elysium)\0*.elysium\0");
+	std::string path = WindowsFileUtils::OpenFile("Elysium Scene (*.elysium)\0*.elysium\0");
 	if (!path.empty())
 	{
 		auto relativePath = std::filesystem::relative(path, Project::GetActiveAssetDirectory());
@@ -527,613 +986,4 @@ void EditorLayer::OnSceneStop()
 	m_ActiveScene = m_EditorScene;
 	m_SceneHierarchyPanel.SetScene(m_ActiveScene);
 	m_PhysicsConfigPanel.SetScene(m_ActiveScene);
-}
-
-
-void EditorLayer::sGUI()
-{
-	static bool dockspaceOpen = true;
-	static bool opt_fullsreen = true;
-	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-	if (opt_fullsreen)
-	{
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->Pos);
-		ImGui::SetNextWindowSize(viewport->Size);
-		ImGui::SetNextWindowViewport(viewport->ID);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-	}
-
-	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
-	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-	{
-		window_flags |= ImGuiWindowFlags_NoBackground;
-	}
-
-	ImGui::Begin("Dockspace demo", &dockspaceOpen, window_flags);
-
-	if (opt_fullsreen)
-	{
-		ImGui::PopStyleVar(2);
-	}
-
-	// DockSpace
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-	{
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-	}
-
-	bool createNewProject = false;
-
-	// Menu Bar
-	if (ImGui::BeginMenuBar())
-	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("New  Project", "Ctrl+Shift+N"))
-			{
-				createNewProject = true;
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("Open Project", "Ctrl+Shift+O"))
-			{
-				SaveProject();
-				OpenProject();
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("Save Project", "Ctrl+Shift+S"))
-			{
-				SaveProject();
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
-			{
-				SaveScene(); // save active Scene
-				OpenScene();
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
-			{
-				NewScene();
-			}
-			ImGui::Separator();
-			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
-			{
-				SaveScene();
-			}
-			ImGui::EndMenu();
-		}
-		ImGui::EndMenuBar();
-	}
-
-	if (createNewProject)
-		ImGui::OpenPopup("new_project");
-
-	if (ImGui::IsPopupOpen("new_project"))
-		NewProject();
-
-
-	m_SceneHierarchyPanel.OnImGuiRender();
-	m_ContentBrowserPanel->OnImGuiRender();
-	m_PhysicsConfigPanel.OnImGuiRender();
-	m_LoggerPanel.OnImGuiRender();
-
-	// Viewport 
-	ImGui::Begin("Viewport");
-	auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-	auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-	auto viewportOffset = ImGui::GetWindowPos();
-	m_viewportBounds.first = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-	m_viewportBounds.second = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	m_viewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-	ImGui::Image(m_rt);
-
-	if (m_SceneState == SceneState::Edit)
-	{
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
-			{
-				char* file = (char*)payload->Data;
-				std::string fullPath = std::string(file, 256);
-				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
-				AssetHandle handle = 0;
-				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
-				{
-					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
-				}
-				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
-				// spawn entity with sprite renderer component
-				Vec2 viewportPos = windowToViewport(m_mousePos);
-				Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-				Entity newEntity = m_ActiveScene->AddEntityWithSprite(worldPos, handle);
-				newEntity.getComponent<CTag>().tag = relativePath.stem().string();
-				m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
-			}
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Scene"))
-			{
-				char* file = (char*)payload->Data;
-				std::string fullPath = std::string(file, 256);
-				auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
-				AssetHandle handle = 0;
-				if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
-				{
-					Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
-				}
-				handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
-				SaveScene(); // TODO: maybe show a prompt/pop-up for this...
-				OpenScene(handle);
-			}
-			ImGui::EndDragDropTarget();
-		}
-
-
-		// Gizmos
-		m_inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-		if (m_inspectedEntity)
-		{
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			static const ImU32 directionColor[3] = { 0xFF715ED8, 0xFF25AA25, 0xFFCC532C }; // x, y, z direction colors
-			static const ImU32 selectionColor = 0xFF20AACC;
-			Vec2 ePos = m_inspectedEntity.getComponent<CTransform>().GlobalTranslation;
-			sf::Vector2i pixel = m_rt.mapCoordsToPixel(sf::Vector2f(ePos.x, ePos.y));
-			ImVec2 origin = ImVec2(m_viewportBounds.first.x + pixel.x, m_viewportBounds.first.y + pixel.y);
-			static const float lineLength = 80.0f;
-			static const float lineThickness = 4.0f;
-			static const float arrowSize = 6.0f;
-			static const float rectSize = 6.0f;
-			static const float circleRadius = 80.0f;
-			static const float squareSize = 20.0f;
-
-			if (m_gizmoType == GIZMO_OPERATION::ROTATE)
-			{
-				// circle
-				ImU32 color = (m_gizmoRotateSelect || m_gizmoRotateHover) ? selectionColor : directionColor[2];
-				drawList->AddCircle(origin, circleRadius, color, 64);
-				// convex poly filled
-				ImVec2 circleArcPoints[32 + 1];
-				circleArcPoints[0] = origin;
-				float startAngle = fmod(m_inspectedEntity.getComponent<CTransform>().GlobalRotation + 180.0f, 360.0f);
-				if (startAngle < 0)
-					startAngle += 360.0f;
-				startAngle -= 180.0f;
-				float endAngle = m_gizmoRotateSelect  ? - 1 * atan2(windowToViewport(m_mousePos).y - pixel.y, windowToViewport(m_mousePos).x - pixel.x) * 180.0 / 3.14 : startAngle;
-
-				float angle_step = (endAngle - startAngle) / 32;
-				for (unsigned int i = 1; i < 32; i++)
-				{
-					float angle = startAngle + angle_step * i;
-					float costheta = cos(angle * 3.14 / 180.0);
-					float sintheta = sin(angle * 3.14 / 180.0);
-					circleArcPoints[i] = ImVec2(origin.x + circleRadius * costheta, origin.y - circleRadius * sintheta);
-				}
-				drawList->AddConvexPolyFilled(circleArcPoints, 32, 0x8020AACC);
-				drawList->AddPolyline(circleArcPoints, 32, color, true, 2);
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x - circleRadius, origin.y - circleRadius), ImVec2(origin.x + circleRadius, origin.y + circleRadius)))
-				{
-					m_gizmoRotateHover = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoRotateSelect = true;
-						m_lastGizmoRotatePos = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoRotateSelect && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoRotateSelect = false;
-					}
-				}
-				else
-				{
-					m_gizmoRotateHover = false;
-				}
-			}
-			else
-			{
-				// X-translation gizmo
-				ImU32 colorX = (m_gizmoSelectX || m_gizmoHoverX) ? selectionColor : directionColor[0];
-				// line
-				ImVec2 endPointX = ImVec2(origin.x + lineLength, origin.y);
-				drawList->AddLine(origin, endPointX, colorX, lineThickness);
-				// Y-translation gizmo
-				ImU32 colorY = (m_gizmoSelectY || m_gizmoHoverY) ? selectionColor : directionColor[1];
-				// line
-				ImVec2 endPointY = ImVec2(origin.x, origin.y - lineLength);
-				drawList->AddLine(origin, endPointY, colorY, lineThickness);
-				if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-				{
-					// X-arrow
-					ImVec2 dir = ImVec2(origin.x - endPointX.x, origin.y - endPointX.y);
-					float d = sqrtf(ImLengthSqr(dir));
-					dir.x = dir.x / d * arrowSize;
-					dir.y = dir.y / d * arrowSize;
-					ImVec2 orthogonoalDir(dir.y * 0.8f, -dir.x * 0.8f);
-					ImVec2 a = ImVec2(endPointX.x + dir.x, endPointX.y + dir.y);
-					drawList->AddTriangleFilled(ImVec2(endPointX.x - dir.x, endPointX.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorX);
-					// Y-arrow
-					dir = ImVec2(origin.x - endPointY.x, origin.y - endPointY.y);
-					d = sqrtf(ImLengthSqr(dir));
-					dir.x = dir.x / d * arrowSize;
-					dir.y = dir.y / d * arrowSize;
-					orthogonoalDir = ImVec2(dir.y * 0.8f, -dir.x * 0.8f);
-					a = ImVec2(endPointY.x + dir.x, endPointY.y + dir.y);
-					drawList->AddTriangleFilled(ImVec2(endPointY.x - dir.x, endPointY.y - dir.y), ImVec2(a.x + orthogonoalDir.x, a.y + orthogonoalDir.y), ImVec2(a.x - orthogonoalDir.x, a.y - orthogonoalDir.y), colorY);
-				}
-				else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-				{
-					// X-square
-					drawList->AddRectFilled(ImVec2(endPointX.x, endPointX.y - rectSize), ImVec2(endPointX.x + 2 * rectSize, endPointX.y + rectSize), colorX);
-					// Y-square	
-					drawList->AddRectFilled(ImVec2(endPointY.x - rectSize, endPointY.y - 2 * rectSize), ImVec2(endPointY.x + rectSize, endPointY.y), colorY);
-				}
-				ImU32 colorSquare = (m_gizmoSelectSquare || m_gizmoHoverSquare) ? selectionColor : directionColor[2];
-				drawList->AddRectFilled(ImVec2(origin.x + lineThickness/2.0f, origin.y - squareSize - lineThickness/2.0f), ImVec2(origin.x + squareSize + lineThickness/2.0, origin.y - lineThickness/2.0f), colorSquare);
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x, origin.y - arrowSize), ImVec2(endPointX.x + arrowSize, endPointX.y + arrowSize)))
-				{
-					m_gizmoHoverX = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectX = true;
-						m_lastGizmoPosX = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectX && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectX = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverX = false;
-				}
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(endPointY.x - arrowSize, endPointY.y - arrowSize), ImVec2(origin.x + arrowSize, origin.y)))
-				{
-					m_gizmoHoverY = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectY = true;
-						m_lastGizmoPosY = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectY && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectY = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverY = false;
-				}
-
-				if (ImGui::IsMouseHoveringRect(ImVec2(origin.x + lineThickness / 2.0f, origin.y - squareSize - lineThickness / 2.0f), ImVec2(origin.x + squareSize + lineThickness / 2.0, origin.y - lineThickness / 2.0f)))
-				{
-					m_gizmoHoverSquare = true;
-					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectSquare = true;
-						m_lastGizmoSquarePos = windowToViewport(m_mousePos);
-					}
-					if (m_gizmoSelectSquare && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-					{
-						m_gizmoSelectSquare = false;
-					}
-				}
-				else
-				{
-					m_gizmoHoverSquare = false;
-				}
-			}
-
-		}
-
-	}
-
-	ImGui::End(); // end "Viewport"
-
-	UI_Toolbar(); // Pause/Play Toolbar
-
-	ImGui::End(); // end "Dockspace demo" 
-
-	//ImGui::SFML::Render(m_game->window());
-
-}
-
-void EditorLayer::UI_Toolbar()
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-	auto* colors = ImGui::GetStyle().Colors;
-	const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
-	const auto& buttonActive = colors[ImGuiCol_ButtonActive];
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
-
-	ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-
-	bool toolbarEnabled = (bool)m_ActiveScene;
-
-	ImVec4 tintColor = ImVec4(1, 1, 1, 1);
-	if (!toolbarEnabled)
-		tintColor.w = 0.5f;
-
-	float size = ImGui::GetWindowHeight() - 4.0f;
-	ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
-
-	bool hasPlayButton = true; // either edit or play...
-	bool hasPauseButton = m_SceneState == SceneState::Play;
-
-	if (hasPlayButton)
-	{
-		std::shared_ptr<Texture> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
-		if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
-		{
-			if (m_SceneState == SceneState::Edit)
-			{
-				OnScenePlay();
-			}
-			else if (m_SceneState == SceneState::Play)
-			{
-				OnSceneStop();
-			}
-		}
-	}
-
-	if (hasPauseButton)
-	{
-		bool isPaused = m_ActiveScene->IsPaused();
-		ImGui::SameLine();
-		{
-			std::shared_ptr<Texture> icon = m_IconPause;
-			if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
-			{
-				m_ActiveScene->SetPaused(!isPaused);
-			}
-		}
-
-		// step button
-		if (isPaused)
-		{
-			ImGui::SameLine();
-			{
-				std::shared_ptr<Texture> icon = m_IconStep;
-				if (ImGui::ImageButton(icon->GetSFMLTexture(), sf::Vector2f(size, size), 0, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), tintColor) && toolbarEnabled)
-				{
-					m_ActiveScene->Step();
-				}
-			}
-		}
-	}
-
-	ImGui::PopStyleVar(2);
-	ImGui::PopStyleColor(3);
-	ImGui::End();
-
-}
-
-void EditorLayer::sDoAction(const Action& action)
-{
-	if (action.name() == "MOUSE_MOVE")
-	{
-		m_mousePos = action.pos();
-		Vec2 viewportPos = windowToViewport(m_mousePos);
-		Vec2 deltaPos = m_lastSceneViewPos - m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-
-		if (m_SceneViewMoving)
-		{
-			m_SceneView.setCenter(m_SceneView.getCenter() + sf::Vector2f(deltaPos.x, deltaPos.y));
-		}
-
-		// Gizmo System
-		if (m_gizmoSelectX && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoPosX;
-			m_lastGizmoPosX = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation.x += deltaPos.x;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale.x += m_scalingFactor * deltaPos.x;
-			}
-		}
-		else if (m_gizmoSelectY && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoPosY;
-			m_lastGizmoPosY = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation.y += deltaPos.y;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale.y += m_scalingFactor * deltaPos.y;
-			}
-		}
-		else if (m_gizmoSelectSquare && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoSquarePos;
-			m_lastGizmoSquarePos = viewportPos;
-			if (m_gizmoType == GIZMO_OPERATION::TRANSLATE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Translation += deltaPos;
-			}
-			else if (m_gizmoType == GIZMO_OPERATION::SCALE)
-			{
-				m_inspectedEntity.getComponent<CTransform>().Scale += deltaPos * m_scalingFactor;
-			}
-		}
-		else if (m_gizmoRotateSelect && m_inspectedEntity)
-		{
-			deltaPos = viewportPos - m_lastGizmoRotatePos;
-			m_lastGizmoRotatePos = viewportPos;
-			float deltaRotation = atan2(deltaPos.y, deltaPos.x) * 180.0 / 3.14;
-			float newAngle = m_inspectedEntity.getComponent<CTransform>().Rotation + m_rotationFactor * deltaRotation;
-			m_inspectedEntity.getComponent<CTransform>().Rotation = newAngle;
-		}
-	}
-
-	if (action.name() == "MOUSE_WHEEL_SCROLL")
-	{
-		if (!m_SceneViewMoving && m_altPressed)
-		{
-			float delta = action.pos().x;
-			if (delta <= -1)
-			{
-				m_SceneViewZoom = std::min(2.0f, m_SceneViewZoom + 0.1f);
-			}
-			else if (delta >= 1)
-			{
-				m_SceneViewZoom = std::max(0.5f, m_SceneViewZoom - 0.1f);
-			}
-		}
-	}
-
-	if (action.type() == "START")
-	{
-		if (action.name() == "TOGGLE_GRID")
-		{
-			m_drawGrid = !m_drawGrid;
-		}
-		else if (action.name() == "ALT")
-		{
-			m_altPressed = true;
-		}
-		else if (action.name() == "TRANSLATE_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::TRANSLATE;
-		}
-		else if (action.name() == "SCALE_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::SCALE;
-		}
-		else if (action.name() == "ROTATION_GIZMO")
-		{
-			m_gizmoType = GIZMO_OPERATION::ROTATE;
-		}
-		else if (action.name() == "DELETE")
-		{
-			Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-			if (inspectedEntity)
-			{
-				m_SceneHierarchyPanel.SetInspectedEntity({});
-				m_ActiveScene->DestroyEntity(inspectedEntity);
-			}
-		}
-		else if (action.name() == "DUPLICATE")
-		{
-			if (m_SceneState == SceneState::Edit)
-			{
-				Entity inspectedEntity = m_SceneHierarchyPanel.GetInspectedEntity();
-				if (inspectedEntity)
-				{
-					Entity newEntity = m_ActiveScene->DuplicateEntity(inspectedEntity);
-					m_SceneHierarchyPanel.SetInspectedEntity(newEntity);
-				}
-			}
-		}
-		else if (action.name() == "LEFT_CLICK")
-		{
-			Vec2 viewportPos = windowToViewport(m_mousePos);
-			Vec2 worldPos = m_rt.mapPixelToCoords(sf::Vector2i(viewportPos.x, viewportPos.y));
-
-			if (viewportPos.x > 0 && viewportPos.x < m_viewportSize.x && viewportPos.y > 0 && viewportPos.y < m_viewportSize.y)
-			{
-				Entity entity = m_ActiveScene->GetEntityIfClicked(worldPos);
-				if (entity)
-				{
-					m_SceneHierarchyPanel.SetInspectedEntity(entity);
-				}
-				else
-				{
-					if (!(m_gizmoHoverX || m_gizmoHoverY || m_gizmoSelectX || m_gizmoSelectY || m_gizmoRotateHover || m_gizmoRotateSelect || m_gizmoSelectSquare || m_gizmoHoverSquare))
-					{
-						m_SceneHierarchyPanel.SetInspectedEntity({});
-
-					}
-				}
-			}
-
-			if (m_altPressed)
-			{
-				m_SceneViewMoving = true;
-				m_lastSceneViewPos = worldPos;
-			}
-
-		}
-		else if (action.name() == "QUIT")
-		{
-			if (m_SceneState == SceneState::Play)
-				OnSceneStop();
-			SaveScene();
-			SaveProject();
-			m_hasEnded = true;
-			onEnd();
-		}
-		
-	}
-	
-	if (action.type() == "END")
-	{
-		if (action.name() == "LAUNCH_BOMB")
-		{
-			if (m_SceneState == SceneState::Play)
-			{
-				m_ActiveScene->LaunchBomb(m_rt);
-			}
-		}
-		if (action.name() == "ALT")
-		{
-			m_altPressed = false;
-			m_SceneViewMoving = false;
-		}
-		if (action.name() == "LEFT_CLICK")
-		{
-			if (m_altPressed)
-			{
-				m_SceneViewMoving = false;
-			}
-			if (m_gizmoSelectX)
-			{
-				m_gizmoSelectX = false;
-			}
-			if (m_gizmoSelectY)
-			{
-				m_gizmoSelectY = false;
-			}
-			if (m_gizmoRotateSelect)
-			{
-				m_gizmoRotateSelect = false;
-			}
-			if (m_gizmoSelectSquare)
-			{
-				m_gizmoSelectSquare = false;
-			}
-		}
-		else if (action.name() == "PLAY_Scene")
-		{
-			// Scene state, Scene play
-			if (m_SceneState == SceneState::Edit)
-			{
-				m_SceneState = SceneState::Play;
-			}
-			else if (m_SceneState == SceneState::Play)
-				m_SceneState = SceneState::Edit;
-		}
-	}
-}
-
-void EditorLayer::onEnd()
-{
-	//TODO: Save editor settings: viewport size , zoom etc ig...
-	//m_game->quit();
 }

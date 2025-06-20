@@ -5,6 +5,8 @@
 #include "Physics/PhysicsWorld.h"
 #include "core/UUID.h"
 
+#include "Renderer/EditorCamera.h"
+
 #include "EntityManager.h"
 
 #include <string>
@@ -24,9 +26,12 @@ public:
 	Entity AddEntityWithSprite(Vec2 pos,AssetHandle textureHandle);
 	//Entity DuplicateEntity(Entity entity);
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
-	Entity GetEntityIfClicked(Vec2 mousePos);
 	Entity GetEntityByUUID(Elysium::UUID id);
+	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
+
+	Camera GetPrimaryCamera();
+	glm::mat4 GetPrimaryCameraViewMatrix();
 
 	bool IsEntityUUIDValid(Elysium::UUID uuid);
 
@@ -39,11 +44,12 @@ public:
 	void OnRuntimeStart();
 	void OnRuntimeStop();
 	void UpdateTransforms();
-	void OnUpdateRuntime(sf::RenderTexture& renderTexture, float dt);
-	void OnUpdateEditor(sf::RenderTexture& renderTexture);
+	void OnUpdateRuntime(float dt);
+	void OnUpdateEditor(EditorCamera& camera);
+	void OnViewportResize(uint32_t width, uint32_t height);
 
 	// Physics
-	void LaunchBomb(sf::RenderTexture& renderTexture);
+	//void LaunchBomb(sf::RenderTexture& renderTexture);
 
 	bool IsRunning() const { return m_IsRunning; }
 	bool IsPaused() const { return m_IsPaused; }
@@ -55,16 +61,7 @@ private:
 
 	Entity m_player = {};
 
-	// debug stuff
-	sf::RectangleShape m_PhysicsRect;
-	sf::ConvexShape m_PhysicsPoly;
-	
-	// drawing
-	sf::CircleShape m_CircleShape;
-	sf::RectangleShape m_RectangleShape;
-	//sf::Texture m_Texture;
-
-	void RenderScene(sf::RenderTexture& renderTexture);
+	void RenderScene(EditorCamera& camera);
 private:
 	EntityManager m_entityManager;
 	bool m_IsRunning = false;
@@ -84,10 +81,8 @@ private:
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
-	sf::View m_cameraView;
+	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
-	// shader test
-	//sf::Shader m_Shader;
 
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;

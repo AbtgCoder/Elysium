@@ -11,7 +11,7 @@ class WindowsFileUtils
 {
 public:
 	// return empty string if cancelled
-	static std::string OpenFile(HWND hwnd, const char* filter);
-	static std::string SaveFile(HWND hwnd, const char* filter);
-	static std::string OpenFolder(HWND hwnd);
+	static std::string OpenFile(const char* filter);
+	static std::string SaveFile(const char* filter);
+	static std::string OpenFolder();
 };

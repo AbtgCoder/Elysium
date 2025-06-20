@@ -1,0 +1,19 @@
+SpriteSheet: runleft
+Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runleft.png
+SubSprites:
+  - Subsprite: 0
+    Name: runleft_0
+    Position: [0, 0]
+    Size: [63, 72]
+  - Subsprite: 1
+    Name: runleft_1
+    Position: [74, 0]
+    Size: [46, 72]
+  - Subsprite: 2
+    Name: runleft_2
+    Position: [198, 0]
+    Size: [46, 72]
+  - Subsprite: 3
+    Name: runleft_3
+    Position: [127, 1]
+    Size: [67, 71]

@@ -1,16 +1,22 @@
 #include "FileUtils.h"
 
+#include "core/Application.h"
+
 #include "core/Logger.h"
+
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 #include <ShObjIdl.h>
 
-std::string WindowsFileUtils::OpenFile(HWND hwnd, const char* filter)
+std::string WindowsFileUtils::OpenFile(const char* filter)
 {
 	OPENFILENAMEA ofn;
 	CHAR szFile[260] = { 0 };
 	ZeroMemory(&ofn, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hwnd; // win32 handle of parent window
+	ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow()); // win32 handle of parent window
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = sizeof(szFile);
 	ofn.lpstrFilter = filter;
@@ -24,13 +30,13 @@ std::string WindowsFileUtils::OpenFile(HWND hwnd, const char* filter)
 	return std::string();
 }
 
-std::string WindowsFileUtils::SaveFile(HWND hwnd, const char* filter)
+std::string WindowsFileUtils::SaveFile(const char* filter)
 {
 	OPENFILENAMEA ofn;
 	CHAR szFile[260] = { 0 };
 	ZeroMemory(&ofn, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hwnd; // win32 handle of parent window
+	ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow()); // win32 handle of parent window
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = sizeof(szFile);
 	ofn.lpstrFilter = filter;
@@ -44,12 +50,12 @@ std::string WindowsFileUtils::SaveFile(HWND hwnd, const char* filter)
 	return std::string();
 }
 
-std::string WindowsFileUtils::OpenFolder(HWND hwnd)
+std::string WindowsFileUtils::OpenFolder()
 {
 	BROWSEINFO bi = { 0 };
 	bi.lpszTitle = L"Select a Folder";
 	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;  // only shows folders...
-	bi.hwndOwner = hwnd;
+	bi.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow());
 
 	PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
 
