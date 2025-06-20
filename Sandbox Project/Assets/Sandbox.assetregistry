@@ -1,4 +1,7 @@
 AssetRegistry:
+  - Handle: 1009555716690119789
+    FilePath: textures/coin.png
+    Type: AssetType::Texture2D
   - Handle: 1290859156789939854
     FilePath: scenes/scene_test.elysium
     Type: AssetType::Scene
@@ -76,4 +79,7 @@ AssetRegistry:
     Type: AssetType::Texture2D
   - Handle: 17525485254563730416
     FilePath: Spritesheets/enemy.esmspritesheet
+    Type: AssetType::SpriteSheet
+  - Handle: 18092660231005806557
+    FilePath: Spritesheets/runleft.esmspritesheet
     Type: AssetType::SpriteSheet

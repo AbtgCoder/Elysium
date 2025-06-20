@@ -323,7 +323,8 @@ void Scene::OnRuntimeStart()
 			auto& nsc = e.getComponent<CNativeScriptComponent>();
 			//nsc.instance = nsc.InstantiateScript();
 			nsc.instance = TryLoadScript();
-			nsc.instance->m_Entity = &e;
+			nsc.instance->m_Entity = e;
+			nsc.instance->m_EntityManager = &m_entityManager;
 			nsc.instance->OnCreate();
 		}
 	}

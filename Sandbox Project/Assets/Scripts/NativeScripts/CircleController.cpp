@@ -4,7 +4,7 @@
 
 void CircleController::OnCreate()
 {
-	Logger::Log("oncreate!", "script");
+	Logger::Log("oncreateeeeeeee!", "script");
 }
 
 void CircleController::OnDestroy()
@@ -16,5 +16,5 @@ void CircleController::OnUpdate(float ts)
 {
 	auto& transform = getComponent<CTransform>();
 	transform.Rotation += 15.0f * ts;
-	transform.Translation.x += 10.0f;
+	// transform.Translation.x += 10.0f;
 }

@@ -25,7 +25,7 @@ project "Sandbox"
            -- "D:/Game Development/Game_Engine_Programming/Elysium/Elysium/src"
            "Assets/",
             "" ..EngineSrcDir.. "/Elysium/src",
-            "" ..EngineSrcDir.. "/Elysium/vendor",
+            "" ..EngineSrcDir.. "/Elysium/vendor/glm",
             "../../SFML-2.5.1/include",
           --  "%{IncludeDir.yaml_cpp}",
         }
