@@ -64,6 +64,9 @@ private:
 	void RenderScene(EditorCamera& camera);
 private:
 	EntityManager m_entityManager;
+	
+	std::unordered_map<Elysium::UUID, Entity> m_EntityMap;
+	
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
 	int m_StepFrames = 0;

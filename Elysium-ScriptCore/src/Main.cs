@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elysium
 {
-    public struct Vector3
+/*    public struct Vector3
     {
         public float X, Y, Z;
 
@@ -11,9 +11,9 @@ namespace Elysium
         {
             X = x; Y = y; Z = z;
         }
-    }
+    }*/
 
-    public static class InternalCalls
+   /* public static class InternalCalls
     {
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void NativeLog(string text, int parameter);
@@ -23,9 +23,9 @@ namespace Elysium
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static float NativeLog_VectorDot(ref Vector3 v);
-    }
+    }*/
 
-    public class Entity
+  /*  public class Entity
     {
         public float FloatVar { get; set; }
 
@@ -71,5 +71,5 @@ namespace Elysium
             InternalCalls.NativeLog_Vector(ref value, out Vector3 result);
             return result;
         }
-    }
+    }*/
 }

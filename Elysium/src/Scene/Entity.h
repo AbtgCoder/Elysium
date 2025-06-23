@@ -51,6 +51,9 @@ public:
 	}
 
 	operator bool() const { return m_IsValidEntity; }
+
+	Elysium::UUID GetUUID() { return getComponent<CId>().id; }
+
 private:
 	bool m_IsValidEntity = false;
 	size_t m_Id;

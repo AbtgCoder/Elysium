@@ -11,10 +11,10 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [-3.78999996, -1.69809341, 0]
+      Translation: [-3.78999996, -1.68794632, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-3.78999996, -1.69809341, 0]
+      GlobalTranslation: [-3.78999996, -1.68794632, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -46,6 +46,8 @@ Entities:
       HasParent: false
       ParentID: 0
       Children: []
+    ScriptComponent:
+      ClassName: Sandbox.Player
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0
@@ -60,16 +62,14 @@ Entities:
       Points:
         Size: 5
         Elements: [[29, 31], [31, 29], [28, -31], [-31, -31], [-31, 28]]
-    Rigidbody2D:
-      BodyType: Static
   - Entity: 5365315938177892065
     Tag:
       Tag: Player
     Transform:
-      Translation: [-4.45972824, 0.379045397, 3.63797881e-12]
+      Translation: [-4.45972824, 0.379045397, 3.63797837e-12]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-4.45972824, 0.379045397, 3.63797881e-12]
+      GlobalTranslation: [-4.45972824, 0.379045397, 3.63797837e-12]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:

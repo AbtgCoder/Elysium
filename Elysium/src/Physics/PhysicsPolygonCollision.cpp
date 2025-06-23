@@ -13,7 +13,7 @@ struct CollisionEdge
 
 	float dot(const Vec2& v)
 	{
-		return (v2 - v1).dot(v);
+		return (float)((v2 - v1).dot(v));
 	}
 };
 
@@ -29,7 +29,7 @@ CollisionEdge* FindCollisionEdge(const std::vector<Vec2>& vertices, const Vec2& 
 	size_t index = 0;
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
-		float projection = normal.dot(vertices[i]);
+		float projection = (float)(normal.dot(vertices[i]));
 		if (projection > max)
 		{
 			max = projection;
@@ -82,7 +82,7 @@ std::vector<Vec2> ClipLineSegment(const Vec2& lineStart, const Vec2& lineEnd, co
 
 	if (d1 * d2 < 0)
 	{
-		float t = d1 / (d1 - d2);
+		float t = (float)(d1 / (d1 - d2));
 		Vec2 pointOnLine = lineStart + (lineEnd - lineStart) * t;
 		cp.push_back(pointOnLine);
 	}
@@ -103,7 +103,7 @@ int32_t ClipLineSegment(CollisionVertex vOut[2], const CollisionVertex vIn[2], c
 
 	if (d1 * d2 < 0)
 	{
-		float t = d1 / (d1 - d2);
+		float t = (float)(d1 / (d1 - d2));
 		vOut[count].v = vIn[0].v + (vIn[1].v - vIn[0].v) * t;
 		vOut[count].id.cf.indexA = static_cast<uint8_t>(vertexIndexA);
 		vOut[count].id.cf.indexB = vIn[0].id.cf.indexB;
@@ -168,7 +168,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 
 	for (auto axis : axesA)
 	{
-		float amin = axis.dot(colliderVerticesA[0]), amax = amin;
+		float amin = (float)(axis.dot(colliderVerticesA[0])), amax = amin;
 		for (size_t i = 0; i < colliderVerticesA.size(); i++)
 		{
 			Vec2 p = colliderVerticesA[i];
@@ -182,7 +182,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 				amin = dot;
 			}
 		}
-		float bmin = axis.dot(colliderVerticesB[0]), bmax = bmin;
+		float bmin = (float)(axis.dot(colliderVerticesB[0])), bmax = bmin;
 		for (size_t i = 0; i < colliderVerticesB.size(); i++)
 		{
 			Vec2 p = colliderVerticesB[i];
@@ -214,7 +214,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 
 	for (auto axis : axesB)
 	{
-		float amin = axis.dot(colliderVerticesA[0]), amax = amin;
+		float amin = (float)(axis.dot(colliderVerticesA[0])), amax = amin;
 		for (size_t i = 0; i < colliderVerticesA.size(); i++)
 		{
 			Vec2 p = colliderVerticesA[i];
@@ -228,7 +228,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 				amin = dot;
 			}
 		}
-		float bmin = axis.dot(colliderVerticesB[0]), bmax = bmin;
+		float bmin = (float)(axis.dot(colliderVerticesB[0])), bmax = bmin;
 		for (size_t i = 0; i < colliderVerticesB.size(); i++)
 		{
 			Vec2 p = colliderVerticesB[i];
@@ -317,11 +317,11 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 	CollisionVertex clipPoints2[2];
 
 	Vec2 refv = (ref->v2 - ref->v1).normalize();
-	auto np = ClipLineSegment(clipPoints1, cp, refv, refv.dot(ref->v1), ref->index1);   // clip incident edge by the first vertex of reference edge
+	auto np = ClipLineSegment(clipPoints1, cp, refv, (float)(refv.dot(ref->v1)), ref->index1);   // clip incident edge by the first vertex of reference edge
 	if (np < 2)
 		return 0;
 
-	np = ClipLineSegment(clipPoints2, clipPoints1, refv * -1, -1 * refv.dot(ref->v2), ref->index2); // clip incident edge by the second vertex of reference edge
+	np = ClipLineSegment(clipPoints2, clipPoints1, refv * -1, -1 * (float)(refv.dot(ref->v2)), ref->index2); // clip incident edge by the second vertex of reference edge
 	if (np < 2)
 		return 0;
 
@@ -330,7 +330,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 	Vec2 refn = (ref->v2 - ref->v1).perpendicular().normalize() * -1;
 	for (int i = 0; i < 2; i++)
 	{
-		float separation = refn.dot(clipPoints2[i].v) - refn.dot(ref->v);
+		float separation = (float)(refn.dot(clipPoints2[i].v) - refn.dot(ref->v));
 		if (separation <= 0.002)
 		{
 			contacts[numContacts].m_separation = collisionDepth; // separation;

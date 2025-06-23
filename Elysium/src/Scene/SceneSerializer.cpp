@@ -198,6 +198,14 @@ void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 	}
+	if (entity.hasComponent<CScript>())
+	{
+		out << YAML::Key << "ScriptComponent";
+		out << YAML::BeginMap;
+		auto& scriptComponent = entity.getComponent<CScript>();
+		out << YAML::Key << "ClassName" << YAML::Value << scriptComponent.ClassName;
+		out << YAML::EndMap;
+	}
 	if (entity.hasComponent<CCircle>())
 	{
 		out << YAML::Key << "CircleShape";
@@ -485,6 +493,13 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 						colorArray[3].as<float>()
 					);
 				}
+			}
+
+			auto scriptComponent = entity["ScriptComponent"];
+			if (scriptComponent)
+			{
+				auto& script = deserializedEntity.addComponent<CScript>();
+				script.ClassName = scriptComponent["ClassName"].as<std::string>();
 			}
 
 			auto spriteRendererComponent = entity["SpriteRenderer"];

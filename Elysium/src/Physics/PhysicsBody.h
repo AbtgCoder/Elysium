@@ -48,6 +48,6 @@ public:
 	float m_mass, m_invMass;
 	float m_I, m_invI;
 
-	friend class Arbiter;
+	friend struct Arbiter;
 	friend class PhysicsWorld;
 };

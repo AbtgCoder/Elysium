@@ -5,6 +5,7 @@
 #include "Asset/AssetManager.h"
 #include "Renderer/Texture.h"
 #include "Physics/graham_scan.h"
+#include "Scripting/ScriptEngine.h"
 #include "Utils/StringUtils.h"
 #include "../Helper/ImGuiHelper.h"
 
@@ -295,6 +296,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
 			DisplayAddComponentEntry<CAnimator>("Animator");
+			DisplayAddComponentEntry<CScript>("Script"); 
 			ImGui::EndPopup();
 		}
 
@@ -367,6 +369,29 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 
 				ImGui::ColorEdit4("Color", glm::value_ptr(component.backgroundColor));
+			});
+
+		DrawComponentGUI<CScript>("Script", m_InspectedEntity, [](auto& component)
+			{
+				bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
+
+				static char buffer[64];
+				strcpy(buffer, component.ClassName.c_str());
+
+				if (!scriptClassExists)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+				}
+
+				if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+				{
+					component.ClassName = std::string(buffer);
+				}
+
+				if (!scriptClassExists)
+				{
+					ImGui::PopStyleColor();
+				}
 			});
 
 		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 

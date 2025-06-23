@@ -121,6 +121,15 @@ public:
 		: Controller(controller) {}
 };
 
+class CScript : public Component
+{
+public:
+	std::string ClassName; // name of the script class
+
+	CScript() = default;
+	CScript(const CScript&) = default;
+};
+
 // forward declaration
 class ScriptableEntity;
 class CNativeScriptComponent : public Component
