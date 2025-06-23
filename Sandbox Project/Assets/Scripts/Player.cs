@@ -12,6 +12,9 @@ namespace Sandbox
     {
         private TransformComponent m_Transform;
 
+        public float Speed;
+        public float Time = 0.0f;
+
         void OnCreate()
         {
             Console.WriteLine($"Player.OnCreate - {ID}");
@@ -21,8 +24,9 @@ namespace Sandbox
 
         void OnUpdate(float deltaTime)
         {
+            Time += deltaTime;
 
-            float speed = 3.0f;
+            float speed = Speed;
             Vector3 velocity = Vector3.Zero;
 
             if (Input.IsKeyDown(KeyCode.W))

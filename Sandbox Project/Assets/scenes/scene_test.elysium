@@ -48,6 +48,13 @@ Entities:
       Children: []
     ScriptComponent:
       ClassName: Sandbox.Player
+      ScriptFields:
+        - Name: Speed
+          Type: Float
+          Data: 1
+        - Name: Time
+          Type: Float
+          Data: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0

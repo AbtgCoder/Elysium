@@ -15,6 +15,11 @@ namespace Elysium
             ID = id;
         }
 
+        public Entity(string name)
+        {
+            //ID = InternalCalls.Entity_Create(name);
+        }
+
         public readonly ulong ID;
 
         public Vector3 Translation

@@ -12,6 +12,25 @@
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
 #include "mono/metadata/object.h"
+#include "mono/metadata/tabledefs.h"
+
+static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
+        { "System.Single", ScriptFieldType::Float },
+        { "System.Double", ScriptFieldType::Double },
+        { "System.Boolean", ScriptFieldType::Bool },
+        { "System.Char", ScriptFieldType::Char },
+        { "System.Int16", ScriptFieldType::Short },
+        { "System.Int32", ScriptFieldType::Int },
+        { "System.Int64", ScriptFieldType::Long },
+        { "System.Byte", ScriptFieldType::Byte },
+        { "System.UInt16", ScriptFieldType::UShort },
+        { "System.UInt32", ScriptFieldType::UInt },
+        { "System.UInt64", ScriptFieldType::ULong },
+
+        { "Elysium.Vector3", ScriptFieldType::Vector3 },
+
+        { "HElysiumazel.Entity", ScriptFieldType::Entity },
+};
 
 namespace Utils
 {
@@ -94,6 +113,21 @@ namespace Utils
         }
     }
 
+    ScriptFieldType MonoTypeToScriptFieldType(MonoType* monoType)
+    {
+		std::string typeName = mono_type_get_name(monoType);
+
+        auto it = s_ScriptFieldTypeMap.find(typeName);
+        if (it == s_ScriptFieldTypeMap.end())
+        {
+			Logger::Log("Unknown MonoType: " + typeName, "Script Engine", LOG_TYPE::CRITICAL);
+            return ScriptFieldType::None;
+        }
+
+		return it->second;
+	}
+
+
 }
 
 struct ScriptEngineData
@@ -111,6 +145,7 @@ struct ScriptEngineData
 
 	std::unordered_map<std::string, std::shared_ptr<ScriptClass>> EntityClasses;
     std::unordered_map<Elysium::UUID, std::shared_ptr<ScriptInstance>> EntityInstances;
+	std::unordered_map<Elysium::UUID, ScriptFieldMap> EntityScriptFields; // map of entity ID to script fields
 
     // runtime
 	Scene* SceneContext = nullptr;
@@ -176,9 +211,38 @@ Scene* ScriptEngine::GetSceneContext()
     return s_Data->SceneContext;
 }
 
+std::shared_ptr<ScriptInstance> ScriptEngine::GetEntityScriptInstance(Elysium::UUID entityID)
+{
+	auto it = s_Data->EntityInstances.find(entityID);
+    if (it == s_Data->EntityInstances.end())
+    {
+        // entity script instance not found
+        return nullptr;
+	}
+
+	return it->second;
+}
+
+std::shared_ptr<ScriptClass> ScriptEngine::GetEntityClass(const std::string& className)
+{
+    if (s_Data->EntityClasses.find(className) != s_Data->EntityClasses.end())
+    {
+        return s_Data->EntityClasses.at(className);
+	}
+
+    return nullptr;
+}
+
 std::unordered_map<std::string, std::shared_ptr<ScriptClass>>& ScriptEngine::GetEntityClasses()
 {
 	return s_Data->EntityClasses;
+}
+
+ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
+{
+	// assert entity is valid
+    Elysium::UUID entityID = entity.GetUUID();
+	return s_Data->EntityScriptFields[entityID];
 }
 
 MonoImage* ScriptEngine::GetCoreAssemblyImage()
@@ -228,14 +292,14 @@ void ScriptEngine::LoadAssemblyClasses()
         uint32_t cols[MONO_TYPEDEF_SIZE];
         mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
         const char* nameSpace = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
-        const char* name = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
+        const char* className = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
         std::string fullClassName; 
         if (strlen(nameSpace) == 0)
-            fullClassName = std::string(name);
+            fullClassName = std::string(className);
         else
-			fullClassName = std::string(nameSpace) + "." + std::string(name);
+			fullClassName = std::string(nameSpace) + "." + std::string(className);
 
-		MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, nameSpace, name);
+		MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, nameSpace, className);
 
         if (monoClass == entityClass)
         {
@@ -244,8 +308,27 @@ void ScriptEngine::LoadAssemblyClasses()
 		}
 
 		bool isEntityClass = mono_class_is_subclass_of(monoClass, entityClass, false);
-        if (isEntityClass)
-            s_Data->EntityClasses[fullClassName] = std::make_shared<ScriptClass>(nameSpace, name);
+        if (!isEntityClass)
+			continue; // skip classes that are not subclasses of Entity class
+
+		std::shared_ptr<ScriptClass> scriptClass = std::make_shared<ScriptClass>(nameSpace, className);
+        s_Data->EntityClasses[fullClassName] = scriptClass;
+
+        // retrive class fields
+		void* iter = nullptr;
+        while (MonoClassField* field = mono_class_get_fields(monoClass, &iter))
+        {
+			const char* fieldName = mono_field_get_name(field);
+			uint32_t flags = mono_field_get_flags(field);
+            if (flags & FIELD_ATTRIBUTE_PUBLIC)
+            {
+				MonoType* type = mono_field_get_type(field);
+				ScriptFieldType scriptFieldType = Utils::MonoTypeToScriptFieldType(type);
+				Logger::Log("Found field: " + std::string(fieldName) + " of type: " + Utils::ScriptFieldTypeToString(scriptFieldType), "Script Engine", LOG_TYPE::VERBOSE);
+
+                scriptClass->m_Fields[fieldName] = {scriptFieldType, fieldName, field};
+            }
+		}
 	}   
 }
 
@@ -280,8 +363,21 @@ void ScriptEngine::OnCreateEntity(Entity entity)
     const auto& sc = entity.getComponent<CScript>();
     if (ScriptEngine::EntityClassExists(sc.ClassName))
     {
+		Elysium::UUID entityID = entity.GetUUID();
+
         auto scriptInstance = std::make_shared<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
-        s_Data->EntityInstances[entity.GetUUID()] = scriptInstance;
+        s_Data->EntityInstances[entityID] = scriptInstance;
+
+        // copy field values
+        if (s_Data->EntityScriptFields.find(entityID) != s_Data->EntityScriptFields.end())
+        {
+            const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entityID);
+            for (const auto& [fieldName, fieldInstance] : fieldMap)
+            {
+                scriptInstance->SetFieldValueInternal(fieldName, fieldInstance.m_Buffer);
+            }
+		}
+
         // invoke OnCreate method
         scriptInstance->InvokeOnCreate();
     }
@@ -362,4 +458,30 @@ void ScriptInstance::InvokeOnUpdate(float deltaTime)
         void* params[1] = { &deltaTime };
         m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, params);
 	}
+}
+
+bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)
+{
+	const auto& fields = m_ScriptClass->GetFields();
+	auto it = fields.find(name);
+    if (it == fields.end())
+    {
+		return false; // field not found
+    }
+
+	const ScriptField& field = it->second;
+	mono_field_get_value(m_Instance, field.ClassField, buffer);
+    return true;
+}
+
+bool ScriptInstance::SetFieldValueInternal(const std::string& name, const void* value)
+{
+    const auto& fields = m_ScriptClass->GetFields();
+    auto it = fields.find(name);
+    if (it == fields.end())
+		return false; // field not found
+
+	const ScriptField& field = it->second;
+	mono_field_set_value(m_Instance, field.ClassField, const_cast<void*>(value)); // mono_field_set_value expects a non-const pointer because mono is weird like that
+    return true;
 }
