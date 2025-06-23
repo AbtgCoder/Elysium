@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-    <ProjectGuid>{58AC8CAA-4490-4D00-ADF0-475399F33782}</ProjectGuid>
+    <ProjectGuid>{F4C124E3-60A1-A37E-69B9-2E55D5170AE0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Elysium-ScriptCore</RootNamespace>
-    <AssemblyName>Elysium-ScriptCore</AssemblyName>
+    <RootNamespace>Sandbox</RootNamespace>
+    <AssemblyName>Sandbox</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -18,8 +18,8 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
-    <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
-    <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Debug\</BaseIntermediateOutputPath>
+    <OutputPath>bin\</OutputPath>
+    <BaseIntermediateOutputPath>bin-int\Debug\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
     <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -30,8 +30,8 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>true</Optimize>
-    <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
-    <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Release\</BaseIntermediateOutputPath>
+    <OutputPath>bin\</OutputPath>
+    <BaseIntermediateOutputPath>bin-int\Release\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
     <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -42,8 +42,8 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <Optimize>true</Optimize>
-    <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
-    <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Dist\</BaseIntermediateOutputPath>
+    <OutputPath>bin\</OutputPath>
+    <BaseIntermediateOutputPath>bin-int\Dist\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
     <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -56,14 +56,13 @@
   <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Dist|x64' ">
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\Elysium\Input.cs" />
-    <Compile Include="src\Elysium\InternalCalls.cs" />
-    <Compile Include="src\Elysium\KeyCode.cs" />
-    <Compile Include="src\Elysium\Scene\Components.cs" />
-    <Compile Include="src\Elysium\Scene\Entity.cs" />
-    <Compile Include="src\Elysium\Vector3.cs" />
+    <Compile Include="Assets\Scripts\Player.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Elysium-ScriptCore\Elysium-ScriptCore.csproj">
+      <Project>{58AC8CAA-4490-4D00-ADF0-475399F33782}</Project>
+      <Name>Elysium-ScriptCore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

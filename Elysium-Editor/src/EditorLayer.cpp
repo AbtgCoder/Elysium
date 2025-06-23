@@ -815,6 +815,7 @@ void EditorLayer::NewProject()
 						// Create Project
 						const auto& projectInitialSceneDirectory = projectParentPath + "/Assets/Scenes/";
 						std::filesystem::create_directories(projectInitialSceneDirectory);
+						//TODO: create new lua/csproject solution file 
 						Project::New(projectName, finalLocation);
 						auto projectInitialScenePath = projectInitialSceneDirectory + "Gameplay.elysium";
 						auto relativePath = std::filesystem::relative(projectInitialScenePath, Project::GetActiveAssetDirectory());
