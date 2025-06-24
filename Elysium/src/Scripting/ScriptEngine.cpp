@@ -250,6 +250,12 @@ MonoImage* ScriptEngine::GetCoreAssemblyImage()
     return s_Data->CoreAssemblyImage;
 }
 
+MonoObject* ScriptEngine::GetManagedInstance(Elysium::UUID entityID)
+{
+	// assert s_Data->EntityInstances.find(entityID) != s_Data->EntityInstances.end();
+    return s_Data->EntityInstances.at(entityID)->GetManagedObject();
+}
+
 void ScriptEngine::InitMono()
 {
     mono_set_assemblies_path("D:/Game Development/Game_Engine_Programming/Elysium/Elysium-Editor/mono/lib");

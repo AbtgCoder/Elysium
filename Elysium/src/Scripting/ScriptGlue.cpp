@@ -63,6 +63,29 @@ static bool Entity_HasComponent(Elysium::UUID entityID, MonoReflectionType* comp
 	}
 }
 
+static uint64_t Entity_FindEntityByName(MonoString* name)
+{
+	char* nameCStr = mono_string_to_utf8(name);
+
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert: scene
+	Entity entity = scene->FindEntityByName(nameCStr);
+	mono_free(nameCStr);
+
+	if (!entity)
+	{
+		return 0;
+	}
+
+	return entity.GetUUID(); // Return the UUID of the entity if found, or 0 if not found
+}
+
+
+static MonoObject* GetScriptInstance(Elysium::UUID entityID)
+{
+	return ScriptEngine::GetManagedInstance(entityID);
+}
+
 static void TransformComponent_GetTranslation(Elysium::UUID entityID, glm::vec3* outTranslation)
 {
 	Scene* scene = ScriptEngine::GetSceneContext();
@@ -129,7 +152,11 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(NativeLog_Vector);
 	ESM_ADD_INTERNAL_CALL(NativeLog_VectorDot);
 
+	ESM_ADD_INTERNAL_CALL(GetScriptInstance);
+
 	ESM_ADD_INTERNAL_CALL(Entity_HasComponent);
+	ESM_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+
 	ESM_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 	ESM_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
 

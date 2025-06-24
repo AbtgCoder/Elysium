@@ -47,6 +47,19 @@ namespace Sandbox
                 velocity.X = 1.0f;
             }
 
+            Entity cameraEntity = FindEntityByName("Main Camera");
+            if (cameraEntity != null)
+            {
+                Camera camera = cameraEntity.As<Camera>();
+
+                if (Input.IsKeyDown(KeyCode.Q))
+                    camera.DistanceFromPlayer += speed * 2.0f * deltaTime;
+                else if (Input.IsKeyDown(KeyCode.E))
+                    camera.DistanceFromPlayer -= speed * 2.0f * deltaTime;
+            }
+
+
+
             velocity *= speed;
 
             Vector3 translation = m_Transform.Translation;

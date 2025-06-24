@@ -27,6 +27,7 @@ public:
 	//Entity DuplicateEntity(Entity entity);
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
 	Entity GetEntityByUUID(Elysium::UUID id);
+	Entity FindEntityByName(const std::string& name);
 	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
 

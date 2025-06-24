@@ -46,15 +46,6 @@ Entities:
       HasParent: false
       ParentID: 0
       Children: []
-    ScriptComponent:
-      ClassName: Sandbox.Player
-      ScriptFields:
-        - Name: Speed
-          Type: Float
-          Data: 1
-        - Name: Time
-          Type: Float
-          Data: 0
     SpriteRenderer:
       TextureHandle: 12063736264547966939
       Layer: 0
@@ -83,6 +74,15 @@ Entities:
       HasParent: false
       ParentID: 0
       Children: []
+    ScriptComponent:
+      ClassName: Sandbox.Player
+      ScriptFields:
+        - Name: Speed
+          Type: Float
+          Data: 2
+        - Name: Time
+          Type: Float
+          Data: 0
     SpriteRenderer:
       TextureHandle: 6392853097170261536
       Layer: 0
@@ -219,7 +219,7 @@ Entities:
       Children: []
     Camera:
       Camera:
-        ProjectionType: 1
+        ProjectionType: 0
         PerspectiveFOV: 0.785398185
         PerspectiveNear: 0.00999999978
         PerspectiveFar: 1000
@@ -228,6 +228,12 @@ Entities:
         OrthographicFar: 100
       Primary: true
       BackgroundColor: [0.854901969, 0.572549045, 0.572549045, 0.631372571]
+    ScriptComponent:
+      ClassName: Sandbox.Camera
+      ScriptFields:
+        - Name: DistanceFromPlayer
+          Type: Float
+          Data: 5
   - Entity: 7923484610642854400
     Tag:
       Tag: Circle

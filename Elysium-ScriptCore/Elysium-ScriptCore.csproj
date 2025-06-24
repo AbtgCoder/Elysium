@@ -21,7 +21,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Debug\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -33,7 +34,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Release\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -45,7 +47,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Dist\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -61,6 +64,7 @@
     <Compile Include="src\Elysium\KeyCode.cs" />
     <Compile Include="src\Elysium\Scene\Components.cs" />
     <Compile Include="src\Elysium\Scene\Entity.cs" />
+    <Compile Include="src\Elysium\Vector2.cs" />
     <Compile Include="src\Elysium\Vector3.cs" />
   </ItemGroup>
   <ItemGroup>

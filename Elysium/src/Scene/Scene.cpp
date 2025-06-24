@@ -70,7 +70,7 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	// create entities in new Scene
 	for (auto e : other->m_entityManager.GetEntities())
 	{
-		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, "runtime_" + e.getComponent<CTag>().tag);
+		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, e.getComponent<CTag>().tag);
 		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
 		runtimeEntity.addComponent<CParent>(e.getComponent<CParent>());
 
@@ -226,6 +226,18 @@ Entity Scene::GetEntityByEntityID(size_t id)
 			return e;
 		}
 	}
+}
+
+Entity Scene::FindEntityByName(const std::string& name)
+{
+	for (auto entity : m_entityManager.GetEntities())
+	{
+		if (entity.hasComponent<CTag>() && entity.getComponent<CTag>().tag == name)
+		{
+			return entity;
+		}
+	}
+	return Entity();
 }
 
 void Scene::DestroyEntity(Entity entity)
