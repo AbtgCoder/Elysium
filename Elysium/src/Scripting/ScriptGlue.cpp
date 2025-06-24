@@ -139,6 +139,8 @@ static void RegisterComponent()
 
 void ScriptGlue::RegisterComponents()
 {
+	s_EntityHasComponentFuncs.clear();
+
 	RegisterComponent<CTransform>();
 	RegisterComponent<CTag>();
 	RegisterComponent<CCamera>();

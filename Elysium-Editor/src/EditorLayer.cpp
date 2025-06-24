@@ -10,6 +10,7 @@
 
 #include "Physics/graham_scan.h"
 
+#include "Scripting/ScriptEngine.h"
 
 #include "Asset/AssetManager.h"
 #include "Asset/SceneImporter.h"
@@ -209,6 +210,14 @@ void EditorLayer::OnImGuiRender()
 			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
 			{
 				SaveScene();
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Script"))
+		{
+			if (ImGui::MenuItem("Reload Assembly", "Ctrl+R"))
+			{
+				ScriptEngine::ReloadAssembly();
 			}
 			ImGui::EndMenu();
 		}
@@ -548,8 +557,15 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 		}
 		case Key::R:
 		{
-			if (!control && !ImGuizmo::IsUsing())
-				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			if (control)
+			{
+				ScriptEngine::ReloadAssembly();
+			}
+			else
+			{
+				if (!ImGuizmo::IsUsing())
+					m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			}
 			break;
 		}
 	}

@@ -29,7 +29,7 @@ static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
 
         { "Elysium.Vector3", ScriptFieldType::Vector3 },
 
-        { "HElysiumazel.Entity", ScriptFieldType::Entity },
+        { "Elysium.Entity", ScriptFieldType::Entity },
 };
 
 namespace Utils
@@ -141,6 +141,9 @@ struct ScriptEngineData
 	MonoAssembly* AppAssembly = nullptr;
 	MonoImage* AppAssemblyImage = nullptr;
 
+    std::filesystem::path CoreAssemblyPath;
+    std::filesystem::path AppAssemblyPath;
+
     ScriptClass EntityClass;
 
 	std::unordered_map<std::string, std::shared_ptr<ScriptClass>> EntityClasses;
@@ -158,15 +161,13 @@ void ScriptEngine::Init()
 	s_Data = new ScriptEngineData();
 
 	InitMono();
+    ScriptGlue::RegisterFunctions();
+
     LoadAssembly("D:/Game Development/Game_Engine_Programming/Elysium/Elysium-Editor/Resources/Scripts/Elysium-ScriptCore.dll");
-
-	// LoadAssemblyClasses(s_Data->CoreAssembly);
 	LoadAppAssembly("D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/bin/Sandbox.dll"); //TODO: we should get this from project settings
-
     LoadAssemblyClasses();
 
     ScriptGlue::RegisterComponents();
-    ScriptGlue::RegisterFunctions();
 
     s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
 
@@ -270,10 +271,12 @@ void ScriptEngine::InitMono()
 
 void ScriptEngine::ShutdownMono()
 {
-   // mono_domain_unload(s_Data->AppDomain);
+	mono_domain_set(mono_get_root_domain(), false);
+
+	mono_domain_unload(s_Data->AppDomain);
     s_Data->AppDomain = nullptr;
 
-   // mono_jit_cleanup(s_Data->RootDomain);
+    mono_jit_cleanup(s_Data->RootDomain);
     s_Data->RootDomain = nullptr;
 }
 
@@ -344,14 +347,31 @@ void ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
     s_Data->AppDomain = mono_domain_create_appdomain(const_cast<char*>("ElysiumScriptRuntime"), nullptr);
     mono_domain_set(s_Data->AppDomain, true);
 
+    s_Data->CoreAssemblyPath = filepath;
     s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
     s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 }
 
 void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
 {
+	s_Data->AppAssemblyPath = filepath;
 	s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
 	s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
+}
+
+void ScriptEngine::ReloadAssembly()
+{
+	mono_domain_set(mono_get_root_domain(), false);
+
+	mono_domain_unload(s_Data->AppDomain);
+
+	LoadAssembly(s_Data->CoreAssemblyPath);
+	LoadAppAssembly(s_Data->AppAssemblyPath);
+	LoadAssemblyClasses();
+
+	ScriptGlue::RegisterComponents(); // re-register components after reloading assemblies
+
+	s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
 }
 
 bool ScriptEngine::EntityClassExists(const std::string& fullClassName)
