@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Elysium
+namespace Elysium
 {
     public struct Vector2
     {

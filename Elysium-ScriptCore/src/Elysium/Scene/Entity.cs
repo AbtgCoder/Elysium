@@ -17,22 +17,42 @@ namespace Elysium
 
         public Entity(string name)
         {
-            //ID = InternalCalls.Entity_Create(name);
+            ID = InternalCalls.Entity_CreateEntity(name);
         }
 
-        public readonly ulong ID;
+        //TODO: destroy entity
 
-        public Vector3 Translation
+        private TransformComponent m_TransformComponent;
+        //TODO: Add Parent, retriving children, component cache, etc.
+
+        public readonly ulong ID;
+        public string Tag => GetComponent<TagComponent>().Tag;
+        public TransformComponent Transform
         {
             get
             {
-                InternalCalls.TransformComponent_GetTranslation(ID, out Vector3 translation);
-                return translation;
+                if (m_TransformComponent == null)
+                    m_TransformComponent = GetComponent<TransformComponent>();
+                return m_TransformComponent;
             }
-            set
-            {
-                InternalCalls.TransformComponent_SetTranslation(ID, ref value);
-            }
+        }
+
+        public Vector3 Translation
+        {
+            get => Transform.Translation;
+            set => Transform.Translation = value;
+        }
+
+        public Vector3 Rotation
+        {
+            get => Transform.Rotation;
+            set => Transform.Rotation = value;
+        }
+
+        public Vector3 Scale
+        {
+            get => Transform.Scale;
+            set => Transform.Scale = value;
         }
 
         public bool HasComponent<T>() where T : Component, new()
@@ -48,6 +68,25 @@ namespace Elysium
                
             T component = new T() { Entity = this};
             return component;
+        }
+
+        public T AddComponent<T>() where T : Component, new()
+        {
+            if (HasComponent<T>())
+                return GetComponent<T>();
+            
+            Type componentType = typeof(T);
+            InternalCalls.Entity_AddComponent(ID, componentType);
+            T component = new T() { Entity = this };
+            return component;
+        }
+
+        public void RemoveComponent<T>() where T : Component, new()
+        {
+            if (!HasComponent<T>())
+                return;
+            Type componentType = typeof(T);
+            InternalCalls.Entity_RemoveComponent(ID, componentType);
         }
 
         public Entity FindEntityByName(string name)

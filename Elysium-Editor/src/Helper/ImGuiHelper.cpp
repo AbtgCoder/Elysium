@@ -115,6 +115,7 @@ void DrawFloatControl(const std::string& label, float& value, float vMin, float 
 	ImGui::DragFloat("##val", &value, 0.01f, vMin, vMax, "%.2f");
 	ImGui::PopStyleVar();
 
+
 	ImGui::Columns(1);
 	ImGui::PopID();
 }

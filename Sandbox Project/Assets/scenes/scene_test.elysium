@@ -11,10 +11,10 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [-3.78999996, -1.68794632, 0]
+      Translation: [-12.3900213, -1.68794632, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-3.78999996, -1.68794632, 0]
+      GlobalTranslation: [-12.3900213, -1.68794632, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -36,10 +36,10 @@ Entities:
     Tag:
       Tag: Tile1
     Transform:
-      Translation: [-1.82476807, 0.09970662, 0]
+      Translation: [4.18501282, 0.628496051, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-1.82476807, 0.09970662, 0]
+      GlobalTranslation: [4.18501282, 0.628496051, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -64,10 +64,10 @@ Entities:
     Tag:
       Tag: Player
     Transform:
-      Translation: [-4.45972824, 0.379045397, 3.63797837e-12]
+      Translation: [-2.66000009, 0.379045397, -1.49011612e-08]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-4.45972824, 0.379045397, 3.63797837e-12]
+      GlobalTranslation: [-2.66000009, 0.379045397, -1.49011612e-08]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -80,9 +80,12 @@ Entities:
         - Name: Speed
           Type: Float
           Data: 2
-        - Name: Time
-          Type: Float
-          Data: 0
+        - Name: pipeTexture
+          Type: Texture2D
+          Data: 9785990741684801335
+        - Name: tile
+          Type: Entity
+          Data: 4163440874578799761
     SpriteRenderer:
       TextureHandle: 6392853097170261536
       Layer: 0
@@ -233,7 +236,7 @@ Entities:
       ScriptFields:
         - Name: DistanceFromPlayer
           Type: Float
-          Data: 5
+          Data: 20
   - Entity: 7923484610642854400
     Tag:
       Tag: Circle
@@ -305,3 +308,47 @@ Entities:
     RectangleShape:
       Size: [0.400000006, 0.400000006]
       Color: [1, 1, 1, 1]
+  - Entity: 6005207423729971255
+    Tag:
+      Tag: Level Generator
+    Transform:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    ScriptComponent:
+      ClassName: LevelGenerator
+      ScriptFields:
+        - Name: brickTexture
+          Type: Texture2D
+          Data: 7105023437157358994
+        - Name: coinTexture
+          Type: Texture2D
+          Data: 0
+        - Name: generationDistance
+          Type: Float
+          Data: 10
+        - Name: groundHeight
+          Type: Int
+          Data: -3
+        - Name: groundTexture
+          Type: Texture2D
+          Data: 7768261576516653517
+        - Name: pipeTexture
+          Type: Texture2D
+          Data: 9785990741684801335
+        - Name: platformTexture
+          Type: Texture2D
+          Data: 12063736264547966939
+        - Name: segmentWidth
+          Type: Int
+          Data: 10
+        - Name: tileSize
+          Type: Float
+          Data: 1

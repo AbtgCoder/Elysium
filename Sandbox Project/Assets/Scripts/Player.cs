@@ -13,18 +13,39 @@ namespace Sandbox
         private TransformComponent m_Transform;
 
         public float Speed;
-        public float Time = 0.0f;
+
+        public Entity tile;
+
+        public Texture2D pipeTexture;
+
+        private Entity newRectangle;
+
+        private RectangleComponent rectangleComponent;
+
+        private SpriteRendererComponent sr;
 
         void OnCreate()
         {
             Console.WriteLine($"Player.OnCreate - {ID}");
+            Console.WriteLine($"Tile ID: {tile.ID}");
 
             m_Transform = GetComponent<TransformComponent>();
+
+            newRectangle = new Entity("New Rectangle");
+            Vector3 newEntityTranslation = new Vector3(5.0f, 3.0f, 0.0f);
+            newRectangle.Translation = newEntityTranslation;
+
+            sr = newRectangle.AddComponent<SpriteRendererComponent>();
+            //ulong textureHandle = 12063736264547966939;
+            sr.Texture = pipeTexture; // new Texture2D(textureHandle);
+
+            //rectangleComponent = newRectangle.AddComponent<RectangleComponent>();
+            //rectangleComponent.Color = new Vector4(0.0f, 1.0f, 0.6f, 1.0f);
         }
 
         void OnUpdate(float deltaTime)
         {
-            Time += deltaTime;
+           //rectangleComponent.Size += new Vector2(deltaTime, deltaTime);
 
             float speed = Speed;
             Vector3 velocity = Vector3.Zero;
@@ -58,7 +79,9 @@ namespace Sandbox
                     camera.DistanceFromPlayer -= speed * 2.0f * deltaTime;
             }
 
-
+            Vector3 tileTranslation = tile.Translation;
+            tileTranslation.X -= deltaTime;
+            tile.Translation = tileTranslation;
 
             velocity *= speed;
 

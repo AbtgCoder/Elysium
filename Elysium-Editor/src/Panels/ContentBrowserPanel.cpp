@@ -1,7 +1,62 @@
 #include "ContentBrowserPanel.h"
 
+#include "Utils/FileUtils.h"
+
+#include "Scripting/ScriptEngine.h"
+
 #include "Asset/TextureImporter.h"
 #include "../Helper/ImGuiHelper.h"
+
+#include <fstream>
+
+namespace Utils
+{
+	void AddScriptToCsProj(const std::filesystem::path& scriptPath, const std::filesystem::path& csprojPath) // TODO: maybe this should be somewhere else, like in project ??
+	{
+		std::ifstream fileIn(csprojPath);
+		std::stringstream buffer;
+		buffer << fileIn.rdbuf();
+		std::string csprojContent = buffer.str();
+
+		std::string relativeScriptPath = std::filesystem::relative(scriptPath, csprojPath.parent_path()).generic_string();
+
+		// Ensure file isnt already added
+		if (csprojContent.find(relativeScriptPath) != std::string::npos)
+			return;
+
+		std::replace(relativeScriptPath.begin(), relativeScriptPath.end(), '/', '\\');
+
+		std::string compileEntry = "	<Compile Include=\"" + relativeScriptPath + "\" />\n";
+
+
+		size_t insertPos = csprojContent.find("<ItemGroup>");
+		while (insertPos != std::string::npos)
+		{
+			size_t endGroupPos = csprojContent.find("</ItemGroup>", insertPos);
+			if (csprojContent.find("<Compile", insertPos) < endGroupPos)
+			{
+				// fount suitable ItemGroup
+				csprojContent.insert(endGroupPos, compileEntry);
+				break;
+			}
+			insertPos = csprojContent.find("<ItemGroup>", endGroupPos);
+		}
+
+
+		// if not found, insert a new <ItemGroup> before </Project>
+		if (insertPos == std::string::npos)
+		{
+			size_t endProject = csprojContent.find("</Project>");
+			std::string itemGroup = "	<ItemGroup>\n" + compileEntry + "	</ItemGroup>\n";
+			csprojContent.insert(endProject, itemGroup);
+		}
+		
+
+		// write back
+		std::ofstream out(csprojPath);
+		out << csprojContent;
+	}
+}
 
 
 ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)
@@ -179,6 +234,10 @@ void ContentBrowserPanel::OnImGuiRender()
 					{
 						dragType = "_Spritesheet";
 					}
+					else if (extension == ".cs")
+					{
+						dragType = "_Script";
+					}
 					ImGui::SetDragDropPayload(dragType.c_str(), (void*)(pathBuffer), sizeof(pathBuffer));
 					ImGui::Text(itemStr.c_str());
 					ImGui::EndDragDropSource();
@@ -288,6 +347,59 @@ void ContentBrowserPanel::OnImGuiRender()
 	{
 		if (ImGui::MenuItem("New Folder"))
 		{
+		}
+		if (ImGui::MenuItem("New Script"))
+		{
+			std::string path = WindowsFileUtils::SaveFile("C# Script (*.cs)\0*.cs\0");
+
+			if (!path.empty())
+			{
+				std::string className = std::filesystem::path(path).filename().stem().string();
+
+				// 1) write default script file
+				std::string defaultScript =
+					"using System;\n"
+					"using System.Collections.Generic;\n"
+					"using System.Linq;\n"
+					"using System.Text;\n"
+					"using System.Threading.Tasks;\n\n"
+					"using Elysium;\n\n"
+					"public class " + className + " : Entity\n"
+					"{\n"
+					"	void OnCreate()\n"
+					"	{\n"
+					"	}\n"
+					"\n"
+					"	void OnUpdate(float deltaTime)\n"
+					"	{\n"
+					"	}\n"
+					"}\n";
+
+				std::ofstream outFile(path);
+				if (!outFile.is_open())
+				{
+					// error: couldnt write to file
+				}
+				outFile << defaultScript;
+				outFile.close();
+
+
+				// 2) Add to .csproj
+				Utils::AddScriptToCsProj(path, "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox.csproj");
+
+				// 3) Rebuild C# project: TODO: this doesnt work.. isnt registering the command correctly
+				//std::string msbuildPath = "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"";
+				//std::string slnPath = "\"D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox Project.sln\"";
+
+				//std::string command = "cmd /C " + msbuildPath + " " + slnPath + " /p:Configuration=Release /nologo";
+
+				//std::cout << "Running: " << command << std::endl;
+
+				//int result = system(command.c_str());
+				//// 4) Reload assembly
+				//ScriptEngine::ReloadAssembly();
+			}
+
 		}
 		ImGui::EndPopup();
 	}

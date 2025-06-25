@@ -26,9 +26,11 @@ static std::unordered_map<std::string, ScriptFieldType> s_ScriptFieldTypeMap = {
         { "System.UInt16", ScriptFieldType::UShort },
         { "System.UInt32", ScriptFieldType::UInt },
         { "System.UInt64", ScriptFieldType::ULong },
-
+        
+        { "Elysium.Vector2", ScriptFieldType::Vector2 },
         { "Elysium.Vector3", ScriptFieldType::Vector3 },
 
+        { "Elysium.Texture2D", ScriptFieldType::Texture2D },
         { "Elysium.Entity", ScriptFieldType::Entity },
 };
 
@@ -146,6 +148,8 @@ struct ScriptEngineData
 
     ScriptClass EntityClass;
 
+    ScriptClass Texture2DClass;
+
 	std::unordered_map<std::string, std::shared_ptr<ScriptClass>> EntityClasses;
     std::unordered_map<Elysium::UUID, std::shared_ptr<ScriptInstance>> EntityInstances;
 	std::unordered_map<Elysium::UUID, ScriptFieldMap> EntityScriptFields; // map of entity ID to script fields
@@ -170,6 +174,8 @@ void ScriptEngine::Init()
     ScriptGlue::RegisterComponents();
 
     s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
+
+	s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
 
 #if 0
     // 1) create an object (and call constructor)
@@ -246,6 +252,26 @@ ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
 	return s_Data->EntityScriptFields[entityID];
 }
 
+MonoDomain* ScriptEngine::GetRootDomain()
+{
+    return s_Data->RootDomain;
+}
+
+MonoDomain* ScriptEngine::GetAppDomain()
+{
+    return s_Data->AppDomain;
+}
+
+MonoAssembly* ScriptEngine::GetCoreAssembly()
+{
+    return s_Data->CoreAssembly;
+}
+
+MonoAssembly* ScriptEngine::GetAppAssembly()
+{
+    return s_Data->AppAssembly;
+}
+
 MonoImage* ScriptEngine::GetCoreAssemblyImage()
 {
     return s_Data->CoreAssemblyImage;
@@ -308,9 +334,10 @@ void ScriptEngine::LoadAssemblyClasses()
         else
 			fullClassName = std::string(nameSpace) + "." + std::string(className);
 
+
 		MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, nameSpace, className);
 
-        if (monoClass == entityClass)
+        if (!monoClass or monoClass == entityClass)
         {
             // skip the entity class
             continue;
@@ -320,6 +347,9 @@ void ScriptEngine::LoadAssemblyClasses()
         if (!isEntityClass)
 			continue; // skip classes that are not subclasses of Entity class
 
+        Logger::Log(fullClassName, "Script Engine");
+
+
 		std::shared_ptr<ScriptClass> scriptClass = std::make_shared<ScriptClass>(nameSpace, className);
         s_Data->EntityClasses[fullClassName] = scriptClass;
 
@@ -328,6 +358,8 @@ void ScriptEngine::LoadAssemblyClasses()
         while (MonoClassField* field = mono_class_get_fields(monoClass, &iter))
         {
 			const char* fieldName = mono_field_get_name(field);
+            //Logger::Log("Found field: " + std::string(fieldName), "Script Engine", LOG_TYPE::VERBOSE);
+
 			uint32_t flags = mono_field_get_flags(field);
             if (flags & FIELD_ATTRIBUTE_PUBLIC)
             {
@@ -372,6 +404,7 @@ void ScriptEngine::ReloadAssembly()
 	ScriptGlue::RegisterComponents(); // re-register components after reloading assemblies
 
 	s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
+	s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
 }
 
 bool ScriptEngine::EntityClassExists(const std::string& fullClassName)
@@ -417,10 +450,15 @@ void ScriptEngine::OnUpdateEntity(Entity entity, float deltaTime)
 {
 	Elysium::UUID entityID = entity.GetUUID();
 
-	// assert s_Data->EntityInstances.find(entityID) != s_Data->EntityInstances.end();
-
-	std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entityID];
-	scriptInstance->InvokeOnUpdate(deltaTime);
+    if (s_Data->EntityInstances.find(entityID) != s_Data->EntityInstances.end())
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entityID];
+        scriptInstance->InvokeOnUpdate(deltaTime);
+    }
+    else
+    {
+		Logger::Log("Script instance for entity " + std::to_string(entityID) + " not found", "Script Engine", LOG_TYPE::CRITICAL);
+    }
 }
 
 void ScriptEngine::OnRuntimeStop()
@@ -508,6 +546,39 @@ bool ScriptInstance::SetFieldValueInternal(const std::string& name, const void* 
 		return false; // field not found
 
 	const ScriptField& field = it->second;
-	mono_field_set_value(m_Instance, field.ClassField, const_cast<void*>(value)); // mono_field_set_value expects a non-const pointer because mono is weird like that
+
+    if (field.Type == ScriptFieldType::Entity)
+    {
+        // 1) create a new managed Entity
+		MonoObject* managedEntity = s_Data->EntityClass.Instantiate();
+
+        // 2) set the entity ID
+        Elysium::UUID entityID = *static_cast<const Elysium::UUID*>(value);
+        void* params[1] = { &entityID };
+		auto entityConstructor = s_Data->EntityClass.GetMethod(".ctor", 1);
+		s_Data->EntityClass.InvokeMethod(managedEntity, entityConstructor, params);
+
+		// 3) finally assign the managed entity to the script instance's field
+		mono_field_set_value(m_Instance, field.ClassField, managedEntity);
+    }
+    else if (field.Type == ScriptFieldType::Texture2D)
+    {
+        // 1) create a new managed texture
+        MonoObject* managedTexture = s_Data->Texture2DClass.Instantiate();
+
+		// 2) set the texture handle
+		uint64_t textureHandle = *static_cast<const uint64_t*>(value);
+        void* params[1] = { &textureHandle };
+        auto textureConstructor = s_Data->Texture2DClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(managedTexture, textureConstructor, params);
+
+        // 3) finally assign the managed texture to the script instance's field
+        mono_field_set_value(m_Instance, field.ClassField, managedTexture);
+    }
+    else
+    {
+        // primitive types
+        mono_field_set_value(m_Instance, field.ClassField, const_cast<void*>(value)); // mono_field_set_value expects a non-const pointer because mono is weird like that
+    }
     return true;
 }

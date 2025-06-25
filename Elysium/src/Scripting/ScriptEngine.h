@@ -14,6 +14,7 @@ extern "C" {
 	typedef struct _MonoAssembly MonoAssembly;
 	typedef struct _MonoImage MonoImage;
 	typedef struct _MonoClassField MonoClassField;
+	typedef struct _MonoDomain MonoDomain;
 }
 
 enum class ScriptFieldType
@@ -22,8 +23,8 @@ enum class ScriptFieldType
 	Float, Double,
 	Bool, Char, Byte, Short, Int, Long,
 	UByte, UShort, UInt, ULong,
-	Vector3,
-	Entity
+	Vector2, Vector3,
+	Texture2D, Entity
 };
 
 struct ScriptField
@@ -173,6 +174,13 @@ public:
 
 	static ScriptFieldMap& GetScriptFieldMap(Entity entity);
 
+
+	static MonoDomain* GetRootDomain();
+	static MonoDomain* GetAppDomain();
+
+	static MonoAssembly* GetCoreAssembly();
+	static MonoAssembly* GetAppAssembly();
+
 	static MonoImage* GetCoreAssemblyImage();
 
 	static MonoObject* GetManagedInstance(Elysium::UUID entityID);
@@ -206,7 +214,9 @@ namespace Utils
 		case ScriptFieldType::UShort: return "UShort";
 		case ScriptFieldType::UInt: return "UInt";
 		case ScriptFieldType::ULong: return "ULong";
+		case ScriptFieldType::Vector2: return "Vector2";
 		case ScriptFieldType::Vector3: return "Vector3";
+		case ScriptFieldType::Texture2D: return "Texture2D";
 		case ScriptFieldType::Entity: return "Entity";
 		default: return "<Invalid>";
 		}
@@ -227,7 +237,9 @@ namespace Utils
 		if (fieldType == "UShort")  return ScriptFieldType::UShort;
 		if (fieldType == "UInt")    return ScriptFieldType::UInt;
 		if (fieldType == "ULong")   return ScriptFieldType::ULong;
+		if (fieldType == "Vector2") return ScriptFieldType::Vector2;
 		if (fieldType == "Vector3") return ScriptFieldType::Vector3;
+		if (fieldType == "Texture2D") return ScriptFieldType::Texture2D;
 		if (fieldType == "Entity")  return ScriptFieldType::Entity;
 
 		// ASSERT(false, "Unknown ScriptFieldType");

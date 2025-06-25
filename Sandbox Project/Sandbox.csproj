@@ -61,7 +61,9 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Camera.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
-  </ItemGroup>
+    <Compile Include="Assets\Scripts\test.cs" />
+  	<Compile Include="Assets\Scripts\LevelGenerator.cs" />
+</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elysium-ScriptCore\Elysium-ScriptCore.csproj">
       <Project>{58AC8CAA-4490-4D00-ADF0-475399F33782}</Project>
