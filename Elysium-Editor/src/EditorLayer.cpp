@@ -883,7 +883,10 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 	if (Project::Load(path))
 	{
 		Logger::Log("Opening Project: " + path.filename().generic_string(), "editor");
-		ScriptEngine::Init();
+		
+		//ScriptEngine::Init();
+		ScriptEngine::LoadAppAssemblyFromProject();
+		
 		m_EditorProjectPath = path;
 		AssetHandle lastOpenedScene = Project::GetActive()->GetConfig().lastOpenedScene;
 		AssetHandle startScene = Project::GetActive()->GetConfig().StartScene;

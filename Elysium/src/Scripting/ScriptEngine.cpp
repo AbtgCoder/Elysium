@@ -171,10 +171,15 @@ void ScriptEngine::Init()
 	InitMono();
     ScriptGlue::RegisterFunctions();
 
-    LoadAssembly(Elysium::FileSystem::GetEditorRootDir() / "Resources/Scripts/Elysium-ScriptCore.dll");
+    // load only engine core assembly here
+    LoadCoreAssembly(Elysium::FileSystem::GetEditorRootDir() / "Resources/Scripts/Elysium-ScriptCore.dll");
 //	LoadAppAssembly(Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/bin/Sandbox.dll"); 
-    LoadAppAssembly(Project::GetActiveScriptModulePath()); 
-    LoadAssemblyClasses();
+    
+    // create a fresh app domain (no project assembly loaded yet)
+    CreateAppDomain();
+
+    /*LoadAppAssembly(Project::GetActiveScriptModulePath()); 
+    LoadAssemblyClasses();*/
 
     ScriptGlue::RegisterComponents();
 
@@ -185,8 +190,10 @@ void ScriptEngine::Init()
 
 void ScriptEngine::Shutdown()
 {
+    DestroyAppDomain();
 	ShutdownMono();
 	delete s_Data;
+    s_Data = nullptr;
 }
 
 
@@ -276,10 +283,10 @@ void ScriptEngine::InitMono()
 
 void ScriptEngine::ShutdownMono()
 {
-	mono_domain_set(mono_get_root_domain(), false);
+	/*mono_domain_set(mono_get_root_domain(), false);
 
 	mono_domain_unload(s_Data->AppDomain);
-    s_Data->AppDomain = nullptr;
+    s_Data->AppDomain = nullptr;*/
 
     mono_jit_cleanup(s_Data->RootDomain);
     s_Data->RootDomain = nullptr;
@@ -352,38 +359,92 @@ void ScriptEngine::LoadAssemblyClasses()
 	}   
 }
 
-void ScriptEngine::LoadAssembly(const std::filesystem::path& filepath)
+void ScriptEngine::CreateAppDomain()
 {
-    // create an App domain
+    // if already created, do nothing
+    if (s_Data->AppDomain)
+        return;
+
     s_Data->AppDomain = mono_domain_create_appdomain(const_cast<char*>("ElysiumScriptRuntime"), nullptr);
     mono_domain_set(s_Data->AppDomain, true);
+}
+
+void ScriptEngine::DestroyAppDomain()
+{
+    if (!s_Data->AppDomain)
+        return;
+
+    mono_domain_set(mono_get_root_domain(), false);
+    mono_domain_unload(s_Data->AppDomain);
+    s_Data->AppDomain = nullptr;
+}
+
+void ScriptEngine::LoadCoreAssembly(const std::filesystem::path& filepath)
+{
+    //// create an App domain
+    //s_Data->AppDomain = mono_domain_create_appdomain(const_cast<char*>("ElysiumScriptRuntime"), nullptr);
+    //mono_domain_set(s_Data->AppDomain, true);
 
     s_Data->CoreAssemblyPath = filepath;
     s_Data->CoreAssembly = Utils::LoadMonoAssembly(filepath);
     s_Data->CoreAssemblyImage = mono_assembly_get_image(s_Data->CoreAssembly);
 }
 
-void ScriptEngine::LoadAppAssembly(const std::filesystem::path& filepath)
+bool ScriptEngine::LoadAppAssemblyFromProject()
 {
-	s_Data->AppAssemblyPath = filepath;
-	s_Data->AppAssembly = Utils::LoadMonoAssembly(filepath);
+    auto project = Project::GetActive();
+    if (!project)
+        return false;
+
+    auto appAsmPath = project->GetScriptModulePath();
+    if (!std::filesystem::exists(appAsmPath))
+    {
+        Logger::Log("Project assembly not found: " + appAsmPath.string(), "Script Engine", LOG_TYPE::WARNING);
+    }
+
+    // Destroy and recreate AppDomain to ensure a clean slate
+    DestroyAppDomain();
+    CreateAppDomain();
+
+    // load engine core again into the new domain if necessary
+    LoadCoreAssembly(s_Data->CoreAssemblyPath);
+
+    // load project assembly
+	s_Data->AppAssemblyPath = appAsmPath;
+	s_Data->AppAssembly = Utils::LoadMonoAssembly(appAsmPath);
 	s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
+
+    // parse classes from app assembly
+    LoadAssemblyClasses();
+
+    ScriptGlue::RegisterComponents();
+
+    s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
+    s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
+
+    Logger::Log("Loaded project assembly: " + appAsmPath.string(), "Script Engine");
+    return true;
 }
+
+
 
 void ScriptEngine::ReloadAssembly()
 {
-	mono_domain_set(mono_get_root_domain(), false);
+    // called after a build completes
+    LoadAppAssemblyFromProject(); // recreates app domain and registers classes
 
-	mono_domain_unload(s_Data->AppDomain);
+	//mono_domain_set(mono_get_root_domain(), false);
 
-	LoadAssembly(s_Data->CoreAssemblyPath);
-	LoadAppAssembly(s_Data->AppAssemblyPath);
-	LoadAssemblyClasses();
+	//mono_domain_unload(s_Data->AppDomain);
 
-	ScriptGlue::RegisterComponents(); // re-register components after reloading assemblies
+	//LoadAssembly(s_Data->CoreAssemblyPath);
+	//LoadAppAssembly(s_Data->AppAssemblyPath);
+	//LoadAssemblyClasses();
 
-	s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
-	s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
+	//ScriptGlue::RegisterComponents(); // re-register components after reloading assemblies
+
+	//s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
+	//s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
 }
 
 bool ScriptEngine::EntityClassExists(const std::string& fullClassName)

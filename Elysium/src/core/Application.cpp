@@ -33,7 +33,7 @@ Application::Application(const std::string& name)
 	Renderer2D::Init();
 
 	// initialize Script Engine
-	//ScriptEngine::Init();
+	ScriptEngine::Init();
 
 	// create and push imgui layer
 	m_ImGuiLayer = new ImGuiLayer();
