@@ -31,6 +31,9 @@ public:
 	static void DrawRotatedRect(const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
 	static void DrawRect(const glm::mat4& transform, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
 
+	static void DrawPolygon(const glm::mat4 transform, float radius, int sides, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
+
+	static void DrawCircle(const glm::vec2& position, float radius, const glm::vec4& color = glm::vec4(1.0f), int entityID = -1);
 public:
 	// stats
 	struct Statistics

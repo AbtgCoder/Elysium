@@ -564,8 +564,9 @@ void Scene::OnUpdateRuntime(float dt)
 
 		// Physics
 		{
+			m_PhysicsWorld->Update(dt);
 
-			m_PhysicsWorld->Step(dt);
+			//m_PhysicsWorld->Step(dt);
 
 			// Debug: Display contact points
 			std::map<ArbiterKey, Arbiter>::const_iterator iter;
@@ -643,6 +644,18 @@ void Scene::OnUpdateRuntime(float dt)
 			{
 				auto rect = entity.getComponent<CRectangle>();
 				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+			}
+
+			if (entity.hasComponent<CCircle>())
+			{
+				auto circle = entity.getComponent<CCircle>();
+				Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, (int)entity.id());
+			}
+
+			if (entity.hasComponent<CPolygon>())
+			{
+				auto polygon = entity.getComponent<CPolygon>();
+				Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, (int)entity.id());
 			}
 
 			bool renderSpriteFromSpriteRenderer = true;
@@ -737,6 +750,18 @@ void Scene::RenderScene(EditorCamera& camera)
 		{
 			auto rect = entity.getComponent<CRectangle>();
 			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CCircle>())
+		{
+			auto circle = entity.getComponent<CCircle>();
+			Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CPolygon>())
+		{
+			auto polygon = entity.getComponent<CPolygon>();
+			Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, (int)entity.id());
 		}
 
 		if (entity.hasComponent<CSpriteRenderer>())

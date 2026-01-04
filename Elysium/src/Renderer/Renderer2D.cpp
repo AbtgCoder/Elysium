@@ -38,6 +38,16 @@ struct LineVertex
 	int entityID;
 };
 
+struct CircleVertex
+{
+	glm::vec3 Position;
+	glm::vec3 LocalPosition;
+	glm::vec4 Color;
+
+	// editor-only
+	int entityID;
+};
+
 struct Renderer2DData
 {
 	static const uint32_t MaxQuads = 20000;
@@ -62,6 +72,14 @@ struct Renderer2DData
 	LineVertex* LineVertexBufferBase = nullptr;
 	LineVertex* LineVertexBufferPtr = nullptr;
 	float LineWidth = 3.0f;
+
+	// Circles
+	std::shared_ptr<VertexArray> CircleVertexArray;
+	std::shared_ptr<VertexBuffer> CircleVertexBuffer;
+	std::shared_ptr<Shader> CircleShader;
+	uint32_t CircleIndexCount = 0;
+	CircleVertex* CircleVertexBufferBase = nullptr;
+	CircleVertex* CircleVertexBufferPtr = nullptr;
 	
 	// textures
 	std::shared_ptr<Texture2D> WhiteTexture;
@@ -135,7 +153,24 @@ void Renderer2D::Init()
 	
 	s_RenderData.LineVertexBufferBase = new LineVertex[s_RenderData.MaxVertices];
 
-	s_RenderData.LineShader = Shader::Create("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/LineVertexShader.glsl", "D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/LineFragmentShader.glsl");
+	s_RenderData.LineShader = Shader::Create(Elysium::FileSystem::GetResourcePath("Resources/Shaders/LineVertexShader.glsl").string(), Elysium::FileSystem::GetResourcePath("Resources/Shaders/LineFragmentShader.glsl").string());
+
+
+	// Circles
+	s_RenderData.CircleVertexArray = VertexArray::Create();
+
+	s_RenderData.CircleVertexBuffer = VertexBuffer::Create(s_RenderData.MaxVertices * sizeof(CircleVertex));
+	s_RenderData.CircleVertexBuffer->SetLayout({
+		{ShaderDataType::Float3, "a_Position"},
+		{ShaderDataType::Float3, "a_LocalPosition"},
+		{ShaderDataType::Float4, "a_Color"},
+		{ShaderDataType::Int, "a_EntityID"},
+		});
+	s_RenderData.CircleVertexArray->AddVertexBuffer(s_RenderData.CircleVertexBuffer);
+	s_RenderData.CircleVertexArray->SetIndexBuffer(quadIndexBuffer); // reuse quad index buffer
+	s_RenderData.CircleVertexBufferBase = new CircleVertex[s_RenderData.MaxVertices];
+
+	s_RenderData.CircleShader = Shader::Create(Elysium::FileSystem::GetResourcePath("Resources/Shaders/CircleVertexShader.glsl").string(), Elysium::FileSystem::GetResourcePath("Resources/Shaders/CircleFragmentShader.glsl").string());
 
 	// textures
 	s_RenderData.WhiteTexture = Texture2D::Create(TextureSpecification());
@@ -168,6 +203,9 @@ void Renderer2D::BeginScene(const EditorCamera& camera)
 	s_RenderData.LineVertexCount = 0;
 	s_RenderData.LineVertexBufferPtr = s_RenderData.LineVertexBufferBase;
 
+	s_RenderData.CircleIndexCount = 0;
+	s_RenderData.CircleVertexBufferPtr = s_RenderData.CircleVertexBufferBase;
+
 	s_RenderData.TextureSlotIndex = 1;
 
 	s_RenderData.QuadShader->Bind();
@@ -175,6 +213,9 @@ void Renderer2D::BeginScene(const EditorCamera& camera)
 
 	s_RenderData.LineShader->Bind();
 	s_RenderData.LineShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
+
+	s_RenderData.CircleShader->Bind();
+	s_RenderData.CircleShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
 }
 
 void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
@@ -185,6 +226,9 @@ void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
 	s_RenderData.LineVertexCount = 0;
 	s_RenderData.LineVertexBufferPtr = s_RenderData.LineVertexBufferBase;
 
+	s_RenderData.CircleIndexCount = 0;
+	s_RenderData.CircleVertexBufferPtr = s_RenderData.CircleVertexBufferBase;
+
 	s_RenderData.TextureSlotIndex = 1;
 
 	glm::mat4 viewProjection = camera.GetProjection() * glm::inverse(transform);
@@ -194,6 +238,9 @@ void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
 
 	s_RenderData.LineShader->Bind();
 	s_RenderData.LineShader->SetMat4("u_ViewProjection", viewProjection);
+
+	s_RenderData.CircleShader->Bind();
+	s_RenderData.CircleShader->SetMat4("u_ViewProjection", viewProjection);
 }
 
 void Renderer2D::EndScene()
@@ -230,6 +277,18 @@ void Renderer2D::Flush()
 		s_RenderData.LineShader->Bind();
 		RenderCommand::SetLineWidth(s_RenderData.LineWidth);
 		RenderCommand::DrawLines(s_RenderData.LineVertexArray, s_RenderData.LineVertexCount);
+		// update stats
+		s_RenderData.Stats.DrawCalls++;
+	}
+
+	// batch render circles
+	if (s_RenderData.CircleIndexCount)
+	{
+		uint32_t dataSize = (uint32_t)((uint8_t*)s_RenderData.CircleVertexBufferPtr - (uint8_t*)s_RenderData.CircleVertexBufferBase);
+		s_RenderData.CircleVertexBuffer->SetData(s_RenderData.CircleVertexBufferBase, dataSize);
+		
+		s_RenderData.CircleShader->Bind();
+		RenderCommand::DrawIndexed(s_RenderData.CircleVertexArray, s_RenderData.CircleIndexCount);
 		// update stats
 		s_RenderData.Stats.DrawCalls++;
 	}
@@ -433,6 +492,54 @@ void Renderer2D::DrawRect(const glm::mat4& transform, const glm::vec4& color, in
 	DrawLine(rectVertices[2], rectVertices[3], color, entityID);
 	DrawLine(rectVertices[3], rectVertices[0], color, entityID);
 
+}
+
+void Renderer2D::DrawPolygon(const glm::mat4 transform, float radius, int sides, const glm::vec4& color, int entityID)
+{
+	std::vector<glm::vec3> polygonVertices;
+	polygonVertices.reserve(sides);
+	const float angleIncrement = 2.0f * glm::pi<float>() / static_cast<float>(sides);
+	// for odd n, place one vertex at the top (pi/2), for even n, place top edge horizontal
+	float offset = 0.0f;
+	if (sides % 2 == 1)
+		offset = glm::half_pi<float>();
+	else
+	{
+		offset = glm::pi<float>() / static_cast<float>(sides);
+	}
+	for (int i = 0; i < sides; i++)
+	{
+		float angle = i * angleIncrement + offset;
+		glm::vec3 localPos = glm::vec3(radius * cos(angle), radius * sin(angle), 0.0f);
+		glm::vec3 worldPos = transform * glm::vec4(localPos, 1.0f);
+		polygonVertices.push_back(worldPos);
+	}
+	for (int i = 0; i < sides; i++)
+	{
+		DrawLine(polygonVertices[i], polygonVertices[(i + 1) % sides], color, entityID);
+	}
+//	Logger::Log("Drawing Polygon with " + std::to_string(sides) + " sides.", "Renderer2D", LOG_TYPE::VERBOSE);
+}
+
+void Renderer2D::DrawCircle(const glm::vec2& position, float radius, const glm::vec4& color, int entityID)
+{
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.0f))
+		* glm::scale(glm::mat4(1.0f), { radius * 2.0f, radius * 2.0f, 1.0f });
+	constexpr size_t quadVertexCount = 4;
+	for (size_t i = 0; i < quadVertexCount; i++)
+	{
+		// set the data for each circle vertex
+		s_RenderData.CircleVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
+		s_RenderData.CircleVertexBufferPtr->LocalPosition = s_RenderData.QuadVertexPositions[i] * glm::vec4(2.0f, 2.0f, 1.0f, 1.0f); // local pos ranges from -1 to 1 in both x and y
+		s_RenderData.CircleVertexBufferPtr->Color = color;
+		// set entity id
+		s_RenderData.CircleVertexBufferPtr->entityID = entityID;
+		// update the pointer to the next position in the circle vertex array
+		s_RenderData.CircleVertexBufferPtr++;
+	}
+	s_RenderData.CircleIndexCount += 6;
+	// update stats
+	s_RenderData.Stats.QuadCount++;
 }
 
 void Renderer2D::ResetStats()
