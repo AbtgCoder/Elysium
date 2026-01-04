@@ -29,6 +29,9 @@ AssetRegistry:
   - Handle: 6392853097170261536
     FilePath: textures/player.png
     Type: AssetType::Texture2D
+  - Handle: 7105023437157358994
+    FilePath: textures/brick.png
+    Type: AssetType::Texture2D
   - Handle: 7287817204883166030
     FilePath: scenes/rigidbody_physics_test.elysium
     Type: AssetType::Scene

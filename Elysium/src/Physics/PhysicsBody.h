@@ -9,6 +9,13 @@
 
 // TODO:  bodydef, fixturedef, fixtures ?? , drag ?? , NEED DEFS BECAUSE WHO OWNS POINTERS ??, THEIR CREATION AND THEIR DELETION, THIS ALL SHOULD BE HANDLED BE ENGINE USING EFFICIENT MEMORY ALLOCATION
 
+struct AABB
+{
+	Vec2 min;
+	Vec2 max;
+};
+
+
 //TODO: kinematic body ??
 enum PhysicsBodyType
 {
@@ -22,32 +29,49 @@ public:
 	PhysicsBody();
 	void ResetMassData(float d);
 
-	void AddForce(const Vec2& f);
-
 	PhysicsShape* GetShape();
 	PhysicsShape::Type GetShapeType() const;
 
-public:
-	Vec2 m_position;
-	float m_rotation;
-	Vec2 m_velocity;
-	float m_angularVelocity;
-		
-	PhysicsBodyType m_type;
+	void ComputeAABB();
 
-	Vec2 m_force;
-	float m_torque;
+	// API
+	void ApplyForceToCenter(const Vec2& f) { if (m_type != PhysicsBodyType::dynamicBody) return; m_force += f; WakeUp(); }
+	void ApplyForceToPoint(const Vec2& f, const Vec2& point);
+	void ApplyImpulseToCenter(const Vec2& impulse);
+	void ApplyImpulseToPoint(const Vec2& impulse, const Vec2& point);
+	void ClearForces() { m_force.Set(0.0f, 0.0f); m_torque = 0.0f; }
+
+	// sleeping helpers
+	void SetSleeping(bool sleep) { m_isSleeping = sleep; if (sleep) { m_velocity.Set(0, 0); m_angularVelocity = 0.0f; m_force.Set(0, 0); m_torque = 0; } }
+	void WakeUp() { m_isSleeping = false; m_sleepTime = 0.0f; }
+	bool IsSleeping() const { return m_isSleeping; }
+public:
+	Vec2 m_position = {0.0f, 0.0f};
+	float m_rotation = 0.0f;
+	Vec2 m_velocity = {0.0f, 0.0f};
+	float m_angularVelocity = 0.0f;
+		
+	PhysicsBodyType m_type = PhysicsBodyType::dynamicBody;
+
+	Vec2 m_force = {0.0f, 0.0f};
+	float m_torque = 0.0f;
 
 	PhysicsShape* m_shape;
+
+	AABB m_aabb;
 
 	float m_friction;
 	float m_restitution;
 	float m_restitutionThreshold;
 	float m_density;
 
-	float m_mass, m_invMass;
-	float m_I, m_invI;
+	float m_mass = 1.0f, m_invMass = 1.0f;
+	float m_I = 1.0f, m_invI = 1.0f;
 
-	friend class Arbiter;
+	// sleep
+	bool m_isSleeping = false;
+	float m_sleepTime = 0.0f;
+
+	friend struct Arbiter;
 	friend class PhysicsWorld;
 };

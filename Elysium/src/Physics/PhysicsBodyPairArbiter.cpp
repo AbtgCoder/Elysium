@@ -1,4 +1,6 @@
 #include "PhysicsBodyPairArbiter.h"
+#include <algorithm>
+#include <iostream>
 
 
 Arbiter::Arbiter(PhysicsBody* b1, PhysicsBody* b2)
@@ -23,6 +25,36 @@ Arbiter::Arbiter(PhysicsBody* b1, PhysicsBody* b2)
 	m_restitution = std::max(m_body1->m_restitution, m_body2->m_restitution);
 	m_restitionThreshold = std::min(m_body1->m_restitutionThreshold, m_body2->m_restitutionThreshold);
 }
+
+#if 0
+void Arbiter::UpdateContacts(Contact* newContacts, int newCount)
+{
+	const float kMatchEpsilon = 0.01f;
+	Contact old[100];
+	int oldCount = m_numContacts;
+	for (int i = 0; i < oldCount; ++i) old[i] = m_contacts[i];
+
+	// copy new contacts into m_contacts, but try to copy impulses from old contacts
+	for (int i = 0; i < newCount; ++i)
+	{
+		Contact nc = newContacts[i];
+		nc.m_Jn = 0.0f;
+		nc.m_Jt = 0.0f;
+		// try to find match
+		for (int j = 0; j < oldCount; ++j)
+		{
+			if (nc.m_position.dist(old[j].m_position) < kMatchEpsilon)
+			{
+				nc.m_Jn = old[j].m_Jn;
+				nc.m_Jt = old[j].m_Jt;
+				break;
+			}
+		}
+		m_contacts[i] = nc;
+	}
+	m_numContacts = newCount;
+}
+#endif
 
 void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 {
@@ -68,6 +100,11 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 		{
 			mergedContacts[i] = newContacts[i];
 		}
+
+		if (k == -1) {
+			std::cout << "Contact replaced: old key=" << m_contacts[0].m_id.key << " newKey=" << cNew->m_id.key << "\n";
+		}
+
 	}
 
 	for (int i = 0; i < numNewContacts; ++i)
@@ -75,11 +112,87 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 
 	m_numContacts = numNewContacts;
 }
+// Arbiter::PreStep
+// Optional local debug macro
+//#define ARBITER_DEBUG_LOG(...) ESM_LOG(__VA_ARGS__)
+
+#if 0
+void Arbiter::PreStep(float inv_dt)
+{
+	// parameters (tune if needed)
+	const float k_allowedPenetration = 0.01f;   // slop
+	const float k_biasFactor = 0.2f;            // velocity bias fraction
+	// The arbiter should have m_restitutionThreshold, m_restitution, m_friction already set
+
+	// For safety, ensure bodies have valid invI
+	// (Assumes you set m_invI when creating/resetting mass data)
+	for (int i = 0; i < m_numContacts; ++i)
+	{
+		Contact* c = m_contacts + i;
+
+		// recompute r1, r2 (contact relative vectors)
+		c->m_r1 = c->m_position - m_body1->m_position;
+		c->m_r2 = c->m_position - m_body2->m_position;
+
+		// Precompute effective normal mass
+		// Use scalar cross-products for 2D (Cross(vec2, vec2) -> scalar)
+		float rn1 = Cross(c->m_r1, c->m_normal); // r x n (scalar)
+		float rn2 = Cross(c->m_r2, c->m_normal);
+		float kNormal = m_body1->m_invMass + m_body2->m_invMass
+			+ m_body1->m_invI * rn1 * rn1
+			+ m_body2->m_invI * rn2 * rn2;
+		c->m_massNormal = (kNormal > 0.0f) ? (1.0f / kNormal) : 0.0f;
+
+		// Tangent mass (perp of normal)
+		Vec2 tangent = { -c->m_normal.y, c->m_normal.x };
+		float rt1 = Cross(c->m_r1, tangent);
+		float rt2 = Cross(c->m_r2, tangent);
+		float kTangent = m_body1->m_invMass + m_body2->m_invMass
+			+ m_body1->m_invI * rt1 * rt1
+			+ m_body2->m_invI * rt2 * rt2;
+		c->m_massTangent = (kTangent > 0.0f) ? (1.0f / kTangent) : 0.0f;
+
+		// Compute bias (velocity) using penetration (separation is negative when penetrating)
+		float penetrationPlusSlop = c->m_separation + k_allowedPenetration;
+		float penetrationError = std::min(0.0f, penetrationPlusSlop);
+		c->m_bias = -k_biasFactor * inv_dt * penetrationError;
+
+		// Compute restitution only as a property (don't add extra impulse here)
+		float vRel = c->m_normal.dot(
+			(m_body2->m_velocity + Cross(m_body2->m_angularVelocity, c->m_r2))
+			- (m_body1->m_velocity + Cross(m_body1->m_angularVelocity, c->m_r1))
+		);
+		if (vRel < -m_restitionThreshold)
+			c->m_bias += m_restitution;
+
+		// Warm starting: re-apply accumulated impulses from last step
+		if (true) // use the world's warmStarting flag or arbiter flag
+		{
+			Vec2 P = c->m_normal * c->m_Jn + tangent * c->m_Jt;
+			// Apply to body velocities
+			m_body1->m_velocity -= P * m_body1->m_invMass;
+			m_body1->m_angularVelocity -= m_body1->m_invI * Cross(c->m_r1, P);
+
+			m_body2->m_velocity += P * m_body2->m_invMass;
+			m_body2->m_angularVelocity += m_body2->m_invI * Cross(c->m_r2, P);
+		}
+		else
+		{
+			c->m_Jn = 0.0f;
+			c->m_Jt = 0.0f;
+		}
+
+		// Debug print
+		// ARBITER_DEBUG_LOG("PreStep: sep=%f bias=%f massN=%f massT=%f",
+		//      c->m_separation, c->m_bias, c->m_massNormal, c->m_massTangent);
+	}
+}
+#endif
 
 void Arbiter::PreStep(float inv_dt)
 {
 	
-	Contact* c = m_contacts;
+	/*Contact* c = m_contacts;
 	Vec2 mtv = c->m_normal * c->m_separation;
 	if (m_body1->m_type == PhysicsBodyType::staticBody)
 	{
@@ -93,7 +206,7 @@ void Arbiter::PreStep(float inv_dt)
 	{
 		m_body1->m_position -= mtv / 2.0f;
 		m_body2->m_position += mtv / 2.0f;
-	}
+	}*/
 
 	const float k_allowedPenetration = 0.01f;
 	float k_biasFactor = 0.2f; 
@@ -121,14 +234,14 @@ void Arbiter::PreStep(float inv_dt)
 		c->m_massTangent = 1.0f / kTangent;
 
 		//NOTE: add bias velocity (proportional to penetration) to give normal impulse some extra oomph!!
-		//c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
+		c->m_bias = -1 * k_biasFactor * inv_dt * std::min(0.0f, c->m_separation + k_allowedPenetration);
 		//ESM_LOG("bias", c->m_bias);
-		c->m_bias = 0.0f;
-		float vRel = c->m_normal.dot(m_body2->m_velocity + Cross(m_body2->m_angularVelocity, c->m_r2) - m_body1->m_velocity - Cross(m_body1->m_angularVelocity, c->m_r1));
+		//c->m_bias = 0.0f;
+		/*float vRel = c->m_normal.dot(m_body2->m_velocity + Cross(m_body2->m_angularVelocity, c->m_r2) - m_body1->m_velocity - Cross(m_body1->m_angularVelocity, c->m_r1));
 		if (vRel < -m_restitionThreshold) 
 		{
-			//c->m_bias = -m_restitution * vRel;
-		}
+			c->m_bias = -m_restitution * vRel;
+		}*/
 		//if accumulate impulses then:
 		{
 			// Apply normal + frictional impulse
@@ -249,3 +362,4 @@ void Arbiter::ApplyImpulse()
 		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invMass;
 	}
 }
+

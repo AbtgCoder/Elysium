@@ -2,6 +2,7 @@
 
 #include "Core/Application.h"
 #include "core/Logger.h"
+#include "Utils/FileSystem.h"
 
 #include "core/Input.h"
 
@@ -10,6 +11,7 @@
 
 #include "Physics/graham_scan.h"
 
+#include "Scripting/ScriptEngine.h"
 
 #include "Asset/AssetManager.h"
 #include "Asset/SceneImporter.h"
@@ -34,10 +36,10 @@ EditorLayer::EditorLayer()
 
 void EditorLayer::OnAttach()
 {
-	m_IconPlay = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PlayButton.png");
-	m_IconPause = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/PauseButton.png");
-	m_IconStep = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StepButton.png");
-	m_IconStop = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/StopButton.png");
+	m_IconPlay = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/PlayButton.png"));
+	m_IconPause = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/PauseButton.png"));
+	m_IconStep = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/StepButton.png"));
+	m_IconStop = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/StopButton.png"));
 	
 	// framebuffer
 	FramebufferSpecification fbSpec;
@@ -54,7 +56,7 @@ void EditorLayer::OnAttach()
 	m_EditorCamera = EditorCamera(30.0f, 1.778f, 0.1f, 1000.0f);
 
 	//OpenProject();
-	OpenProject("D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox.eproject");
+	OpenProject(Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/Sandbox.eproject");
 
 }
 
@@ -209,6 +211,14 @@ void EditorLayer::OnImGuiRender()
 			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
 			{
 				SaveScene();
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Script"))
+		{
+			if (ImGui::MenuItem("Reload Assembly", "Ctrl+R"))
+			{
+				ScriptEngine::ReloadAssembly();
 			}
 			ImGui::EndMenu();
 		}
@@ -548,8 +558,15 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 		}
 		case Key::R:
 		{
-			if (!control && !ImGuizmo::IsUsing())
-				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			if (control)
+			{
+				ScriptEngine::ReloadAssembly();
+			}
+			else
+			{
+				if (!ImGuizmo::IsUsing())
+					m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			}
 			break;
 		}
 	}
@@ -815,6 +832,7 @@ void EditorLayer::NewProject()
 						// Create Project
 						const auto& projectInitialSceneDirectory = projectParentPath + "/Assets/Scenes/";
 						std::filesystem::create_directories(projectInitialSceneDirectory);
+						//TODO: create new csproject solution file 
 						Project::New(projectName, finalLocation);
 						auto projectInitialScenePath = projectInitialSceneDirectory + "Gameplay.elysium";
 						auto relativePath = std::filesystem::relative(projectInitialScenePath, Project::GetActiveAssetDirectory());
@@ -865,6 +883,7 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 	if (Project::Load(path))
 	{
 		Logger::Log("Opening Project: " + path.filename().generic_string(), "editor");
+		ScriptEngine::Init();
 		m_EditorProjectPath = path;
 		AssetHandle lastOpenedScene = Project::GetActive()->GetConfig().lastOpenedScene;
 		AssetHandle startScene = Project::GetActive()->GetConfig().StartScene;

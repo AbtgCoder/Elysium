@@ -24,6 +24,19 @@ IncludeDir["ImGui"] = "%{wks.location}/Elysium/vendor/imgui"
 IncludeDir["stb_image"] = "%{wks.location}/Elysium/vendor/stb_image"
 IncludeDir["glm"] = "%{wks.location}/Elysium/vendor/glm"
 IncludeDir["ImGuizmo"] = "%{wks.location}/Elysium/vendor/ImGuizmo"
+IncludeDir["mono"] = "%{wks.location}/Elysium/vendor/mono/include"
+
+LibraryDir = {}
+LibraryDir["mono"] = "%{wks.location}/Elysium/vendor/mono/lib/%{cfg.buildcfg}"
+
+Library = {}
+Library["mono"] = "%{LibraryDir.mono}/libmono-static-sgen.lib"
+
+-- Windows
+Library["WinSock"] = "Ws2_32.lib"
+Library["Winmm"] = "Winmm.lib"
+Library["WinVersion"] = "Version.lib"
+Library["BCrypt"] = "Bcrypt.lib"
 
 group "Dependencies"
    include "Elysium/vendor/GLFW"
@@ -34,6 +47,7 @@ group ""
 
 group "Core"
    include "Elysium"
+   include "Elysium-ScriptCore"
 group ""
 
 group "Tools"

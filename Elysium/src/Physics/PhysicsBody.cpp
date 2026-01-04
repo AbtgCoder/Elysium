@@ -56,10 +56,6 @@ void PhysicsBody::ResetMassData(float density)
 
 }
 
-void PhysicsBody::AddForce(const Vec2& f)
-{
-	m_force += f;
-}
 
 PhysicsShape* PhysicsBody::GetShape()
 {
@@ -69,4 +65,65 @@ PhysicsShape* PhysicsBody::GetShape()
 PhysicsShape::Type PhysicsBody::GetShapeType() const
 {
 	return m_shape->GetType();
+}
+
+void PhysicsBody::ComputeAABB()
+{
+	if (m_shape->GetType() == PhysicsShape::e_circle)
+	{
+		PhysicsCircleShape* circle = static_cast<PhysicsCircleShape*>(m_shape);
+		Vec2 center = m_position + circle->m_p;
+		m_aabb.min = Vec2(center.x - circle->m_radius, center.y - circle->m_radius);
+		m_aabb.max = Vec2(center.x + circle->m_radius, center.y + circle->m_radius);
+	}
+	else if (m_shape->GetType() == PhysicsShape::e_polygon)
+	{
+		PhysicsPolygonShape* poly = static_cast<PhysicsPolygonShape*>(m_shape);
+		m_aabb.min = Vec2(FLT_MAX, FLT_MAX);
+		m_aabb.max = Vec2(-FLT_MAX, -FLT_MAX);
+		for (uint32_t i = 0; i < poly->m_count; ++i)
+		{
+			// transform vertex to world space
+			Vec2 v = poly->m_vertices[i].rotate(m_rotation) + m_position;
+			if (v.x < m_aabb.min.x) m_aabb.min.x = v.x;
+			if (v.y < m_aabb.min.y) m_aabb.min.y = v.y;
+			if (v.x > m_aabb.max.x) m_aabb.max.x = v.x;
+			if (v.y > m_aabb.max.y) m_aabb.max.y = v.y;
+		}
+	}
+}
+
+void PhysicsBody::ApplyForceToPoint(const Vec2& f, const Vec2& point)
+{
+	if (m_type != PhysicsBodyType::dynamicBody)
+		return;
+	// linear
+	m_force += f;
+	// angular
+	Vec2 r = point - m_position;
+	m_torque += Cross(r, f);
+	WakeUp();
+}
+
+void PhysicsBody::ApplyImpulseToCenter(const Vec2& impulse)
+{
+	if (m_type != PhysicsBodyType::dynamicBody)
+		return;
+	m_velocity += impulse * m_invMass;
+	WakeUp();
+}
+
+void PhysicsBody::ApplyImpulseToPoint(const Vec2& impulse, const Vec2& point)
+{
+	if (m_type != PhysicsBodyType::dynamicBody)
+		return;
+
+	// linear
+	m_velocity += impulse * m_invMass;
+
+	// angular
+	Vec2 r = point - m_position;
+	m_angularVelocity += m_invI * Cross(r, impulse);
+
+	WakeUp();
 }

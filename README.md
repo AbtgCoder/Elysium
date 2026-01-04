@@ -31,7 +31,14 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [ ] multiple animation layers support
 - [ ] Enhanced editing tools which make creating Animations easier
 
+### Scripting System
+- [X] Integrate Mono
+- [X] Manipulate Transform of entities through c# scripts
+- [X] Ability to get, add and remove components through c# scripts
+- [X] Texture and Sprite Renderer in c# API
+- [ ] Extension of Parent-Child Relation in c# API
+- [ ] Rigidbody interface and control physics through c# scripts
+
 ### Features to come
-- [ ] Complete Scripting Capabilities
 - [ ] Prefabs
 - [ ] Upgraded Physics engine capabilities, with proper contact management, contact listeners, broadphase detection, raycast etc...

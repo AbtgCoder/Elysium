@@ -87,7 +87,7 @@ private:
 	bool m_ViewportFocused = false, m_ViewportHovered = false;
 
 	// Gizmo stuff
-	int m_GizmoType = -1;
+	int m_GizmoType = GIZMO_OPERATION::TRANSLATE;
 	float m_GizmoScaleFactor = 0.01;
 	float m_GizmoRotationFactor = 0.01;
 

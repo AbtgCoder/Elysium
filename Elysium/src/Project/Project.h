@@ -15,6 +15,8 @@ struct ProjectConfig
 	std::filesystem::path AssetDirectory; // relative to ProjectDirectory
 	std::filesystem::path AssetRegistryPath; // relative to AssetDirectory
 
+	std::filesystem::path ScriptModulePath; // relative to ProjectDirectory (TODO: maybe should be relative to AssetDirectory)
+
 	AssetHandle lastOpenedScene; // for editor only (TODO: maybe find a better way to do this)
 };
 
@@ -26,6 +28,7 @@ public:
 	const std::filesystem::path& GetProjectDirectory() { return m_ProjectDirectory; }
 	std::filesystem::path GetAssetDirectory() { return GetProjectDirectory() / s_ActiveProject->m_Config.AssetDirectory; }
 	std::filesystem::path GetAssetRegistryPath() { return GetAssetDirectory() / s_ActiveProject->m_Config.AssetRegistryPath; }
+	std::filesystem::path GetScriptModulePath() { return GetProjectDirectory() / s_ActiveProject->m_Config.ScriptModulePath; }
 
 	static const std::filesystem::path& GetActiveProjectDirectory()
 	{
@@ -41,6 +44,11 @@ public:
 	{
 		// assert s_ActiveProject
 		return s_ActiveProject->GetAssetRegistryPath();
+	}
+	static const std::filesystem::path GetActiveScriptModulePath()
+	{
+		// assert s_ActiveProject
+		return s_ActiveProject->GetScriptModulePath();
 	}
 
 	static void SetLastOpenedScene(AssetHandle handle) { s_ActiveProject->m_Config.lastOpenedScene = handle; }

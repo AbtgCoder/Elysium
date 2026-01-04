@@ -27,6 +27,7 @@ public:
 	//Entity DuplicateEntity(Entity entity);
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
 	Entity GetEntityByUUID(Elysium::UUID id);
+	Entity FindEntityByName(const std::string& name);
 	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
 
@@ -64,6 +65,9 @@ private:
 	void RenderScene(EditorCamera& camera);
 private:
 	EntityManager m_entityManager;
+	
+	std::unordered_map<Elysium::UUID, Entity> m_EntityMap;
+	
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
 	int m_StepFrames = 0;

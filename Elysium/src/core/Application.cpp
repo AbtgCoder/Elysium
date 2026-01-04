@@ -4,9 +4,15 @@
 #include "Renderer/RenderCommand.h"
 #include "Renderer/Renderer2D.h"
 
+#include "Scripting/ScriptEngine.h"
+
 #include "core/Logger.h"
 
+#include "Utils/FileSystem.h"
+
+
 #include <GLFW/glfw3.h>
+
 
 #define BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
@@ -18,10 +24,16 @@ Application::Application(const std::string& name)
 
 	m_Window = Window::Create(WindowProps(name));
 	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
-	
+
+	// initialize filesystem
+	Elysium::FileSystem::Init();
+
 	// initialize renderer
 	RenderCommand::Init();
 	Renderer2D::Init();
+
+	// initialize Script Engine
+	//ScriptEngine::Init();
 
 	// create and push imgui layer
 	m_ImGuiLayer = new ImGuiLayer();
@@ -32,6 +44,8 @@ Application::Application(const std::string& name)
 Application::~Application()
 {
 	Renderer2D::Shutdown();
+
+	ScriptEngine::Shutdown();
 }
 
 void Application::PushLayer(Layer* layer)

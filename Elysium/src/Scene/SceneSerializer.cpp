@@ -3,78 +3,12 @@
 #include "Core/UUID.h"
 #include "Project/Project.h"
 
+#include "Scripting/ScriptEngine.h"
+
 #include "Asset/AnimationImporter.h"
 #include "Asset/AssetManager.h"
 
 #include <fstream>
-
-
-namespace YAML
-{
-	template<>
-	struct convert<Vec2>
-	{
-		static Node encode(const Vec2& rhs)
-		{
-			Node node;
-			node.push_back(rhs.x);
-			node.push_back(rhs.y);
-			node.SetStyle(EmitterStyle::Flow);
-			return node;
-		}
-		static bool decode(const Node& node, Vec2& rhs)
-		{
-			if (!node.IsSequence() || node.size() != 2)
-			{
-				return false;
-			}
-			rhs.x = node[0].as<float>();
-			rhs.y = node[1].as<float>();
-			return true;
-		}
-	};
-
-	template<>
-	struct convert<glm::vec3>
-	{
-		static Node encode(const glm::vec3& rhs)
-		{
-			Node node;
-			node.push_back(rhs.x);
-			node.push_back(rhs.y);
-			node.push_back(rhs.z);
-			node.SetStyle(EmitterStyle::Flow);
-			return node;
-		}
-		static bool decode(const Node& node, glm::vec3& rhs)
-		{
-			if (!node.IsSequence() || node.size() != 3)
-			{
-				return false;
-			}
-			rhs.x = node[0].as<float>();
-			rhs.y = node[1].as<float>();
-			rhs.z = node[2].as<float>();
-			return true;
-		}
-	};
-
-	template<>
-	struct convert<Elysium::UUID>
-	{
-		static Node encode(const Elysium::UUID& uuid)
-		{
-			Node node;
-			node.push_back((uint64_t)uuid);
-			return node;
-		}
-		static bool decode(const Node& node, Elysium::UUID& uuid)
-		{
-			uuid = node.as<uint64_t>();
-			return true;
-		}
-	};
-}
 
 static std::string RigidBody2DBodyTypeToString(CRigidBody::BodyType bodyType)
 {
@@ -94,26 +28,24 @@ static CRigidBody::BodyType RigidBody2DBodyTypeFromString(const std::string& bod
 	if (bodyTypeString == "Static")    return CRigidBody::BodyType::Static;
 	if (bodyTypeString == "Dynamic")   return CRigidBody::BodyType::Dynamic;
 	if (bodyTypeString == "Kinematic") return CRigidBody::BodyType::Kinematic;
-	
+
 	// assert invalid value type
 
 	return CRigidBody::BodyType::Static;
 }
 
-YAML::Emitter& operator<<(YAML::Emitter& out, const Vec2& v)
-{
-	out << YAML::Flow;
-	out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
-	return out;
-}
+#define WRITE_SCRIPT_FIELD(FieldType, Type)           \
+			case ScriptFieldType::FieldType:          \
+				out << scriptField.GetValue<Type>();  \
+				break
 
-YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
-{
-	out << YAML::Flow;
-	out << YAML::BeginSeq << v.x << v.y << v.z << YAML::EndSeq;
-	return out;
-}
-
+#define READ_SCRIPT_FIELD(FieldType, Type)             \
+	case ScriptFieldType::FieldType:                   \
+	{                                                  \
+		Type data = scriptField["Data"].as<Type>();    \
+		fieldInstance.SetValue(data);                  \
+		break;                                         \
+	}
 
 SceneSerializer::SceneSerializer(const std::shared_ptr<Scene>& Scene)
 	: m_Scene(Scene)
@@ -196,6 +128,60 @@ void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 		out << (float)camera.backgroundColor.z;
 		out << (float)camera.backgroundColor.w;
 		out << YAML::EndSeq;
+		out << YAML::EndMap;
+	}
+	if (entity.hasComponent<CScript>())
+	{
+		out << YAML::Key << "ScriptComponent";
+		out << YAML::BeginMap;
+		auto& scriptComponent = entity.getComponent<CScript>();
+		out << YAML::Key << "ClassName" << YAML::Value << scriptComponent.ClassName;
+
+		// Fields
+		std::shared_ptr<ScriptClass> entityClass = ScriptEngine::GetEntityClass(scriptComponent.ClassName);
+		const auto& fields = entityClass->GetFields();
+		if (fields.size() > 0)
+		{
+			out << YAML::Key << "ScriptFields" << YAML::Value;
+			auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
+			out << YAML::BeginSeq;
+			for (const auto& [name, field] : fields)
+			{
+				if (entityFields.find(name) == entityFields.end())
+					continue;
+
+				out << YAML::BeginMap; // ScriptField
+				
+				out << YAML::Key << "Name" << YAML::Value << name;
+				out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+
+				out << YAML::Key << "Data" << YAML::Value;
+				ScriptFieldInstance& scriptField = entityFields.at(name);
+				switch (field.Type)
+				{
+					WRITE_SCRIPT_FIELD(Float, float);
+					WRITE_SCRIPT_FIELD(Double, double);
+					WRITE_SCRIPT_FIELD(Bool, bool);
+					WRITE_SCRIPT_FIELD(Char, char);
+					WRITE_SCRIPT_FIELD(Byte, int8_t);
+					WRITE_SCRIPT_FIELD(Short, int16_t);
+					WRITE_SCRIPT_FIELD(Int, int32_t);
+					WRITE_SCRIPT_FIELD(Long, int64_t);
+					WRITE_SCRIPT_FIELD(UByte, uint8_t);
+					WRITE_SCRIPT_FIELD(UShort, uint16_t);
+					WRITE_SCRIPT_FIELD(UInt, uint32_t);
+					WRITE_SCRIPT_FIELD(ULong, uint64_t);
+					//WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
+					WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
+					WRITE_SCRIPT_FIELD(Texture2D, uint64_t);
+					WRITE_SCRIPT_FIELD(Entity, Elysium::UUID);
+				}
+
+				out << YAML::EndMap; // ScriptField
+			}
+			out << YAML::EndSeq;
+		}
+
 		out << YAML::EndMap;
 	}
 	if (entity.hasComponent<CCircle>())
@@ -484,6 +470,55 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 						colorArray[2].as<float>(),
 						colorArray[3].as<float>()
 					);
+				}
+			}
+
+			auto scriptComponent = entity["ScriptComponent"];
+			if (scriptComponent)
+			{
+				auto& script = deserializedEntity.addComponent<CScript>();
+				script.ClassName = scriptComponent["ClassName"].as<std::string>();
+
+				auto scriptFields = scriptComponent["ScriptFields"];
+				if (scriptFields)
+				{
+					std::shared_ptr<ScriptClass> entityClass = ScriptEngine::GetEntityClass(script.ClassName);
+					// assert entity class
+					const auto& fields = entityClass->GetFields();
+					auto& entityFields = ScriptEngine::GetScriptFieldMap(deserializedEntity);
+
+					for (auto scriptField : scriptFields)
+					{
+						std::string name = scriptField["Name"].as<std::string>();
+						std::string typeString = scriptField["Type"].as<std::string>();
+						ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+
+						ScriptFieldInstance& fieldInstance = entityFields[name];
+
+						if (fields.find(name) == fields.end())
+							continue;
+
+						fieldInstance.Field = fields.at(name);
+
+						switch (type)
+						{
+							READ_SCRIPT_FIELD(Float, float);
+							READ_SCRIPT_FIELD(Double, double);
+							READ_SCRIPT_FIELD(Bool, bool);
+							READ_SCRIPT_FIELD(Char, char);
+							READ_SCRIPT_FIELD(Byte, int8_t);
+							READ_SCRIPT_FIELD(Short, int16_t);
+							READ_SCRIPT_FIELD(Int, int32_t);
+							READ_SCRIPT_FIELD(Long, int64_t);
+							READ_SCRIPT_FIELD(UByte, uint8_t);
+							READ_SCRIPT_FIELD(UShort, uint16_t);
+							READ_SCRIPT_FIELD(UInt, uint32_t);
+							READ_SCRIPT_FIELD(ULong, uint64_t);
+							READ_SCRIPT_FIELD(Vector3, glm::vec3);
+							READ_SCRIPT_FIELD(Texture2D, uint64_t);
+							READ_SCRIPT_FIELD(Entity, Elysium::UUID);
+						}
+					}
 				}
 			}
 

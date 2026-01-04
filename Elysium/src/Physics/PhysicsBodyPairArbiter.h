@@ -41,6 +41,7 @@ struct Contact
 	ContactID m_id;
 };
 
+
 struct ArbiterKey
 {
 	ArbiterKey(PhysicsBody* b1, PhysicsBody* b2)

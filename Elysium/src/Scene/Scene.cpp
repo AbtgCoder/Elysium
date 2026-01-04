@@ -8,6 +8,8 @@
 
 #include "Renderer/Renderer2D.h"
 
+#include "Scripting/ScriptEngine.h"
+
 #include "Scripts/RotateEntity.h"
 
 #include <glm/glm.hpp>
@@ -68,7 +70,7 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	// create entities in new Scene
 	for (auto e : other->m_entityManager.GetEntities())
 	{
-		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, "runtime_" + e.getComponent<CTag>().tag);
+		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, e.getComponent<CTag>().tag);
 		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
 		runtimeEntity.addComponent<CParent>(e.getComponent<CParent>());
 
@@ -85,7 +87,8 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 			CJoint,
 			CCamera,
 			CNativeScriptComponent,
-			CAnimator
+			CAnimator,
+			CScript
 		>(e, runtimeEntity);
 
 	}
@@ -109,6 +112,9 @@ Entity Scene::AddEntityWithUUID(Elysium::UUID uuid, const std::string& name)
 	auto& tag = e.addComponent<CTag>();
 	tag.tag = name.empty() ? "Entity" : name;
 	m_entityManager.update();
+
+	m_EntityMap[uuid] = e; // Store the entity in the map with its UUID
+
 	return e;
 }
 
@@ -168,7 +174,10 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		CRigidBody,
 		CPhysicsMaterial,
 		CJoint,
-		CCamera
+		CCamera,
+		CNativeScriptComponent,
+		CAnimator,
+		CScript
 	>(e, duplicateEntity);
 
 	// Handle recursive duplication of children
@@ -187,13 +196,24 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 Entity Scene::GetEntityByUUID(Elysium::UUID id)
 {
 	//TODO: assert valid id probably
-	for (auto e : m_entityManager.GetEntities())
+	//for (auto e : m_entityManager.GetEntities())
+	//{
+	//	if (e.getComponent<CId>().id == id)
+	//	{
+	//		return e;
+	//	}
+	//}
+
+	if (m_EntityMap.find(id) != m_EntityMap.end())
 	{
-		if (e.getComponent<CId>().id == id)
-		{
-			return e;
-		}
+		return m_EntityMap.at(id);
 	}
+	else
+	{
+		//Logger::Log("Entity with UUID not found: " + id.ToString(), "Scene", LOG_TYPE::WARNING);
+		return Entity(); // Return an invalid entity if not found
+	}
+
 }
 
 Entity Scene::GetEntityByEntityID(size_t id)
@@ -206,6 +226,18 @@ Entity Scene::GetEntityByEntityID(size_t id)
 			return e;
 		}
 	}
+}
+
+Entity Scene::FindEntityByName(const std::string& name)
+{
+	for (auto entity : m_entityManager.GetEntities())
+	{
+		if (entity.hasComponent<CTag>() && entity.getComponent<CTag>().tag == name)
+		{
+			return entity;
+		}
+	}
+	return Entity();
 }
 
 void Scene::DestroyEntity(Entity entity)
@@ -224,6 +256,8 @@ void Scene::DestroyEntity(Entity entity)
 	{
 		DestroyEntity(GetEntityByUUID(cId));
 	}
+
+	m_EntityMap.erase(entity.GetUUID()); // Remove the entity from the map using its UUID
 
 	entity.destroy();
 }
@@ -315,19 +349,33 @@ void Scene::OnRuntimeStart()
 
 	UpdateTransforms();
 
-	// Instantiate script
-	for (auto e : m_entityManager.GetEntities())
+	// Scripting
 	{
-		if (e.hasComponent<CNativeScriptComponent>())
+		ScriptEngine::OnRuntimeStart(this);
+
+		// instantiate scripts for entities that have them
+		for (auto e : m_entityManager.GetEntities())
 		{
-			auto& nsc = e.getComponent<CNativeScriptComponent>();
-			//nsc.instance = nsc.InstantiateScript();
-			nsc.instance = TryLoadScript();
-			nsc.instance->m_Entity = e;
-			nsc.instance->m_EntityManager = &m_entityManager;
-			nsc.instance->OnCreate();
+			if (e.hasComponent<CScript>())
+			{
+				ScriptEngine::OnCreateEntity(e);
+			}
 		}
 	}
+
+	// Instantiate script
+	//for (auto e : m_entityManager.GetEntities())
+	//{
+	//	if (e.hasComponent<CNativeScriptComponent>())
+	//	{
+	//		auto& nsc = e.getComponent<CNativeScriptComponent>();
+	//		//nsc.instance = nsc.InstantiateScript();
+	//		nsc.instance = TryLoadScript();
+	//		nsc.instance->m_Entity = e;
+	//		nsc.instance->m_EntityManager = &m_entityManager;
+	//		nsc.instance->OnCreate();
+	//	}
+	//}
 
 	// Physics world initialization
 	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.8f}, 10);
@@ -425,28 +473,33 @@ void Scene::OnRuntimeStart()
 	}
 }
 
+
+
 void Scene::OnRuntimeStop()
 {
 	m_IsRunning = false;
 
+	ScriptEngine::OnRuntimeStop();
+
 	// Destroy script
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.hasComponent<CNativeScriptComponent>())
-		{
-			auto& nsc = e.getComponent<CNativeScriptComponent>();
-			nsc.instance->OnDestroy();
-			delete nsc.instance;
-			nsc.instance = nullptr;
-			//nsc.DestroyScript(&nsc);
-		}
-	}
+	//for (auto e : m_entityManager.GetEntities())
+	//{
+	//	if (e.hasComponent<CNativeScriptComponent>())
+	//	{
+	//		auto& nsc = e.getComponent<CNativeScriptComponent>();
+	//		nsc.instance->OnDestroy();
+	//		delete nsc.instance;
+	//		nsc.instance = nullptr;
+	//		//nsc.DestroyScript(&nsc);
+	//	}
+	//}
 
 	// Physics world deletion
 	delete m_PhysicsWorld;
 	if (m_bomb)
 		m_bomb.destroy();
 }
+
 
 void Scene::UpdateTransforms()
 {
@@ -488,11 +541,17 @@ void Scene::OnUpdateRuntime(float dt)
 	{
 		m_contactPoints.clear();
 
-		auto runtimeEntities = m_entityManager.GetEntities();
-
-		// Update Native Scripts
+		// Update Scripts
 		{
 			for (auto e : m_entityManager.GetEntities())
+			{
+				if (e.hasComponent<CScript>())
+				{
+					ScriptEngine::OnUpdateEntity(e, dt);
+				}
+			}
+
+			/*for (auto e : m_entityManager.GetEntities())
 			{
 				if (e.hasComponent<CNativeScriptComponent>())
 				{
@@ -500,13 +559,14 @@ void Scene::OnUpdateRuntime(float dt)
 					if (nsc.instance)
 						nsc.instance->OnUpdate(dt);
 				}
-			}
+			}*/
 		}
 
 		// Physics
 		{
+			m_PhysicsWorld->Update(dt);
 
-			m_PhysicsWorld->Step(dt);
+			//m_PhysicsWorld->Step(dt);
 
 			// Debug: Display contact points
 			std::map<ArbiterKey, Arbiter>::const_iterator iter;
@@ -550,6 +610,9 @@ void Scene::OnUpdateRuntime(float dt)
 		}
 	}
 
+	// recompute every entity's global transform
+	UpdateTransforms();
+
 
 	// Rendering
 	Camera* mainCamera = nullptr;
@@ -570,7 +633,6 @@ void Scene::OnUpdateRuntime(float dt)
 
 	if (mainCamera)
 	{
-		UpdateTransforms();
 
 		Renderer2D::BeginScene(*mainCamera, cameraTransform.GetTransform());
 
@@ -582,6 +644,18 @@ void Scene::OnUpdateRuntime(float dt)
 			{
 				auto rect = entity.getComponent<CRectangle>();
 				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+			}
+
+			if (entity.hasComponent<CCircle>())
+			{
+				auto circle = entity.getComponent<CCircle>();
+				Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, (int)entity.id());
+			}
+
+			if (entity.hasComponent<CPolygon>())
+			{
+				auto polygon = entity.getComponent<CPolygon>();
+				Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, (int)entity.id());
 			}
 
 			bool renderSpriteFromSpriteRenderer = true;
@@ -676,6 +750,18 @@ void Scene::RenderScene(EditorCamera& camera)
 		{
 			auto rect = entity.getComponent<CRectangle>();
 			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CCircle>())
+		{
+			auto circle = entity.getComponent<CCircle>();
+			Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, (int)entity.id());
+		}
+
+		if (entity.hasComponent<CPolygon>())
+		{
+			auto polygon = entity.getComponent<CPolygon>();
+			Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, (int)entity.id());
 		}
 
 		if (entity.hasComponent<CSpriteRenderer>())

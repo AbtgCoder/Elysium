@@ -2,9 +2,12 @@
 
 #include "core/Logger.h"
 
+#include "Project/Project.h"
+
 #include "Asset/AssetManager.h"
 #include "Renderer/Texture.h"
 #include "Physics/graham_scan.h"
+#include "Scripting/ScriptEngine.h"
 #include "Utils/StringUtils.h"
 #include "../Helper/ImGuiHelper.h"
 
@@ -295,6 +298,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			DisplayAddComponentEntry<CPhysicsMaterial>("Physics Material");
 			DisplayAddComponentEntry<CNativeScriptComponent>("Native Script");
 			DisplayAddComponentEntry<CAnimator>("Animator");
+			DisplayAddComponentEntry<CScript>("Script"); 
 			ImGui::EndPopup();
 		}
 
@@ -367,6 +371,317 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 
 				ImGui::ColorEdit4("Color", glm::value_ptr(component.backgroundColor));
+			});
+
+		DrawComponentGUI<CScript>("Script", m_InspectedEntity, [this](auto& component) mutable
+			{
+				std::string label = "None (Script)";
+
+				bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
+				
+				if (scriptClassExists)
+				{
+					label = component.ClassName + " (Script)";
+				}
+
+
+				ImVec2 buttonLabelSize = ImGui::CalcTextSize(label.c_str());
+				buttonLabelSize.x += 20.0f;
+				float buttonLabelWidth = std::max<float>(100.0f, buttonLabelSize.x);
+
+				ImGui::Button(label.c_str(), ImVec2(buttonLabelWidth, 0.0f));
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Script"))
+					{
+						char* file = (char*)payload->Data;
+						auto fullPath = std::filesystem::path(std::string(file, 256));
+						component.ClassName = fullPath.filename().stem().string(); //TODO: Sandbox + filename ?? 
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				// Fields
+				bool sceneRunning = m_Scene->IsRunning();
+				if (sceneRunning)
+				{
+					std::shared_ptr<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(m_InspectedEntity.GetUUID());
+					if (scriptInstance)
+					{
+						const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+
+						for (const auto& [name, field] : fields)
+						{
+							if (field.Type == ScriptFieldType::Float)
+							{
+								float value = scriptInstance->GetFieldValue<float>(name);
+								DrawFloatControl(name, value);
+								scriptInstance->SetFieldValue(name, value);
+							}
+						}
+					}
+				}
+				else
+				{
+					if (scriptClassExists)
+					{
+						std::shared_ptr<ScriptClass> scriptClass = ScriptEngine::GetEntityClass(component.ClassName);
+						const auto& fields = scriptClass->GetFields();
+
+						auto& entityFields = ScriptEngine::GetScriptFieldMap(m_InspectedEntity);
+
+						ImGui::Columns(2, nullptr, false);
+
+						for (const auto& [name, field] : fields)
+						{
+							ImGui::AlignTextToFramePadding();
+							ImGui::Text("%s", name.c_str()); // Field name on the left
+							ImGui::NextColumn();
+
+							// Field has been set in editor
+							if (entityFields.find(name) != entityFields.end())
+							{
+								ScriptFieldInstance& scriptField = entityFields.at(name);
+
+								switch (field.Type)
+								{
+								case ScriptFieldType::Int:
+								{
+									//int intValue = scriptField.GetValue<int>();
+									//DrawIntControl(name, intValue);
+									//scriptField.SetValue(intValue);
+									//break;
+
+									int value = scriptField.GetValue<int>();
+									if (ImGui::DragInt(("##" + name).c_str(), &value))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::Float:
+								{
+									//float fValue = scriptField.GetValue<float>();
+									//DrawFloatControl(name, fValue);
+									//scriptField.SetValue(fValue);
+									//break;
+
+									float value = scriptField.GetValue<float>();
+									if (ImGui::DragFloat(("##" + name).c_str(), &value, 0.1f))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::Double:
+								{
+									double value = scriptField.GetValue<double>();
+									if (ImGui::DragScalar(("##" + name).c_str(), ImGuiDataType_Double, &value, 0.1f))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::Bool:
+								{
+									bool value = scriptField.GetValue<bool>();
+									if (ImGui::Checkbox(("##" + name).c_str(), &value))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::Char:
+								{
+									char value = scriptField.GetValue<char>();
+									char buffer[2] = { value, '\0' };
+									if (ImGui::InputText(("##" + name).c_str(), buffer, 2))
+										scriptField.SetValue(buffer[0]);
+									break;
+								}
+								case ScriptFieldType::Byte:
+								{
+									uint8_t value = scriptField.GetValue<uint8_t>();
+									int valInt = static_cast<int>(value);
+									if (ImGui::DragInt(("##" + name).c_str(), &valInt, 1.0f, 0, 255))
+										scriptField.SetValue(static_cast<uint8_t>(valInt));
+									break;
+								}
+								case ScriptFieldType::Short:
+								{
+									int16_t value = scriptField.GetValue<int16_t>();
+									int valInt = static_cast<int>(value);
+									if (ImGui::DragInt(("##" + name).c_str(), &valInt, 1.0f, INT16_MIN, INT16_MAX))
+										scriptField.SetValue(static_cast<int16_t>(valInt));
+									break;
+								}
+								case ScriptFieldType::Long:
+								{
+									int64_t value = scriptField.GetValue<int64_t>();
+									if (ImGui::InputScalar(("##" + name).c_str(), ImGuiDataType_S64, &value))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::UByte:
+								{
+									uint8_t value = scriptField.GetValue<uint8_t>();
+									int valInt = static_cast<int>(value);
+									if (ImGui::DragInt(("##" + name).c_str(), &valInt, 1.0f, 0, 255))
+										scriptField.SetValue(static_cast<uint8_t>(valInt));
+									break;
+								}
+								case ScriptFieldType::UShort:
+								{
+									uint16_t value = scriptField.GetValue<uint16_t>();
+									int valInt = static_cast<int>(value);
+									if (ImGui::DragInt(("##" + name).c_str(), &valInt, 1.0f, 0, UINT16_MAX))
+										scriptField.SetValue(static_cast<uint16_t>(valInt));
+									break;
+								}
+								case ScriptFieldType::UInt:
+								{
+									uint32_t value = scriptField.GetValue<uint32_t>();
+									int valInt = static_cast<int>(value);
+									if (ImGui::DragInt(("##" + name).c_str(), &valInt))
+										scriptField.SetValue(static_cast<uint32_t>(valInt));
+									break;
+								}
+								case ScriptFieldType::ULong:
+								{
+									uint64_t value = scriptField.GetValue<uint64_t>();
+									if (ImGui::InputScalar(("##" + name).c_str(), ImGuiDataType_U64, &value))
+										scriptField.SetValue(value);
+									break;
+								}
+								case ScriptFieldType::Vector2:
+								{
+									glm::vec2 vec2Value = scriptField.GetValue<glm::vec2>();
+									if (ImGui::DragFloat2(("##" + name).c_str(), glm::value_ptr(vec2Value), 0.1f))
+										scriptField.SetValue(vec2Value);
+									break;
+								}
+								case ScriptFieldType::Vector3:
+								{
+									glm::vec3 vec3Value = scriptField.GetValue<glm::vec3>();
+									if (ImGui::DragFloat3(("##" + name).c_str(), glm::value_ptr(vec3Value), 0.1f))
+										scriptField.SetValue(vec3Value);
+									break;
+								}
+								case ScriptFieldType::Texture2D:
+								{
+									AssetHandle textureHandle = scriptField.GetValue<AssetHandle>();
+									std::string label = "None (Texture2D)";
+									
+									if (AssetManager::IsAssetHandleValid(textureHandle))
+									{
+										label = Project::GetActive()->GetEditorAssetManager()->GetFilePath(textureHandle).filename().stem().string() + " (Texture2D)";
+									}
+									
+									ImVec2 buttonLabelSize = ImGui::CalcTextSize(label.c_str());
+									buttonLabelSize.x += 20.0f;
+									float buttonLabelWidth = std::max<float>(100.0f, buttonLabelSize.x);
+									ImGui::Button(label.c_str(), ImVec2(buttonLabelWidth, 0.0f));
+									if (ImGui::BeginDragDropTarget())
+									{
+										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
+										{
+											char* file = (char*)payload->Data;
+											std::string fullPath = std::string(file, 256);
+											auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+											AssetHandle handle = 0;
+											if (!Project::GetActive()->GetEditorAssetManager()->AssetExistsAtFilePath(relativePath))
+											{
+												Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+											}
+											handle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandle(relativePath);
+											scriptField.SetValue((uint64_t)handle);
+										}
+										ImGui::EndDragDropTarget();
+									}
+									break;
+								}
+								case ScriptFieldType::Entity:
+								{
+									Elysium::UUID entityId = scriptField.GetValue<Elysium::UUID>();
+									std::string label = "None (Entity)";
+									if (m_Scene->IsEntityUUIDValid(entityId))
+									{
+										label = m_Scene->GetEntityByUUID(entityId).getComponent<CTag>().tag + " (Entity)";
+									}
+									ImVec2 buttonLabelSize = ImGui::CalcTextSize(label.c_str());
+									buttonLabelSize.x += 20.0f;
+									float buttonLabelWidth = std::max<float>(100.0f, buttonLabelSize.x);
+									ImGui::Button(label.c_str(), ImVec2(buttonLabelWidth, 0.0f));
+									if (ImGui::BeginDragDropTarget())
+									{
+										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+										{
+											Elysium::UUID entityId = *(Elysium::UUID*)payload->Data;
+											auto e = m_Scene->GetEntityByUUID(entityId);
+											if (e)
+											{
+												scriptField.SetValue((uint64_t)entityId);
+											}
+										}
+
+										ImGui::EndDragDropTarget();
+									}
+								}
+									break;
+								default:
+									break;
+								}
+							}
+							else
+							{
+								ScriptFieldInstance& fieldInstance = entityFields[name];
+								fieldInstance.Field = field;
+
+
+								switch (field.Type)
+								{
+								case ScriptFieldType::Int:
+								{
+									int intValue = 0;
+									DrawIntControl(name, intValue);
+									fieldInstance.SetValue(intValue);
+									break;
+								}
+								case ScriptFieldType::Float:
+								{
+									float fValue = 0.0f;
+									DrawFloatControl(name, fValue);
+									fieldInstance.SetValue(fValue);
+									break;
+								}
+								case ScriptFieldType::Double:
+									break;
+								case ScriptFieldType::Bool:
+									break;
+								case ScriptFieldType::Char:
+									break;
+								case ScriptFieldType::Byte:
+									break;
+								case ScriptFieldType::Short:
+									break;
+								case ScriptFieldType::Long:
+									break;
+								case ScriptFieldType::UByte:
+									break;
+								case ScriptFieldType::UShort:
+									break;
+								case ScriptFieldType::UInt:
+									break;
+								case ScriptFieldType::ULong:
+									break;
+								case ScriptFieldType::Vector3:
+									break;
+								case ScriptFieldType::Entity:
+									break;
+								default:
+									break;
+								}
+							}
+							
+							ImGui::NextColumn();
+
+						}
+						
+						ImGui::Columns(1);	
+					}
+				}
 			});
 
 		DrawComponentGUI<CNativeScriptComponent>("Native Script", m_InspectedEntity, [](auto& component) 
@@ -639,6 +954,20 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 				//TODO OR NOT_TODO: m_Scene->GetEntityByUUID(eId).getComponent<CTransform>().Translation = m_Scene->GetEntityByUUID(eId).getComponent<CTransform>().GlobalTranslation - entity.getComponent<CTransform>().GlobalTranslation;
 				//m_InspectedEntity = m_Scene->GetEntityByUUID(eId);
 			}
+		}
+		else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Script"))
+		{
+			 char* file = (char*)payload->Data;
+			 auto fullPath = std::filesystem::path(std::string(file, 256));
+			 
+			 if (!entity.hasComponent<CScript>())
+			 {
+			 	entity.addComponent<CScript>();
+			 }
+			 
+			 auto& sc = entity.getComponent<CScript>();
+			 
+			 sc.ClassName = fullPath.filename().stem().string(); //TODO: Sandbox + filename ?? 
 		}
 		ImGui::EndDragDropTarget();
 	}
