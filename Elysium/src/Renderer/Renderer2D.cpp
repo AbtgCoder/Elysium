@@ -2,6 +2,8 @@
 
 #include "core/Logger.h"
 
+#include "Utils/FileSystem.h"
+
 #include "RenderCommand.h"
 #include "Renderer/VertexArray.h"
 #include "Renderer/Shader.h"
@@ -112,7 +114,7 @@ void Renderer2D::Init()
 	s_RenderData.QuadVertexArray->SetIndexBuffer(quadIndexBuffer);
 	delete[] quadIndices;
 
-	s_RenderData.QuadShader = Shader::Create("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/QuadVertexShader.glsl", "D:/Game Development/Game_Engine_Programming/Elysium/Resources/Shaders/QuadFragmentShader.glsl");
+	s_RenderData.QuadShader = Shader::Create(Elysium::FileSystem::GetResourcePath("Resources/Shaders/QuadVertexShader.glsl").string(), Elysium::FileSystem::GetResourcePath("Resources/Shaders/QuadFragmentShader.glsl").string());
 
 	s_RenderData.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
 	s_RenderData.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f, 1.0f };

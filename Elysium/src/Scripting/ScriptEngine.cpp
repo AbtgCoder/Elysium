@@ -4,7 +4,11 @@
 
 #include "core/Logger.h"
 
+#include "Utils/FileSystem.h"
+
 #include "core/uuid.h"
+
+#include "Project/Project.h"
 
 #include <string>
 #include <fstream> 
@@ -167,8 +171,9 @@ void ScriptEngine::Init()
 	InitMono();
     ScriptGlue::RegisterFunctions();
 
-    LoadAssembly("D:/Game Development/Game_Engine_Programming/Elysium/Elysium-Editor/Resources/Scripts/Elysium-ScriptCore.dll");
-	LoadAppAssembly("D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/bin/Sandbox.dll"); //TODO: we should get this from project settings
+    LoadAssembly(Elysium::FileSystem::GetEditorRootDir() / "Resources/Scripts/Elysium-ScriptCore.dll");
+//	LoadAppAssembly(Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/bin/Sandbox.dll"); 
+    LoadAppAssembly(Project::GetActiveScriptModulePath()); 
     LoadAssemblyClasses();
 
     ScriptGlue::RegisterComponents();
@@ -176,33 +181,6 @@ void ScriptEngine::Init()
     s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
 
 	s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
-
-#if 0
-    // 1) create an object (and call constructor)
-    MonoObject* instance = s_Data->EntityClass.Instantiate();
-
-    // 2) call function
-    MonoMethod* printMessageFunc = s_Data->EntityClass.GetMethod("PrintMessage", 0);
-    s_Data->EntityClass.InvokeMethod(instance, printMessageFunc);
-
-    // 3) call function with param(s)
-    MonoMethod* printIntFunc = s_Data->EntityClass.GetMethod("PrintInt", 1);
-    int value = 5;
-    void* param = &value;
-    s_Data->EntityClass.InvokeMethod(instance, printIntFunc, &param);
-    MonoMethod* printIntsFunc = s_Data->EntityClass.GetMethod("PrintInts", 2);
-    int value2 = 51;
-    void* params[2] = {
-        &value,
-        &value2
-    };
-    s_Data->EntityClass.InvokeMethod(instance, printIntsFunc, params);
-
-    MonoString* monoString = mono_string_new(s_Data->AppDomain, "hello world from c++");
-    MonoMethod* printCustomMessageFunc = s_Data->EntityClass.GetMethod("PrintCustomMessage", 1);
-    void* stringParam = monoString;
-    s_Data->EntityClass.InvokeMethod(instance, printCustomMessageFunc, &stringParam);
-#endif
 }
 
 void ScriptEngine::Shutdown()
@@ -285,7 +263,8 @@ MonoObject* ScriptEngine::GetManagedInstance(Elysium::UUID entityID)
 
 void ScriptEngine::InitMono()
 {
-    mono_set_assemblies_path("D:/Game Development/Game_Engine_Programming/Elysium/Elysium-Editor/mono/lib");
+    std::filesystem::path libPath = Elysium::FileSystem::GetEditorRootDir() / "mono/lib";
+    mono_set_assemblies_path(libPath.string().c_str());
 
     MonoDomain* rootDomain = mono_jit_init("ElysiumJITRuntime");
     // assert rootdomain

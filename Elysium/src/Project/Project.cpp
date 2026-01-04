@@ -15,6 +15,7 @@ std::shared_ptr<Project> Project::New(const std::string& name, const std::string
     config.Name = name;
     config.AssetDirectory = "Assets";
     config.AssetRegistryPath = name + ".assetregistry";
+    config.ScriptModulePath = "bin/" + name + ".dll";
     s_ActiveProject = project;
     std::shared_ptr<EditorAssetManager> editorAssetManager = std::make_shared<EditorAssetManager>();
     s_ActiveProject->m_AssetManager = editorAssetManager;

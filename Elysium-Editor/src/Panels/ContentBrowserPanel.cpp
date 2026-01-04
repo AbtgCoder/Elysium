@@ -7,6 +7,8 @@
 #include "Asset/TextureImporter.h"
 #include "../Helper/ImGuiHelper.h"
 
+#include "Utils/FileSystem.h"
+
 #include <fstream>
 
 namespace Utils
@@ -63,8 +65,8 @@ ContentBrowserPanel::ContentBrowserPanel(std::shared_ptr<Project> project)
 	: m_Project(project), m_ThumbnailCache(std::make_shared<ThumbnailCache>(project)), m_BaseDirectory(m_Project->GetAssetDirectory()), m_CurrentDirectory(m_BaseDirectory)
 {
 
-	m_DirectoryIcon = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/DirectoryIcon.png");
-	m_FileIcon = TextureImporter::LoadTexture2D("D:/Game Development/Game_Engine_Programming/Elysium/Resources/Icons/FileIcon.png");
+	m_DirectoryIcon = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/DirectoryIcon.png"));
+	m_FileIcon = TextureImporter::LoadTexture2D(Elysium::FileSystem::GetResourcePath("Resources/Icons/FileIcon.png"));
 
 }
 
@@ -385,7 +387,7 @@ void ContentBrowserPanel::OnImGuiRender()
 
 
 				// 2) Add to .csproj
-				Utils::AddScriptToCsProj(path, "D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox.csproj");
+				Utils::AddScriptToCsProj(path, Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/Sandbox.csproj");
 
 				// 3) Rebuild C# project: TODO: this doesnt work.. isnt registering the command correctly
 				//std::string msbuildPath = "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"";
@@ -396,11 +398,31 @@ void ContentBrowserPanel::OnImGuiRender()
 				//std::cout << "Running: " << command << std::endl;
 
 				//int result = system(command.c_str());
-				//// 4) Reload assembly
-				//ScriptEngine::ReloadAssembly();
+				
+
+				std::string command =
+					"cmd /S /C \""
+					"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" "
+					"\"D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox Project.sln\" "
+					"/p:Configuration=Release /nologo"
+					"\"";
+
+				std::cout << "Running: " << command << std::endl;
+				int result = system(command.c_str());
+
+
+				
+				// 4) Reload assembly
+				ScriptEngine::ReloadAssembly();
 			}
 
 		}
+		if (ImGui::MenuItem("Open C# Project"))
+		{
+			//TODO: get from project settings
+			ShellExecuteW(NULL, L"open", L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox Project.sln", NULL, L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project", SW_SHOWNORMAL);
+		}
+		
 		ImGui::EndPopup();
 	}
 
