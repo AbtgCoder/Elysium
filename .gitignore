@@ -4,6 +4,12 @@ Binaries/
 bin/
 bin-int/
 
+Resources/Scripts/
+Resources/Intermediates/
+Elysium-Editor/Resources/Scripts/
+Elysium-Editor/Resources/Intermediates/
+
+
 *.vcxproj
 *.vcxproj.user
 *.vcxproj.filters

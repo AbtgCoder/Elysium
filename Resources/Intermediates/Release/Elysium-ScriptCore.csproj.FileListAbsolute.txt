@@ -1,6 +1,0 @@
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Scripts\Elysium-ScriptCore.dll
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Scripts\Elysium-ScriptCore.pdb
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Intermediates\Release\Elysium-ScriptCore.csproj.AssemblyReference.cache
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Intermediates\Release\Elysium-ScriptCore.csproj.CoreCompileInputs.cache
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Intermediates\Release\Elysium-ScriptCore.dll
-D:\Game Development\Game_Engine_Programming\Elysium\Elysium-Editor\Resources\Intermediates\Release\Elysium-ScriptCore.pdb
