@@ -3,5 +3,6 @@ Project:
   StartScene: 1290859156789939854
   AssetDirectory: Assets
   AssetRegistryPath: Sandbox.assetregistry
+  HasScriptSolution: true
   ScriptModulePath: "Bin/Sandbox.dll"
   LastOpenedScene: 4745038581299294832

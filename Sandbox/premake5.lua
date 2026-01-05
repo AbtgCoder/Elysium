@@ -1,4 +1,4 @@
-workspace "Sandbox Project"
+workspace "Sandbox"
    architecture "x86_64"
    startproject "Sandbox"
    configurations { "Debug", "Release", "Dist" }
