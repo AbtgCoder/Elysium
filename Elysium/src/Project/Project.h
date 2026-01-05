@@ -15,9 +15,11 @@ struct ProjectConfig
 	std::filesystem::path AssetDirectory; // relative to ProjectDirectory
 	std::filesystem::path AssetRegistryPath; // relative to AssetDirectory
 
-	std::filesystem::path ScriptModulePath; // relative to ProjectDirectory (TODO: maybe should be relative to AssetDirectory)
+	std::filesystem::path ScriptModulePath = ""; // relative to ProjectDirectory (TODO: maybe should be relative to AssetDirectory)
 
 	AssetHandle lastOpenedScene; // for editor only (TODO: maybe find a better way to do this)
+
+	bool HasScriptSolution = false; // whether we already generated the script/solution for this project
 };
 
 class Project
@@ -29,6 +31,12 @@ public:
 	std::filesystem::path GetAssetDirectory() { return GetProjectDirectory() / s_ActiveProject->m_Config.AssetDirectory; }
 	std::filesystem::path GetAssetRegistryPath() { return GetAssetDirectory() / s_ActiveProject->m_Config.AssetRegistryPath; }
 	std::filesystem::path GetScriptModulePath() { return GetProjectDirectory() / s_ActiveProject->m_Config.ScriptModulePath; }
+
+	void EnsureScriptSolution();
+	bool GenerateScriptSolution();
+	bool RegenerateScriptSolution();
+	bool BuildScriptSolution();
+	bool OpenScriptSolution();
 
 	static const std::filesystem::path& GetActiveProjectDirectory()
 	{

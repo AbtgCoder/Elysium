@@ -428,10 +428,10 @@ bool ScriptEngine::LoadAppAssemblyFromProject()
 
 
 
-void ScriptEngine::ReloadAssembly()
+bool ScriptEngine::ReloadAppAssembly()
 {
     // called after a build completes
-    LoadAppAssemblyFromProject(); // recreates app domain and registers classes
+    return LoadAppAssemblyFromProject(); // recreates app domain and registers classes
 
 	//mono_domain_set(mono_get_root_domain(), false);
 

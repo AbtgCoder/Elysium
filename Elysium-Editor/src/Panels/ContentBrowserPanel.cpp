@@ -8,6 +8,7 @@
 #include "../Helper/ImGuiHelper.h"
 
 #include "Utils/FileSystem.h"
+#include "core/Logger.h"
 
 #include <fstream>
 
@@ -356,6 +357,9 @@ void ContentBrowserPanel::OnImGuiRender()
 
 			if (!path.empty())
 			{
+				// lazy generation 
+				Project::GetActive()->EnsureScriptSolution();
+
 				std::string className = std::filesystem::path(path).filename().stem().string();
 
 				// 1) write default script file
@@ -381,46 +385,39 @@ void ContentBrowserPanel::OnImGuiRender()
 				if (!outFile.is_open())
 				{
 					// error: couldnt write to file
+					Logger::Log("Failed to create script file: ", "Content Browser", LOG_TYPE::CRITICAL);
+					return;
 				}
 				outFile << defaultScript;
 				outFile.close();
 
 
 				// 2) Add to .csproj
-				Utils::AddScriptToCsProj(path, Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/Sandbox.csproj");
+				//Utils::AddScriptToCsProj(path, Project::GetActiveProjectDirectory() / (Project::GetActive()->GetConfig().Name + ".csproj"));
 
-				// 3) Rebuild C# project: TODO: this doesnt work.. isnt registering the command correctly
-				//std::string msbuildPath = "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"";
-				//std::string slnPath = "\"D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox Project.sln\"";
+				// 2) regen the solution (TODO: maybe this isnt the best way to handle this)
+				Project::GetActive()->RegenerateScriptSolution();
 
-				//std::string command = "cmd /C " + msbuildPath + " " + slnPath + " /p:Configuration=Release /nologo";
-
-				//std::cout << "Running: " << command << std::endl;
-
-				//int result = system(command.c_str());
-				
-
-				std::string command =
-					"cmd /S /C \""
-					"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" "
-					"\"D:\\Game Development\\Game_Engine_Programming\\Elysium\\Sandbox Project\\Sandbox Project.sln\" "
-					"/p:Configuration=Release /nologo"
-					"\"";
-
-				std::cout << "Running: " << command << std::endl;
-				int result = system(command.c_str());
-
+				// 3) Build script solution and reload assembly
+				if (Project::GetActive()->BuildScriptSolution())
+				{
+					// 4) load/reload the project's assembly
+					if (!ScriptEngine::ReloadAppAssembly())
+					{
+						Logger::Log("Script engine failed to reload app assembly", "Content Browser", LOG_TYPE::CRITICAL);
+					}
+				}
 
 				
-				// 4) Reload assembly
-				ScriptEngine::ReloadAssembly();
 			}
 
 		}
 		if (ImGui::MenuItem("Open C# Project"))
 		{
 			//TODO: get from project settings
-			ShellExecuteW(NULL, L"open", L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox Project.sln", NULL, L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project", SW_SHOWNORMAL);
+			//ShellExecuteW(NULL, L"open", L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox Project.sln", NULL, L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project", SW_SHOWNORMAL);
+
+			Project::GetActive()->OpenScriptSolution();
 		}
 		
 		ImGui::EndPopup();

@@ -56,7 +56,7 @@ void EditorLayer::OnAttach()
 	m_EditorCamera = EditorCamera(30.0f, 1.778f, 0.1f, 1000.0f);
 
 	//OpenProject();
-	OpenProject(Elysium::FileSystem::GetEngineRootDir() / "Sandbox Project/Sandbox.eproject");
+	OpenProject(Elysium::FileSystem::GetEngineRootDir() / "Sandbox/Sandbox.eproject");
 
 }
 
@@ -218,7 +218,7 @@ void EditorLayer::OnImGuiRender()
 		{
 			if (ImGui::MenuItem("Reload Assembly", "Ctrl+R"))
 			{
-				ScriptEngine::ReloadAssembly();
+				ScriptEngine::ReloadAppAssembly();
 			}
 			ImGui::EndMenu();
 		}
@@ -560,7 +560,7 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)
 		{
 			if (control)
 			{
-				ScriptEngine::ReloadAssembly();
+				ScriptEngine::ReloadAppAssembly();
 			}
 			else
 			{
@@ -832,7 +832,6 @@ void EditorLayer::NewProject()
 						// Create Project
 						const auto& projectInitialSceneDirectory = projectParentPath + "/Assets/Scenes/";
 						std::filesystem::create_directories(projectInitialSceneDirectory);
-						//TODO: create new csproject solution file 
 						Project::New(projectName, finalLocation);
 						auto projectInitialScenePath = projectInitialSceneDirectory + "Gameplay.elysium";
 						auto relativePath = std::filesystem::relative(projectInitialScenePath, Project::GetActiveAssetDirectory());
@@ -885,7 +884,7 @@ void EditorLayer::OpenProject(const std::filesystem::path& path)
 		Logger::Log("Opening Project: " + path.filename().generic_string(), "editor");
 		
 		//ScriptEngine::Init();
-		ScriptEngine::LoadAppAssemblyFromProject();
+		//ScriptEngine::LoadAppAssemblyFromProject();
 		
 		m_EditorProjectPath = path;
 		AssetHandle lastOpenedScene = Project::GetActive()->GetConfig().lastOpenedScene;

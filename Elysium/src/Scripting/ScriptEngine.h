@@ -158,7 +158,7 @@ public:
 	static void CreateAppDomain();
 	static void DestroyAppDomain();
 
-	static void ReloadAssembly();
+	static bool ReloadAppAssembly();
 
 	static void OnRuntimeStart(Scene* scene);
 	static void OnRuntimeStop();

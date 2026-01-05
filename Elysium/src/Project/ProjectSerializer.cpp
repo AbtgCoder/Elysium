@@ -22,6 +22,7 @@ bool ProjectSerializer::Serialize(const std::filesystem::path& filepath)
 			out << YAML::Key << "StartScene" << YAML::Value << (uint64_t)config.StartScene;
 			out << YAML::Key << "AssetDirectory" << YAML::Value << config.AssetDirectory.string();
 			out << YAML::Key << "AssetRegistryPath" << YAML::Value << config.AssetRegistryPath.string();
+			out << YAML::Key << "HasScriptSolution" << YAML::Value << config.HasScriptSolution;
 			out << YAML::Key << "ScriptModulePath" << YAML::Value << config.ScriptModulePath.string();
 			out << YAML::Key << "LastOpenedScene" << YAML::Value << (uint64_t)config.lastOpenedScene;
 			out << YAML::EndMap; // Project
@@ -63,5 +64,6 @@ bool ProjectSerializer::Deserialize(const std::filesystem::path& filepath)
 		config.lastOpenedScene = projectNode["LastOpenedScene"].as<uint64_t>();
 	if (projectNode["ScriptModulePath"])
 		config.ScriptModulePath = projectNode["ScriptModulePath"].as<std::string>();
+	config.HasScriptSolution = projectNode["HasScriptSolution"].as<bool>();
 	return true;
 }
