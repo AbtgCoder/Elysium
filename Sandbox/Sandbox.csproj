@@ -59,6 +59,7 @@
     <Compile Include="Assets\Scripts\Camera.cs" />
     <Compile Include="Assets\Scripts\LevelGenerator.cs" />
     <Compile Include="Assets\Scripts\PhysicsLevelGenerator.cs" />
+    <Compile Include="Assets\Scripts\PhysicsTest.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
   </ItemGroup>
   <ItemGroup>

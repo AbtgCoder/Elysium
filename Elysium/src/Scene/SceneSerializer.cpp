@@ -482,6 +482,10 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				auto scriptFields = scriptComponent["ScriptFields"];
 				if (scriptFields)
 				{
+					//TODO: ig if script field exists, then project must have solution, 
+					// so ig we maybe reload assembly here
+					ScriptEngine::ReloadAppAssembly();
+
 					std::shared_ptr<ScriptClass> entityClass = ScriptEngine::GetEntityClass(script.ClassName);
 					// assert entity class
 					const auto& fields = entityClass->GetFields();
