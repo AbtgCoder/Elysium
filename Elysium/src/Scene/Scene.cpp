@@ -643,7 +643,11 @@ void Scene::OnUpdateRuntime(float dt)
 			if (entity.hasComponent<CRectangle>())
 			{
 				auto rect = entity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+				glm::mat4 t = entity.getComponent<CTransform>().GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
+
+				Renderer2D::DrawQuad(t, rect.color, (int)entity.id());
+
+				//Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
 			}
 
 			if (entity.hasComponent<CCircle>())
@@ -757,7 +761,12 @@ void Scene::RenderScene(EditorCamera& camera)
 		if (entity.hasComponent<CRectangle>())
 		{
 			auto rect = entity.getComponent<CRectangle>();
-			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+			glm::mat4 t = entity.getComponent<CTransform>().GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
+
+			Renderer2D::DrawQuad(t, rect.color, (int)entity.id());
+
+			/*auto rect = entity.getComponent<CRectangle>();
+			Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());*/
 		}
 
 		if (entity.hasComponent<CCircle>())

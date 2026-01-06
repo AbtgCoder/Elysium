@@ -451,7 +451,12 @@ void EditorLayer::OnOverlayRender()
 			if (inspectedEntity.hasComponent<CRectangle>())
 			{
 				auto rect = inspectedEntity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
+				glm::mat4 t = inspectedEntity.getComponent<CTransform>().GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
+
+				Renderer2D::DrawRect(t, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), (int)inspectedEntity.id());
+
+				/*auto rect = inspectedEntity.getComponent<CRectangle>();
+				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));*/
 			}
 
 			if (inspectedEntity.hasComponent<CSpriteRenderer>())
