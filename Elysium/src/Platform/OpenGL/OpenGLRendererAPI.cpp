@@ -7,7 +7,7 @@ void OpenGLRendererAPI::Init()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST); // TODO: maybe need to enable this and later have more specific option for doing this stuff
 	glEnable(GL_LINE_SMOOTH);
 }
 

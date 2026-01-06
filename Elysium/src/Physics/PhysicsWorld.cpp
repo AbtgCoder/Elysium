@@ -405,21 +405,21 @@ void PhysicsWorld::Step(float dt)
 		NotifyContactPostSolve(arb->second);
 	}
 
-	static int frame = 0;
-	if (frame < 60)
-	{
-		for (auto& kv : m_arbiters)
-		{
-			Arbiter& a = kv.second;
-			if (a.m_numContacts > 0)
-			{
-				Contact& c = a.m_contacts[0];
-				std::cout << "[Frame " << frame << "] Separation: " << c.m_separation << " bias: " << c.m_bias << " Jn: " << c.m_Jn << " Jt: " << c.m_Jt << " b1pos: (" << a.m_body1->m_position.x << "," << a.m_body1->m_position.y << ") b2pos: (" << a.m_body2->m_position.x << "," << a.m_body2->m_position.y << " b1vel: (" << a.m_body1->m_velocity.x << "," << a.m_body1->m_velocity.y << ") b2vel: (" << a.m_body2->m_velocity.x << "," << a.m_body2->m_velocity.y << ")\n";
-				break; // one log per frame
-			}
-		}
-		frame++;
-	}
+	//static int frame = 0;
+	//if (frame < 60)
+	//{
+	//	for (auto& kv : m_arbiters)
+	//	{
+	//		Arbiter& a = kv.second;
+	//		if (a.m_numContacts > 0)
+	//		{
+	//			Contact& c = a.m_contacts[0];
+	//			std::cout << "[Frame " << frame << "] Separation: " << c.m_separation << " bias: " << c.m_bias << " Jn: " << c.m_Jn << " Jt: " << c.m_Jt << " b1pos: (" << a.m_body1->m_position.x << "," << a.m_body1->m_position.y << ") b2pos: (" << a.m_body2->m_position.x << "," << a.m_body2->m_position.y << " b1vel: (" << a.m_body1->m_velocity.x << "," << a.m_body1->m_velocity.y << ") b2vel: (" << a.m_body2->m_velocity.x << "," << a.m_body2->m_velocity.y << ")\n";
+	//			break; // one log per frame
+	//		}
+	//	}
+	//	frame++;
+	//}
 
 
 	// 5) position correction (baumgarte)

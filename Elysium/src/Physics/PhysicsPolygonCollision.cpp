@@ -36,6 +36,8 @@ CollisionEdge* FindCollisionEdge(const std::vector<Vec2>& vertices, const Vec2& 
 			index = i;
 		}
 	}
+
+#if 0
 	Vec2 v = vertices[index];
 	Vec2 v1 = vertices[(index + 1) % vertices.size()];
 	Vec2 v0;
@@ -54,7 +56,7 @@ CollisionEdge* FindCollisionEdge(const std::vector<Vec2>& vertices, const Vec2& 
 	Vec2 l = (v - v1).normalize();
 	Vec2 r = (v - v0).normalize();
 
-	return new CollisionEdge(v, v, v1, index, index2);
+	//return new CollisionEdge(v, v, v1, index, index2);
 
 
 	// the edge that is most perpendicular to n will have a dot product closer to zero
@@ -67,6 +69,33 @@ CollisionEdge* FindCollisionEdge(const std::vector<Vec2>& vertices, const Vec2& 
 	{
 		return new CollisionEdge(v, v, v1, index, index2);
 	}
+#endif
+
+	size_t i0 = (index + vertices.size() - 1) % vertices.size();
+	size_t i1 = index;
+	size_t i2 = (index + 1) % vertices.size();
+
+	Vec2 v = vertices[i1];
+	Vec2 vPrev = vertices[i0];
+	Vec2 vNext = vertices[i2];
+
+	//Vec2 left = (v - vPrev).normalize();
+	//Vec2 right = (vNext - v).normalize();
+
+	//// choose edge most perpendicular to normal
+	//if (std::abs(left.dot(normal)) <= std::abs(right.dot(normal)))
+	//	return new CollisionEdge(v, vPrev, v, i0, i1);
+	//else
+	//	return new CollisionEdge(v, v, vNext, i1, i2);
+
+	Vec2 n0 = Vec2((v - vPrev).y, -(v - vPrev).x).normalize();
+	Vec2 n1 = Vec2((vNext - v).y, -(vNext - v).x).normalize();
+
+	if (n0.dot(normal) > n1.dot(normal))
+		return new CollisionEdge(v, vPrev, v, i0, i1);
+	else
+		return new CollisionEdge(v, v, vNext, i1, i2);
+
 }
 
 // Sutherland-Hodgman clipping
@@ -420,19 +449,19 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 	for (size_t i = 0; i < colliderVerticesA.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesA[i + 1] - colliderVerticesA[i];
-		axesA.push_back(Vec2(-1 * edge.y, edge.x).normalize());
+		axesA.push_back(Vec2(edge.y, -1 * edge.x).normalize());
 	}
 	Vec2 lastEdge = colliderVerticesA[0] - colliderVerticesA.back();
-	axesA.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
+	axesA.push_back(Vec2(lastEdge.y, -1 * lastEdge.x).normalize());
 
 	std::vector<Vec2> axesB;
 	for (size_t i = 0; i < colliderVerticesB.size() - 1; i++)
 	{
 		Vec2 edge = colliderVerticesB[i + 1] - colliderVerticesB[i];
-		axesB.push_back(Vec2(-1 * edge.y, edge.x).normalize());
+		axesB.push_back(Vec2(edge.y, -1 * edge.x).normalize());
 	}
 	lastEdge = colliderVerticesB[0] - colliderVerticesB.back();
-	axesB.push_back(Vec2(-1 * lastEdge.y, lastEdge.x).normalize());
+	axesB.push_back(Vec2(lastEdge.y, -1 * lastEdge.x).normalize());
 
 
 	float collisionDepth = FLT_MAX;
@@ -469,7 +498,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 			}
 		}
 
-		if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
+		/*if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
 		{
 			float d = std::min(bmax - amin, amax - bmin);
 			if (d < collisionDepth)
@@ -481,7 +510,18 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 		else
 		{
 			return 0;
+		}*/
+
+		if (amax < bmin || bmax < amin)
+			return 0;
+
+		float d = std::min(amax - bmin, bmax - amin);
+		if (d < collisionDepth)
+		{
+			collisionDepth = d;
+			collisionNormal = axis;
 		}
+
 	}
 
 	for (auto axis : axesB)
@@ -515,7 +555,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 			}
 		}
 
-		if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
+		/*if ((amin <= bmax && amin >= bmin) || (bmin <= amax && bmin >= amin))
 		{
 			float d = std::min(bmax - amin, amax - bmin);
 			if (d < collisionDepth)
@@ -527,6 +567,16 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 		else
 		{
 			return 0;
+		}*/
+
+		if (amax < bmin || bmax < amin)
+			return 0;
+
+		float d = std::min(amax - bmin, bmax - amin);
+		if (d < collisionDepth)
+		{
+			collisionDepth = d;
+			collisionNormal = axis;
 		}
 	}
 
@@ -597,15 +647,22 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 	if (np < 2)
 		return 0;
 
+	
+
 
 	int numContacts = 0;
 	Vec2 refn = (ref->v2 - ref->v1).perpendicular().normalize() * -1;
+	Vec2 refEdge = ref->v2 - ref->v1;
+	//Vec2 refn = Vec2(refEdge.y, -refEdge.x).normalize();
+	// ensure it points towards incident polygon
+	//if (refn.dot(collisionNormal) < 0.0f)
+		//refn = refn * -1;
 	for (int i = 0; i < 2; i++)
 	{
 		float separation = (float)(refn.dot(clipPoints2[i].v) - refn.dot(ref->v));
 		if (separation <= 0.002)
 		{
-			contacts[numContacts].m_separation = collisionDepth; // separation;
+			contacts[numContacts].m_separation =  separation;
 			contacts[numContacts].m_normal = collisionNormal;
 			contacts[numContacts].m_position = clipPoints2[i].v;
 			contacts[numContacts].m_id = clipPoints2[i].id;

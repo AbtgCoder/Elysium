@@ -694,6 +694,14 @@ void Scene::OnUpdateRuntime(float dt)
 			}
 		}
 
+
+		// debug draw : physics contact points
+		for (auto cp : m_contactPoints)
+		{
+			//Logger::Log("contact point: (" + std::to_string(cp.x) + ", " + std::to_string(cp.y) + ")", "Scene");
+			Renderer2D::DrawCircle({ cp.x, cp.y }, 0.05f, {1.0f, 0.0f, 0.0f, 1.0f}, (int)(cp.x));
+		}
+
 		Renderer2D::EndScene();
 	}
 	else

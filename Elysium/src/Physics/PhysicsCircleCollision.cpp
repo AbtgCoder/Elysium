@@ -147,7 +147,7 @@ int PhysicsCirclePolygonCollision(Contact* contacts, PhysicsBody* body1, Physics
 
 	//ESM_LOG("collision normal", collisionNormal, "collision depth", collisionDepth);
 
-	contacts[0].m_separation = collisionDepth;
+	contacts[0].m_separation = -collisionDepth;
 	contacts[0].m_normal = collisionNormal;
 	contacts[0].m_position = flip ? circlePos - collisionNormal * circleRadius :  circlePos + collisionNormal * circleRadius; // TODO: check if this works in every case
 	contacts[0].m_id.key = 0;

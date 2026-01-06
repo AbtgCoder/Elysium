@@ -51,6 +51,7 @@ public:
 
 	// Physics
 	//void LaunchBomb(sf::RenderTexture& renderTexture);
+	//void AddImpulseToCirlce();
 
 	bool IsRunning() const { return m_IsRunning; }
 	bool IsPaused() const { return m_IsPaused; }

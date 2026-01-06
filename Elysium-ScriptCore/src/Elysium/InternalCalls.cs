@@ -63,6 +63,15 @@ namespace Elysium
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void SpriteRendererComponent_SetTexture(ulong entityID, ulong textureID);
 
+        #region RigiBodyComponent
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void RigidBodyComponent_ApplyLinearImpulse(ulong entityID, ref Vector2 impulse, ref Vector2 point);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void RigidBodyComponent_ApplyLinearImpulseToCenter(ulong entityID, ref Vector2 impuls);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void RigidBodyComponent_GetLinearVelocities(ulong entityID, out Vector2 linearVelocity);
+        #endregion
+
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Input_IsKeyDown(KeyCode key);

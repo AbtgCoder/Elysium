@@ -145,13 +145,24 @@ std::vector<Vec2> generatePolygonColliderVertices(int numSides, float radius)
 	std::vector<Vec2> vertices;
 	vertices.reserve(numSides);
 
+	const float angleIncrement = 2.0f * glm::pi<float>() / static_cast<float>(numSides);
+
+	float offset = 0.0f;
+	if (numSides % 2 == 1)
+		offset = glm::half_pi<float>(); // vertex at top
+	else
+		offset = glm::pi<float>() / numSides; // flat top edge
+
 	for (int i = 0; i < numSides; i++)
 	{
-		float theta = 2.0f * 3.14 * i / numSides;
-		float x = radius * std::sin(theta);
-		float y = -1 * radius * std::cos(theta);
+		float angle = i * angleIncrement + offset;
+
+		float x = radius * std::cos(angle);
+		float y = radius * std::sin(angle);
+
 		vertices.emplace_back(Vec2(x, y));
 	}
+
 	return vertices;
 }
 

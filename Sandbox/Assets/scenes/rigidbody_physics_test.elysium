@@ -220,11 +220,11 @@ Entities:
     Tag:
       Tag: polygon
     Transform:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [-3.43586326, 0, 0]
+      Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [0, 0, 0]
-      GlobalRotation: [0, 0, 0]
+      GlobalTranslation: [-3.43586326, 0, 0]
+      GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
@@ -244,7 +244,7 @@ Entities:
       TexSize: [0, 0]
       Points:
         Size: 3
-        Elements: [[0, -0.600000024], [0.519933522, 0.299448073], [-0.518976986, 0.301102877]]
+        Elements: [[-2.6226834e-08, 0.600000024], [-0.519615173, -0.300000131], [0.519615352, -0.299999863]]
     Rigidbody2D:
       BodyType: Dynamic
   - Entity: 2079347866313524397
@@ -261,11 +261,17 @@ Entities:
       HasParent: false
       ParentID: 0
       Children: []
+    ScriptComponent:
+      ClassName: PhysicsTest
+      ScriptFields:
+        - Name: Speed
+          Type: Float
+          Data: 2
     CircleShape:
-      Radius: 0.529999971
+      Radius: 0.200000003
       Color: [0.328719676, 0.838235259, 0.328719676, 1]
     CircleCollider:
-      Radius: 0.529999971
+      Radius: 0.200000003
     PhysicsMaterial:
       Mass: 1
       RestitutionCoefficient: 0
@@ -352,5 +358,31 @@ Entities:
     AABB:
       Offset: [0, 0]
       Size: [1, 1]
+    Rigidbody2D:
+      BodyType: Dynamic
+  - Entity: 17342472434033222438
+    Tag:
+      Tag: Circle
+    Transform:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    CircleShape:
+      Radius: 0.300000012
+      Color: [0.975490212, 0.344290644, 0.344290644, 1]
+    CircleCollider:
+      Radius: 0.300000012
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.0199999996
     Rigidbody2D:
       BodyType: Dynamic

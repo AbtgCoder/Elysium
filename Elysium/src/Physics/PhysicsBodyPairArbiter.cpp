@@ -102,7 +102,7 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 		}
 
 		if (k == -1) {
-			std::cout << "Contact replaced: old key=" << m_contacts[0].m_id.key << " newKey=" << cNew->m_id.key << "\n";
+			//std::cout << "Contact replaced: old key=" << m_contacts[0].m_id.key << " newKey=" << cNew->m_id.key << "\n";
 		}
 
 	}

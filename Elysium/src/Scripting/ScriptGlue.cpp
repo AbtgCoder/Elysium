@@ -325,6 +325,43 @@ void SpriteRendererComponent_SetTexture(uint64_t entityID, uint64_t textureID)
 	entity.getComponent<CSpriteRenderer>().texture = textureID;
 }
 
+static void RigidBodyComponent_ApplyLinearImpulse(Elysium::UUID entityID, glm::vec2* impulse, glm::vec2* point)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& rb2d = entity.getComponent<CRigidBody>();
+	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+	body->ApplyImpulseToPoint(Vec2(impulse->x, impulse->y), Vec2(point->x, point->y));
+}
+
+static void RigidBodyComponent_ApplyLinearImpulseToCenter(Elysium::UUID entityID, glm::vec2* impulse)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& rb2d = entity.getComponent<CRigidBody>();
+	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+	body->ApplyImpulseToCenter(Vec2(impulse->x, impulse->y));
+}
+
+static void RigidBodyComponent_GetLinearVelocity(Elysium::UUID entityID, glm::vec2* outLinearVelocity)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& rb2d = entity.getComponent<CRigidBody>();
+	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+	const Vec2& linearVelocity = body->m_velocity;
+	*outLinearVelocity = glm::vec2(linearVelocity.x, linearVelocity.y);
+}
+
 static bool Input_IsKeyDown(KeyCode key)
 {
 	return Input::IsKeyPressed(key);
@@ -374,6 +411,7 @@ void ScriptGlue::RegisterComponents()
 	RegisterComponent<CCamera>();
 	RegisterComponent<CRectangle>();
 	RegisterComponent<CSpriteRenderer>();
+	RegisterComponent<CRigidBody>();
 	//TODO: register other components as needed
 }
 
@@ -410,6 +448,10 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(Texture2D_GetHeight);
 	ESM_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
 	ESM_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
+
+	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_ApplyLinearImpulse);
+	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_ApplyLinearImpulseToCenter);
+	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_GetLinearVelocity);
 
 	ESM_ADD_INTERNAL_CALL(Input_IsKeyDown);
 }

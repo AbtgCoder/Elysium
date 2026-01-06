@@ -20,9 +20,6 @@ AssetRegistry:
   - Handle: 4745038581299294832
     FilePath: scenes/rigidbody_physics_test.elysium
     Type: AssetType::Scene
-  - Handle: 4794126937057531552
-    FilePath: scenes/scene_test.elysium
-    Type: AssetType::Scene
   - Handle: 5804234953007823693
     FilePath: textures/awesomeface.png
     Type: AssetType::Texture2D
@@ -32,12 +29,6 @@ AssetRegistry:
   - Handle: 7105023437157358994
     FilePath: textures/brick.png
     Type: AssetType::Texture2D
-  - Handle: 7287817204883166030
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
-  - Handle: 7304402947472101696
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
   - Handle: 7443144772706903275
     FilePath: Spritesheets/air.esmspritesheet
     Type: AssetType::SpriteSheet
@@ -59,24 +50,12 @@ AssetRegistry:
   - Handle: 10798807695711001666
     FilePath: textures/runleft.png
     Type: AssetType::Texture2D
-  - Handle: 10945313050467142036
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
-  - Handle: 11234360821199560870
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
   - Handle: 12063736264547966939
     FilePath: textures/block.png
     Type: AssetType::Texture2D
   - Handle: 12438653369529251365
     FilePath: textures/pipetall.png
     Type: AssetType::Texture2D
-  - Handle: 16638245112685517824
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
-  - Handle: 16845781102416918658
-    FilePath: scenes/rigidbody_physics_test.elysium
-    Type: AssetType::Scene
   - Handle: 17151686820002597247
     FilePath: textures/bushsmall.png
     Type: AssetType::Texture2D

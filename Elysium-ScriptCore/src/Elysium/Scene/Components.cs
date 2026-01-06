@@ -120,4 +120,27 @@ namespace Elysium
         }
     }
 
+    public class RigidBodyComponent : Component
+    {
+        public enum BodyType { Static = 0, Dynamic, Kinematic }
+
+        public Vector2 LinearVelocity
+        {
+            get
+            {
+                InternalCalls.RigidBodyComponent_GetLinearVelocities(Entity.ID, out Vector2 velocity);
+                return velocity;
+            }
+        }
+
+        public void ApplyLinearImpulse(Vector2 impulse, Vector2 worldPosition)
+        {
+            InternalCalls.RigidBodyComponent_ApplyLinearImpulse(Entity.ID, ref impulse, ref worldPosition);
+        }
+
+        public void ApplyLinearImpulse(Vector2 impulse)
+        {
+            InternalCalls.RigidBodyComponent_ApplyLinearImpulseToCenter(Entity.ID, ref impulse);
+        }
+    }
 }
