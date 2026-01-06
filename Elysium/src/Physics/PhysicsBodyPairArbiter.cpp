@@ -69,18 +69,6 @@ void Arbiter::UpdateContacts(Contact* newContacts, int numNewContacts)
 			Contact* cOld = m_contacts + j;
 			if (cNew->m_id.key == cOld->m_id.key)
 			{
-				/*ESM_INFO("matched contact");
-				
-				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.indexA);
-				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.indexB);
-				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.typeA);
-				ESM_LOG("Old contact feature: ", (int)cOld->m_id.cf.typeB);
-
-				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.indexA);
-				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.indexB);
-				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.typeA);
-				ESM_LOG("New contact feature: ", (int)cNew->m_id.cf.typeB);*/
-				
 				k = j;
 				break;
 			}
@@ -191,23 +179,6 @@ void Arbiter::PreStep(float inv_dt)
 
 void Arbiter::PreStep(float inv_dt)
 {
-	
-	/*Contact* c = m_contacts;
-	Vec2 mtv = c->m_normal * c->m_separation;
-	if (m_body1->m_type == PhysicsBodyType::staticBody)
-	{
-		m_body2->m_position += mtv;
-	}
-	else if (m_body2->m_type == PhysicsBodyType::staticBody)
-	{
-		m_body1->m_position -= mtv;
-	}
-	else
-	{
-		m_body1->m_position -= mtv / 2.0f;
-		m_body2->m_position += mtv / 2.0f;
-	}*/
-
 	const float k_allowedPenetration = 0.01f;
 	float k_biasFactor = 0.2f; 
 
@@ -251,7 +222,7 @@ void Arbiter::PreStep(float inv_dt)
 			m_body1->m_angularVelocity -= (r1.x * J.y - r1.y * J.x) * m_body1->m_invI;
 			
 			m_body2->m_velocity += J * m_body2->m_invMass;
-			m_body2->m_angularVelocity += (r2.x * J.y - r2.y * J.x) * m_body2->m_invMass;
+			m_body2->m_angularVelocity += (r2.x * J.y - r2.y * J.x) * m_body2->m_invI;
 		}
 	}
 
@@ -321,9 +292,9 @@ void Arbiter::ApplyImpulse()
 		Contact* c = m_contacts + i;
 		Vec2 Jn = normalImpulses[i];
 		b1->m_velocity -= Jn * b1->m_invMass;
-		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invMass;
+		b1->m_angularVelocity -= Cross(c->m_r1, Jn) * b1->m_invI;
 		b2->m_velocity += Jn * b2->m_invMass;
-		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invMass;
+		b2->m_angularVelocity += Cross(c->m_r2, Jn) * b2->m_invI;
 	}
 
 	for (int i = 0; i < m_numContacts; i++)
@@ -357,9 +328,9 @@ void Arbiter::ApplyImpulse()
 		Contact* c = m_contacts + i;
 		Vec2 Jt = tangentialImpulses[i];
 		b1->m_velocity -= Jt * b1->m_invMass;
-		b1->m_angularVelocity -= Cross(c->m_r1, Jt) * b1->m_invMass;
+		b1->m_angularVelocity -= Cross(c->m_r1, Jt) * b1->m_invI;
 		b2->m_velocity += Jt * b2->m_invMass;
-		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invMass;
+		b2->m_angularVelocity += Cross(c->m_r2, Jt) * b2->m_invI;
 	}
 }
 

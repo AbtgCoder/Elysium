@@ -1,4 +1,4 @@
-#include "PhysicsPolygonCollision.h"
+﻿#include "PhysicsPolygonCollision.h"
 
 
 struct CollisionEdge
@@ -414,7 +414,7 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 }
 #endif
 
-#if 1
+#if 0
 int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, PhysicsBody* body2)
 {
 	Vec2 pA = body1->m_position;
@@ -608,18 +608,6 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 		flip = true;
 	}
 
-	// Debug printing
-	{
-		/*std::cout << ref->v << " Reference Edge: " << ref->v1 << " " << ref->v2 << "\n";
-		Vec2 v1, v2;
-		v1 = flip ? colliderVerticesB[ref->index1] : colliderVerticesA[ref->index1];
-		v2 = flip ? colliderVerticesB[ref->index2] : colliderVerticesA[ref->index2];
-		std::cout << ref->v << " Reference Edge by indexes: " << v1 << " " << v2 << "\n";
-		std::cout << inc->v << " Incident Edge: " << inc->v1 << " " << inc->v2 << "\n";
-		v1 = flip ? colliderVerticesA[inc->index1] : colliderVerticesB[inc->index1];
-		v2 = flip ? colliderVerticesA[inc->index2] : colliderVerticesB[inc->index2];
-		std::cout << inc->v << " Incident Edge by indexes: " << v1 << " " << v2 << "\n";*/
-	}
 
 	CollisionVertex cp[2];
 	cp[0].v = inc->v1;
@@ -652,11 +640,19 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 
 	int numContacts = 0;
 	Vec2 refn = (ref->v2 - ref->v1).perpendicular().normalize() * -1;
-	Vec2 refEdge = ref->v2 - ref->v1;
-	//Vec2 refn = Vec2(refEdge.y, -refEdge.x).normalize();
-	// ensure it points towards incident polygon
+
+	//int numContacts = 0;
+	//Vec2 refEdge = ref->v2 - ref->v1;
+	//Vec2 refn(refEdge.y, -refEdge.x);
+	//refn = refn.normalize();
+
+	//// Ensure A → B
 	//if (refn.dot(collisionNormal) < 0.0f)
-		//refn = refn * -1;
+	//	refn = refn * -1;
+
+	// From now on, this is THE normal
+	//collisionNormal = refn;
+
 	for (int i = 0; i < 2; i++)
 	{
 		float separation = (float)(refn.dot(clipPoints2[i].v) - refn.dot(ref->v));
@@ -686,3 +682,146 @@ int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* body1, Physic
 	return numContacts;
 }
 #endif
+
+inline void ProjectPolygon(const std::vector<Vec2>& verts, const Vec2& axis, float& min, float& max)
+{
+	min = max = axis.dot(verts[0]);
+	for (size_t i = 1; i < verts.size(); ++i)
+	{
+		float d = axis.dot(verts[i]);
+		min = std::min(min, d);
+		max = std::max(max, d);
+	}
+}
+
+int PhysicsPolygonPolygonCollision(Contact* contacts, PhysicsBody* bodyA, PhysicsBody* bodyB)
+{
+	auto* polyA = (PhysicsPolygonShape*)bodyA->GetShape();
+	auto* polyB = (PhysicsPolygonShape*)bodyB->GetShape();
+
+	std::vector<Vec2> vertsA(polyA->m_count);
+	std::vector<Vec2> vertsB(polyB->m_count);
+
+	// transform vertices into world space
+	for (int i = 0; i < polyA->m_count; ++i)
+	{
+		vertsA[i] = bodyA->m_position + polyA->m_vertices[i].rotate(bodyA->m_rotation);
+	}
+	for (int i = 0; i < polyB->m_count; ++i)
+	{
+		vertsB[i] = bodyB->m_position + polyB->m_vertices[i].rotate(bodyB->m_rotation);
+	}
+
+	float minOverlap = FLT_MAX;
+	Vec2 bestAxis;
+
+	auto TestAxes = [&](PhysicsPolygonShape* poly, const std::vector<Vec2>& verts, float rotation)
+		{
+			for (int i = 0; i < poly->m_count; ++i)
+			{
+				Vec2 axis = poly->m_normals[i].rotate(rotation);
+
+				float minA, maxA, minB, maxB;
+				ProjectPolygon(vertsA, axis, minA, maxA);
+				ProjectPolygon(vertsB, axis, minB, maxB);
+
+				if (maxA < minB || maxB < minA)
+					return false;
+
+				float overlap = std::min(maxA - minB, maxB - minA);
+				if (overlap < minOverlap)
+				{
+					minOverlap = overlap;
+					bestAxis = axis;
+				}
+			}
+
+			return true;
+		};
+
+	if (!TestAxes(polyA, vertsA, bodyA->m_rotation)) return 0;
+	if (!TestAxes(polyB, vertsB, bodyB->m_rotation)) return 0;
+
+	// Ensure normal points A->B
+	Vec2 d = bodyB->m_position - bodyA->m_position;
+	if (d.dot(bestAxis) < 0.0f)
+		bestAxis = bestAxis * -1.0f;
+
+	CollisionEdge* cf1 = FindCollisionEdge(vertsA, bestAxis);
+	CollisionEdge* cf2 = FindCollisionEdge(vertsB, bestAxis * -1);
+
+	// find reference and incident edges (ref edge is the edge most perpendicular to the separation normal)
+	CollisionEdge* ref;
+	CollisionEdge* inc;
+	bool flip = false;
+	if (std::abs(cf1->dot(bestAxis)) <= std::abs(cf2->dot(bestAxis)))
+	{
+		ref = cf1;
+		inc = cf2;
+	}
+	else
+	{
+		ref = cf2;
+		inc = cf1;
+		// we need to set a flag indicating that the reference
+		// and incident edge were flipped so that when we do the final
+		// clip operation, we use the right edge normal
+		flip = true;
+	}
+
+
+	CollisionVertex cp[2];
+	cp[0].v = inc->v1;
+	cp[0].id.cf.indexA = (uint8_t)ref->index1; // use this as edge index
+	cp[0].id.cf.indexB = (uint8_t)inc->index1;
+	cp[0].id.cf.typeA = ContactFeature::e_face;
+	cp[0].id.cf.typeB = ContactFeature::e_vertex;
+
+	cp[1].v = inc->v2;
+	cp[1].id.cf.indexA = (uint8_t)ref->index1; // use this as edge index
+	cp[1].id.cf.indexB = (uint8_t)inc->index2;
+	cp[1].id.cf.typeA = ContactFeature::e_face;
+	cp[1].id.cf.typeB = ContactFeature::e_vertex;
+
+
+	CollisionVertex clipPoints1[2];
+	CollisionVertex clipPoints2[2];
+
+	Vec2 refv = (ref->v2 - ref->v1).normalize();
+	auto np = ClipLineSegment(clipPoints1, cp, refv, (float)(refv.dot(ref->v1)), ref->index1);   // clip incident edge by the first vertex of reference edge
+	if (np < 2)
+		return 0;
+
+	np = ClipLineSegment(clipPoints2, clipPoints1, refv * -1, -1 * (float)(refv.dot(ref->v2)), ref->index2); // clip incident edge by the second vertex of reference edge
+	if (np < 2)
+		return 0;
+
+
+
+	int numContacts = 0;
+	Vec2 refn = (ref->v2 - ref->v1).perpendicular().normalize() * -1;
+	
+	for (int i = 0; i < 2; i++)
+	{
+		float separation = (float)(refn.dot(clipPoints2[i].v) - refn.dot(ref->v));
+		if (separation <= 0.002)
+		{
+			contacts[numContacts].m_separation = separation;
+			contacts[numContacts].m_normal = bestAxis;
+			contacts[numContacts].m_position = clipPoints2[i].v;
+			contacts[numContacts].m_id = clipPoints2[i].id;
+			if (flip)
+			{
+				ContactFeature cf = contacts[numContacts].m_id.cf;
+				contacts[numContacts].m_id.cf.indexA = cf.indexB;
+				contacts[numContacts].m_id.cf.indexB = cf.indexA;
+				contacts[numContacts].m_id.cf.typeA = cf.typeB;
+				contacts[numContacts].m_id.cf.typeB = cf.typeA;
+			}
+			
+			numContacts += 1;
+		}
+
+	}
+	return numContacts;
+}

@@ -220,12 +220,12 @@ Entities:
     Tag:
       Tag: polygon
     Transform:
-      Translation: [-3.43586326, 0, 0]
-      Rotation: [0, -0, 0]
-      Scale: [1, 1, 1]
-      GlobalTranslation: [-3.43586326, 0, 0]
-      GlobalRotation: [0, -0, 0]
-      GlobalScale: [1, 1, 1]
+      Translation: [-3.72059298, -0.0183673948, 0]
+      Rotation: [0, -0, 0.387463093]
+      Scale: [0.999998629, 0.999998629, 1]
+      GlobalTranslation: [-3.72059298, -0.0183673948, 0]
+      GlobalRotation: [0, -0, 0.387463093]
+      GlobalScale: [0.999998629, 0.999998629, 1]
     ParentComponent:
       HasParent: false
       ParentID: 0

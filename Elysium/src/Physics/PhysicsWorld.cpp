@@ -423,27 +423,27 @@ void PhysicsWorld::Step(float dt)
 
 
 	// 5) position correction (baumgarte)
-	//for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
-	//{
-	//	Arbiter& a = arb->second;
-	//	for (int i = 0; i < a.m_numContacts; ++i)
-	//	{
-	//		Contact& c = a.m_contacts[i];
-	//		float correctionMag = std::max(-(c.m_separation + m_positionCorrectionSlop), 0.0f);
-	//		correctionMag *= m_positionCorrectionPercent;
-	//		Vec2 correction = c.m_normal * correctionMag;
-	//		PhysicsBody* b1 = a.m_body1;
-	//		PhysicsBody* b2 = a.m_body2;
-	//		if (b1->m_type == PhysicsBodyType::dynamicBody)
-	//		{
-	//			b1->m_position -= correction * b1->m_invMass / (b1->m_invMass + b2->m_invMass);
-	//		}
-	//		if (b2->m_type == PhysicsBodyType::dynamicBody)
-	//		{
-	//			b2->m_position += correction * b2->m_invMass / (b1->m_invMass + b2->m_invMass);
-	//		}
-	//	}
-	//}
+	/*for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
+	{
+		Arbiter& a = arb->second;
+		for (int i = 0; i < a.m_numContacts; ++i)
+		{
+			Contact& c = a.m_contacts[i];
+			float correctionMag = std::max((c.m_separation + m_positionCorrectionSlop), 0.0f);
+			correctionMag *= m_positionCorrectionPercent;
+			Vec2 correction = c.m_normal * correctionMag;
+			PhysicsBody* b1 = a.m_body1;
+			PhysicsBody* b2 = a.m_body2;
+			if (b1->m_type == PhysicsBodyType::dynamicBody)
+			{
+				b1->m_position -= correction * b1->m_invMass / (b1->m_invMass + b2->m_invMass);
+			}
+			if (b2->m_type == PhysicsBodyType::dynamicBody)
+			{
+				b2->m_position += correction * b2->m_invMass / (b1->m_invMass + b2->m_invMass);
+			}
+		}
+	}*/
 
 	// 6) integrate velocities to positions
 	for (int i = 0; i < (int)m_bodies.size(); i++)

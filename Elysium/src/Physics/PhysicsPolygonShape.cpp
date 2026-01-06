@@ -2,15 +2,49 @@
 
 void PhysicsPolygonShape::Set(const std::vector<Vec2>& points)
 {
-	for (size_t i = 0; i < points.size(); i++)
+	m_count = points.size();
+
+	// asssrt m_count >= 3
+
+	// copy verties
+	for (size_t i = 0; i < m_count; i++)
 	{
 		m_vertices[i] = points[i];
 	}
-	m_count = points.size();
-	//TODO: compute and store normals
 
-	m_centroid.Set(0.0f, 0.0f);//TODO: compute centroid
 
+	// compute centroid (are-weighted)
+	Vec2 c(0.0f, 0.0f);
+	float area = 0.0f;
+	for (int i = 0; i < m_count; ++i)
+	{
+		const Vec2& p0 = m_vertices[i];
+		const Vec2& p1 = m_vertices[(i + 1) % m_count];
+
+		float D = Cross(p0, p1);
+		float triangleArea = 0.5f * D;
+
+		area += triangleArea;
+		c += (p0 + p1) * (triangleArea / 3.0f);
+	}
+
+	c = c * (1.0f / area);
+	m_centroid = c;
+
+	// shift vertices so centroid is at origin
+	for (int i = 0; i < m_count; ++i)
+		m_vertices[i] -= m_centroid;
+
+	// compute edge normals(outwards)
+	for (int i = 0; i < m_count; i++)
+	{
+		Vec2 v1 = m_vertices[i];
+		Vec2 v2 = m_vertices[(i + 1) % m_count];
+		Vec2 edge = v2 - v1;
+
+		// perpendicular CCW edge -> outward normal
+		m_normals[i] = Vec2(edge.y, -edge.x).normalize();
+	}
 }
 
 // Box vertex and edge numbering:
@@ -64,6 +98,35 @@ void PhysicsPolygonShape::SetAsBox(float hx, float hy, const Vec2& center, float
 void PhysicsPolygonShape::ComputeMass(PhysicsMassData* massData, float density) const
 {
 	//TODO: mass and moment of inertia calculation for polygons
-	massData->mass = 50.0f;
-	massData->I = 50.0f;
+
+	Vec2 c(0.0f, 0.0f);
+	float area = 0.0f;
+	float I = 0.0f;
+
+	const float k_inv3 = 1.0f / 3.0f;
+
+	for (int i = 0; i < m_count; ++i)
+	{
+		const Vec2& p0 = m_vertices[i];
+		const Vec2& p1 = m_vertices[(i + 1) % m_count];
+
+		float D = Cross(p0, p1);
+		float triangleArea = 0.5f * D;
+
+		area += triangleArea;
+		c += (p0 + p1) * (triangleArea * k_inv3);
+
+		float intx2 = p0.x * p0.x + p1.x * p1.x + p0.x * p1.x;
+		float inty2 = p0.y * p0.y + p1.y * p1.y + p0.y * p1.y;
+
+		I += (0.25f * k_inv3 * D) * (intx2 + inty2);
+	}
+	c *= (1.0f / area);
+
+	massData->mass = density * area;
+	massData->center = c;
+	massData->I = density * I;
+
+	// massData->mass = 50.0f;
+	//massData->I = 50.0f;
 }
