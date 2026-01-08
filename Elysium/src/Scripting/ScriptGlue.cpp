@@ -21,6 +21,9 @@
 
 #include "mono/metadata/object.h"
 #include "mono/metadata/reflection.h"
+#include "mono/metadata/assembly.h"
+#include "mono/metadata/debug-helpers.h"
+#include "mono/metadata/mono-debug.h"
 
 #include <iostream>
 
@@ -46,6 +49,27 @@ static void NativeLog_Vector(glm::vec3* parameter, glm::vec3* outResult)
 static float NativeLog_VectorDot(glm::vec3* parameter)
 {
 	return glm::dot(*parameter, *parameter);
+}
+
+static void Debug_Log(MonoString* message)
+{
+	char* cStr = mono_string_to_utf8(message);
+	Logger::Log(cStr, "Script", LOG_TYPE::VERBOSE);
+	mono_free(cStr);	
+}
+
+static void Debug_LogWarning(MonoString* message)
+{
+	char* cStr = mono_string_to_utf8(message);
+	Logger::Log(cStr, "Script", LOG_TYPE::WARNING);
+	mono_free(cStr);
+}
+
+static void Debug_LogError(MonoString* message)
+{
+	char* cStr = mono_string_to_utf8(message);
+	Logger::Log(cStr, "Script", LOG_TYPE::CRITICAL);
+	mono_free(cStr);
 }
 
 static bool Entity_HasComponent(Elysium::UUID entityID, MonoReflectionType* componentType)
@@ -420,6 +444,10 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(NativeLog);
 	ESM_ADD_INTERNAL_CALL(NativeLog_Vector);
 	ESM_ADD_INTERNAL_CALL(NativeLog_VectorDot);
+
+	ESM_ADD_INTERNAL_CALL(Debug_Log);
+	ESM_ADD_INTERNAL_CALL(Debug_LogWarning);
+	ESM_ADD_INTERNAL_CALL(Debug_LogError);
 
 	ESM_ADD_INTERNAL_CALL(GetScriptInstance);
 

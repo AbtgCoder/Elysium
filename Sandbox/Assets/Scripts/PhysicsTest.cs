@@ -38,15 +38,15 @@ public class PhysicsTest : Entity
 
     public override void OnCollisionEnter(Collision2D collision)
     {
-		Console.WriteLine($"{Tag} just started collision with {collision.OtherEntity.Tag} !!");
+		Debug.Log($"{Tag} just started collision with {collision.OtherEntity.Tag} !!");
     }
 
     public override void OnCollisionStay(Collision2D collision)
     {
-		Console.WriteLine($"{Tag} is still in contact with {collision.OtherEntity.Tag} !!");
+        Debug.Log($"{Tag} is still in contact with {collision.OtherEntity.Tag} !!");
     }
     public override void OnCollisionExit(Collision2D collision)
     {
-		Console.WriteLine($"{Tag} just finished colliding with {collision.OtherEntity.Tag} !!");
+        Debug.Log($"{Tag} just finished colliding with {collision.OtherEntity.Tag} !!");
     }
 }

@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Elysium\Collision2D.cs" />
+    <Compile Include="src\Elysium\Debug.cs" />
     <Compile Include="src\Elysium\Input.cs" />
     <Compile Include="src\Elysium\InternalCalls.cs" />
     <Compile Include="src\Elysium\KeyCode.cs" />

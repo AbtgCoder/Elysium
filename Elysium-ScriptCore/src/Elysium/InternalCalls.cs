@@ -73,6 +73,16 @@ namespace Elysium
         #endregion
 
 
+        #region Logging
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Debug_Log(string message);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Debug_LogWarning(string message);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Debug_LogError(string message);
+
+        #endregion
+
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static bool Input_IsKeyDown(KeyCode key);
     }

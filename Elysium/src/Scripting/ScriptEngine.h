@@ -16,6 +16,7 @@ extern "C" {
 	typedef struct _MonoClassField MonoClassField;
 	typedef struct _MonoDomain MonoDomain;
 	typedef struct _MonoProperty MonoProperty;
+	typedef struct _MonoStackFrameInfo MonoStackFrameInfo;
 }
 
 enum class ScriptFieldType
