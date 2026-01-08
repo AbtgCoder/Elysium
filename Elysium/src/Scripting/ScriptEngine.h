@@ -15,6 +15,7 @@ extern "C" {
 	typedef struct _MonoImage MonoImage;
 	typedef struct _MonoClassField MonoClassField;
 	typedef struct _MonoDomain MonoDomain;
+	typedef struct _MonoProperty MonoProperty;
 }
 
 enum class ScriptFieldType
@@ -78,6 +79,9 @@ public:
 	MonoMethod* GetMethod(const std::string& name, int parameterCount);
 	MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
+	MonoProperty* GetProperty(const std::string& name);
+
+
 	const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; }
 private:
 	std::string m_ClassNamespace;
@@ -97,6 +101,9 @@ public:
 
 	void InvokeOnCreate();
 	void InvokeOnUpdate(float deltaTime);
+	void InvokeOnCollisionEnter(MonoObject* managedCollision);
+	void InvokeOnCollisionStay(MonoObject* managedCollision);
+	void InvokeOnCollisionExit(MonoObject* managedCollision);
 
 	std::shared_ptr<ScriptClass> GetScriptClass() const { return m_ScriptClass; }
 
@@ -139,6 +146,9 @@ private:
 	MonoMethod* m_Constructor = nullptr;
 	MonoMethod* m_OnCreateMethod = nullptr;
 	MonoMethod* m_OnUpdateMethod = nullptr;
+	MonoMethod* m_OnCollisionEnter = nullptr;
+	MonoMethod* m_OnCollisionStay = nullptr;
+	MonoMethod* m_OnCollisionExit = nullptr;
 
 	inline static char s_FieldValueBuffer[16];
 
@@ -166,6 +176,9 @@ public:
 	static bool EntityClassExists(const std::string& fullClassName);
 	static void OnCreateEntity(Entity entity);
 	static void OnUpdateEntity(Entity entity, float deltaTime);
+	static void OnCollisionEnter(const CollisionEvent& collisionEvent);
+	static void OnCollisionStay(const CollisionEvent& collisionEvent);
+	static void OnCollisionExit(const CollisionEvent& collisionEvent);
 
 	static Scene* GetSceneContext();
 

@@ -8,24 +8,26 @@
 #include <map>
 
 //TODO: maybe should be in a separate file
-struct ContactEvent
+struct ContactPoint2D
+{
+	Vec2 position = { 0.0f, 0.0f };
+	Vec2 normal = { 0.0f, 0.0f };
+	float penetration = 0.0f;
+};
+struct CollisionEvent
 {
 	PhysicsBody* bodyA = nullptr;
 	PhysicsBody* bodyB = nullptr;
-	Vec2 contactPoint = { 0.0f, 0.0f };
-	Vec2 contactNormal = { 0.0f, 0.0f };
-	float separation = 0.0f;
-	float normalImpulse = 0.0f;	// post-solve normal impulse magnitude
-	float tangentImpulse = 0.0f;	// post-solve normal impulse magnitude
+	std::vector<ContactPoint2D> contacts;
+	size_t numContacts = 0;
 };
 
-struct ContactListener
+struct CollisionListener
 {
-	virtual ~ContactListener() = default;
-	virtual void OnContactBegin(const ContactEvent& event) {}
-	virtual void OnContactEnd(const ContactEvent& event) {}
-	virtual void OnContactPreSolve(const ContactEvent& event) {}
-	virtual void OnContactPostSolve(const ContactEvent& event) {}
+	virtual ~CollisionListener() = default;
+	virtual void OnCollisionBegin(const CollisionEvent& event) {}
+	virtual void OnCollisionStay(const CollisionEvent& event) {}
+	virtual void OnCollisionEnd(const CollisionEvent& event) {}
 };
 
 class PhysicsWorld
@@ -47,7 +49,7 @@ public:
 	void Step(float fixedDt);
 
 
-	void SetContactListener(ContactListener* listener) { m_contactListener = listener; }
+	void SetContactListener(CollisionListener* listener) { m_CollisionListener = listener; }
 public:
 	std::vector<PhysicsBody*> m_bodies;
 	std::map<ArbiterKey, Arbiter> m_arbiters;
@@ -76,14 +78,13 @@ private:
 	void BroadhPhaseSAP();
 	void UpdateArbitersFromCandidates(const std::vector<std::pair<PhysicsBody*, PhysicsBody*>>& candidates);
 
-	void NotifyContactBegin(const Arbiter& arb);
-	void NotifyContactEnd(const ArbiterKey& key);
-	void NotifyContactPreSolve(const Arbiter& arb);
-	void NotifyContactPostSolve(const Arbiter& arb);
+	void NotifyCollisionBegin(const Arbiter& arb);
+	void NotifyCollisionStay(const Arbiter& arb);
+	void NotifyCollisionEnd(const ArbiterKey& key);
 private:
 	float m_accumulator = 0.0f; // for variable timestep handling
 
-	ContactListener* m_contactListener = nullptr;
+	CollisionListener* m_CollisionListener = nullptr;
 	// track previous frame contacts to generate contact begin/end events
-	std::map<ArbiterKey, bool> m_previousContacts;
+	std::map<ArbiterKey, bool> m_previousCollisions;
 };

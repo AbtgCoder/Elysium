@@ -12,7 +12,21 @@
 #include <string>
 #include <optional>
 
-class Scene : public Asset
+namespace Elysium
+{
+    class SceneCollisionListener : public CollisionListener
+    {
+    public:
+		SceneCollisionListener(const std::shared_ptr<Scene>& scene);
+        void OnCollisionBegin(const CollisionEvent& event) override;
+		void OnCollisionStay(const CollisionEvent& event) override;
+        void OnCollisionEnd(const CollisionEvent& event) override;
+    private:
+        std::shared_ptr<Scene> m_Scene;
+    };
+}
+
+class Scene : public Asset, public std::enable_shared_from_this<Scene>
 {
 public:
 	Scene();
@@ -92,4 +106,5 @@ private:
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;
 	friend class PhysicsConfigPanel;
+	friend class Elysium::SceneCollisionListener;
 };

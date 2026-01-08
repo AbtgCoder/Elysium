@@ -132,8 +132,6 @@ namespace Utils
 
 		return it->second;
 	}
-
-
 }
 
 struct ScriptEngineData
@@ -157,6 +155,13 @@ struct ScriptEngineData
 	std::unordered_map<std::string, std::shared_ptr<ScriptClass>> EntityClasses;
     std::unordered_map<Elysium::UUID, std::shared_ptr<ScriptInstance>> EntityInstances;
 	std::unordered_map<Elysium::UUID, ScriptFieldMap> EntityScriptFields; // map of entity ID to script fields
+
+
+    ScriptClass Collision2DClass;
+    ScriptClass ContactPoint2DClass;
+    MonoProperty* Collision2D_Entity;
+    MonoProperty* Collision2D_OtherEntity;
+    MonoProperty* Collision2D_Contacts;
 
     // runtime
 	Scene* SceneContext = nullptr;
@@ -186,6 +191,12 @@ void ScriptEngine::Init()
     s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
 
 	s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
+
+    s_Data->Collision2DClass = ScriptClass("Elysium", "Collision2D", true);
+    s_Data->ContactPoint2DClass = ScriptClass("Elysium", "ContactPoint2D", true);
+    s_Data->Collision2D_Entity = s_Data->Collision2DClass.GetProperty("Entity");
+    s_Data->Collision2D_OtherEntity = s_Data->Collision2DClass.GetProperty("OtherEntity");
+    s_Data->Collision2D_Contacts = s_Data->Collision2DClass.GetProperty("Contacts");
 }
 
 void ScriptEngine::Shutdown()
@@ -422,6 +433,12 @@ bool ScriptEngine::LoadAppAssemblyFromProject()
     s_Data->EntityClass = ScriptClass("Elysium", "Entity", true);
     s_Data->Texture2DClass = ScriptClass("Elysium", "Texture2D", true);
 
+    s_Data->Collision2DClass = ScriptClass("Elysium", "Collision2D", true);
+    s_Data->ContactPoint2DClass = ScriptClass("Elysium", "ContactPoint2D", true);
+    s_Data->Collision2D_Entity = s_Data->Collision2DClass.GetProperty("Entity");
+    s_Data->Collision2D_OtherEntity = s_Data->Collision2DClass.GetProperty("OtherEntity");
+    s_Data->Collision2D_Contacts = s_Data->Collision2DClass.GetProperty("Contacts");
+
     Logger::Log("Loaded project assembly: " + appAsmPath.string(), "Script Engine");
     return true;
 }
@@ -501,6 +518,345 @@ void ScriptEngine::OnUpdateEntity(Entity entity, float deltaTime)
     }
 }
 
+void ScriptEngine::OnCollisionEnter(const CollisionEvent& collisionEvent)
+{
+    Elysium::UUID entity1ID = collisionEvent.bodyA->m_UserData;
+    Elysium::UUID entity2ID = collisionEvent.bodyB->m_UserData;
+
+    if (s_Data->EntityInstances.find(entity1ID) != s_Data->EntityInstances.end())
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity1ID];
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity1ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = {selfEntity};
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity2ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        // Contacts Array
+        MonoArray* contactsArray = mono_array_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass, (uintptr_t)collisionEvent.numContacts);
+        uint32_t contactsHandle = mono_gchandle_new((MonoObject*)contactsArray, false);
+        for (uint32_t i = 0; i < collisionEvent.numContacts; i++)
+        {
+            MonoObject* cp = mono_object_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass);
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Point"),
+                (void*)(&collisionEvent.contacts[i].position));
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Normal"),
+                (void*)(&collisionEvent.contacts[i].normal));
+            
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Penetration"),
+                (void*)(&collisionEvent.contacts[i].penetration));
+
+            mono_array_setref(contactsArray, i, cp);
+
+        }
+        setter = mono_property_get_set_method(s_Data->Collision2D_Contacts);
+        args[0] = contactsArray;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        scriptInstance->InvokeOnCollisionEnter(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+        mono_gchandle_free(contactsHandle);
+    }
+    if (s_Data->EntityInstances.find(entity2ID) != s_Data->EntityInstances.end()) //TODO: need to test this on other object
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity2ID];
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity2ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = { selfEntity };
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity1ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        // Contacts Array
+        MonoArray* contactsArray = mono_array_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass, (uintptr_t)collisionEvent.numContacts);
+        uint32_t contactsHandle = mono_gchandle_new((MonoObject*)contactsArray, false);
+        for (uint32_t i = 0; i < collisionEvent.numContacts; i++)
+        {
+            MonoObject* cp = mono_object_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass);
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Point"),
+                (void*)(&collisionEvent.contacts[i].position));
+
+            Vec2 invertedNormal = collisionEvent.contacts[i].normal * -1.0f;
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Normal"),
+                (void*)(&invertedNormal));
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Penetration"),
+                (void*)(&collisionEvent.contacts[i].penetration));
+
+            mono_array_setref(contactsArray, i, cp);
+
+        }
+        setter = mono_property_get_set_method(s_Data->Collision2D_Contacts);
+        args[0] = contactsArray;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        scriptInstance->InvokeOnCollisionEnter(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+        mono_gchandle_free(contactsHandle);
+    }
+}
+
+void ScriptEngine::OnCollisionStay(const CollisionEvent& collisionEvent)
+{
+    Elysium::UUID entity1ID = collisionEvent.bodyA->m_UserData;
+    Elysium::UUID entity2ID = collisionEvent.bodyB->m_UserData;
+
+    if (s_Data->EntityInstances.find(entity1ID) != s_Data->EntityInstances.end())
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity1ID];
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity1ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = { selfEntity };
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity2ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        // Contacts Array
+        MonoArray* contactsArray = mono_array_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass, (uintptr_t)collisionEvent.numContacts);
+        uint32_t contactsHandle = mono_gchandle_new((MonoObject*)contactsArray, false);
+        for (uint32_t i = 0; i < collisionEvent.numContacts; i++)
+        {
+            MonoObject* cp = mono_object_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass);
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Point"),
+                (void*)(&collisionEvent.contacts[i].position));
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Normal"),
+                (void*)(&collisionEvent.contacts[i].normal));
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Penetration"),
+                (void*)(&collisionEvent.contacts[i].penetration));
+
+            mono_array_setref(contactsArray, i, cp);
+
+        }
+        setter = mono_property_get_set_method(s_Data->Collision2D_Contacts);
+        args[0] = contactsArray;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        scriptInstance->InvokeOnCollisionStay(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+        mono_gchandle_free(contactsHandle);
+    }
+    if (s_Data->EntityInstances.find(entity2ID) != s_Data->EntityInstances.end()) //TODO: need to test this on other object
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity2ID];
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity2ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = { selfEntity };
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity1ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        // Contacts Array
+        MonoArray* contactsArray = mono_array_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass, (uintptr_t)collisionEvent.numContacts);
+        uint32_t contactsHandle = mono_gchandle_new((MonoObject*)contactsArray, false);
+        for (uint32_t i = 0; i < collisionEvent.numContacts; i++)
+        {
+            MonoObject* cp = mono_object_new(s_Data->AppDomain, s_Data->ContactPoint2DClass.m_MonoClass);
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Point"),
+                (void*)(&collisionEvent.contacts[i].position));
+
+            Vec2 invertedNormal = collisionEvent.contacts[i].normal * -1.0f;
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Normal"),
+                (void*)(&invertedNormal));
+
+            mono_field_set_value(cp,
+                mono_class_get_field_from_name(s_Data->ContactPoint2DClass.m_MonoClass, "Penetration"),
+                (void*)(&collisionEvent.contacts[i].penetration));
+
+            mono_array_setref(contactsArray, i, cp);
+
+        }
+        setter = mono_property_get_set_method(s_Data->Collision2D_Contacts);
+        args[0] = contactsArray;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        scriptInstance->InvokeOnCollisionStay(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+        mono_gchandle_free(contactsHandle);
+    }
+}
+
+void ScriptEngine::OnCollisionExit(const CollisionEvent& collisionEvent)
+{
+    Elysium::UUID entity1ID = collisionEvent.bodyA->m_UserData;
+    Elysium::UUID entity2ID = collisionEvent.bodyB->m_UserData;
+
+    if (s_Data->EntityInstances.find(entity1ID) != s_Data->EntityInstances.end())
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity1ID];
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity1ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = { selfEntity };
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity2ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+
+        scriptInstance->InvokeOnCollisionExit(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+    }
+    if (s_Data->EntityInstances.find(entity2ID) != s_Data->EntityInstances.end()) //TODO: need to test this on other object
+    {
+        std::shared_ptr<ScriptInstance> scriptInstance = s_Data->EntityInstances[entity2ID];
+
+
+        MonoObject* managedCollision = s_Data->Collision2DClass.Instantiate();
+        uint32_t collisionHandle = mono_gchandle_new(managedCollision, false);
+
+        // Entity
+        MonoObject* selfEntity = s_Data->EntityClass.Instantiate();
+        uint32_t selfEntityHandle = mono_gchandle_new(selfEntity, false);
+        void* params[1] = { &entity2ID };
+        auto ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(selfEntity, ctor, params);
+        MonoMethod* setter = mono_property_get_set_method(s_Data->Collision2D_Entity);
+        void* args[1] = { selfEntity };
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        // Other Entity
+        MonoObject* otherEntity = s_Data->EntityClass.Instantiate();
+        uint32_t otherEntityHandle = mono_gchandle_new(otherEntity, false);
+        params[0] = { &entity1ID };
+        ctor = s_Data->EntityClass.GetMethod(".ctor", 1);
+        s_Data->EntityClass.InvokeMethod(otherEntity, ctor, params);
+        setter = mono_property_get_set_method(s_Data->Collision2D_OtherEntity);
+        args[0] = otherEntity;
+        mono_runtime_invoke(setter, managedCollision, args, nullptr);
+
+        scriptInstance->InvokeOnCollisionExit(mono_gchandle_get_target(collisionHandle));
+
+        mono_gchandle_free(collisionHandle);
+        mono_gchandle_free(selfEntityHandle);
+        mono_gchandle_free(otherEntityHandle);
+    }
+}
+
 void ScriptEngine::OnRuntimeStop()
 {
     s_Data->SceneContext = nullptr;
@@ -530,6 +886,11 @@ MonoObject* ScriptClass::InvokeMethod(MonoObject* instance, MonoMethod* method, 
     return mono_runtime_invoke(method, instance, params, nullptr);
 }
 
+MonoProperty* ScriptClass::GetProperty(const std::string& name)
+{
+    return mono_class_get_property_from_name(m_MonoClass, name.c_str());
+}
+
 ScriptInstance::ScriptInstance(std::shared_ptr<ScriptClass> scriptClass, Entity entity)
     : m_ScriptClass(scriptClass)
 {
@@ -538,6 +899,9 @@ ScriptInstance::ScriptInstance(std::shared_ptr<ScriptClass> scriptClass, Entity 
 	m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1); // retrieve the constructor method from the parent Entity class
 	m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
 	m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);
+    m_OnCollisionEnter = scriptClass->GetMethod("OnCollisionEnter", 1);
+    m_OnCollisionStay = scriptClass->GetMethod("OnCollisionStay", 1);
+    m_OnCollisionExit = scriptClass->GetMethod("OnCollisionExit", 1);
 
 	// call entity constructor with the instance of the child script class
     {
@@ -562,6 +926,33 @@ void ScriptInstance::InvokeOnUpdate(float deltaTime)
         void* params[1] = { &deltaTime };
         m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, params);
 	}
+}
+
+void ScriptInstance::InvokeOnCollisionEnter(MonoObject* managedCollision)
+{
+    if (m_OnCollisionEnter)
+    {
+        void* params[1] = { managedCollision };
+        m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionEnter, params);
+    }
+}
+
+void ScriptInstance::InvokeOnCollisionStay(MonoObject* managedCollision)
+{
+    if (m_OnCollisionStay)
+    {
+        void* params[1] = { managedCollision };
+        m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionStay, params);
+    }
+}
+
+void ScriptInstance::InvokeOnCollisionExit(MonoObject* managedCollision)
+{
+    if (m_OnCollisionExit)
+    {
+        void* params[1] = { managedCollision };
+        m_ScriptClass->InvokeMethod(m_Instance, m_OnCollisionExit, params);
+    }
 }
 
 bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)

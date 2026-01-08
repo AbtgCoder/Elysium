@@ -12,12 +12,12 @@ public class PhysicsTest : Entity
 
 	public float Speed = 1.0f;
 
-	void OnCreate()
+	public override void OnCreate()
 	{
 		m_Rigidbody = GetComponent<RigidBodyComponent>();
 	}
 
-	void OnUpdate(float deltaTime)
+	public override void OnUpdate(float deltaTime)
 	{
 		Vector2 vel = Vector2.Zero;
 
@@ -35,4 +35,18 @@ public class PhysicsTest : Entity
 
 		m_Rigidbody.ApplyLinearImpulse(vel);
 	}
+
+    public override void OnCollisionEnter(Collision2D collision)
+    {
+		Console.WriteLine($"{Tag} just started collision with {collision.OtherEntity.Tag} !!");
+    }
+
+    public override void OnCollisionStay(Collision2D collision)
+    {
+		Console.WriteLine($"{Tag} is still in contact with {collision.OtherEntity.Tag} !!");
+    }
+    public override void OnCollisionExit(Collision2D collision)
+    {
+		Console.WriteLine($"{Tag} just finished colliding with {collision.OtherEntity.Tag} !!");
+    }
 }

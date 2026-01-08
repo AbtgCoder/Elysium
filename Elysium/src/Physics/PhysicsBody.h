@@ -72,6 +72,8 @@ public:
 	bool m_isSleeping = false;
 	float m_sleepTime = 0.0f;
 
+	uint64_t m_UserData = 0;
+
 	friend struct Arbiter;
 	friend class PhysicsWorld;
 };

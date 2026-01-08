@@ -21,7 +21,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Debug\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -33,7 +34,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Release\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -45,7 +47,8 @@
     <OutputPath>..\Elysium-Editor\Resources\Scripts\</OutputPath>
     <BaseIntermediateOutputPath>..\Elysium-Editor\Resources\Intermediates\Dist\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants></DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -56,6 +59,7 @@
   <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Dist|x64' ">
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\Elysium\Collision2D.cs" />
     <Compile Include="src\Elysium\Input.cs" />
     <Compile Include="src\Elysium\InternalCalls.cs" />
     <Compile Include="src\Elysium\KeyCode.cs" />

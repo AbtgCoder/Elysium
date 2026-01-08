@@ -26,6 +26,14 @@ namespace Elysium
         //TODO: Add Parent, retriving children, component cache, etc.
 
         public readonly ulong ID;
+
+        public virtual void OnCreate() { }
+        public virtual void OnUpdate(float deltaTime) { }
+
+        public virtual void OnCollisionEnter(Collision2D collision) { }
+        public virtual void OnCollisionStay(Collision2D collision) { }
+        public virtual void OnCollisionExit(Collision2D collision) { }
+
         public string Tag => GetComponent<TagComponent>().Tag;
         public TransformComponent Transform
         {

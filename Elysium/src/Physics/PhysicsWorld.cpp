@@ -97,6 +97,8 @@ void PhysicsWorld::Clear()
 	m_joints.clear();
 	
 	m_arbiters.clear();
+
+	delete m_CollisionListener;//TODO: maybe shouldn't be doing this here...
 }
 
 void PhysicsWorld::BroadPhase()
@@ -175,19 +177,7 @@ void PhysicsWorld::BroadhPhaseSAP()
 }
 
 
-// Helper: create contact event from arbiter/contact index
-static ContactEvent CreateContactEvent(const Arbiter& arb, int contactIndex)
-{
-	ContactEvent event;
-	event.bodyA = arb.m_body1;
-	event.bodyB = arb.m_body2;
-	event.contactPoint = arb.m_contacts[contactIndex].m_position;
-	event.contactNormal = arb.m_contacts[contactIndex].m_normal;
-	event.separation = arb.m_contacts[contactIndex].m_separation;
-	event.normalImpulse = arb.m_contacts[contactIndex].m_Jn;
-	event.tangentImpulse = arb.m_contacts[contactIndex].m_Jt;
-	return event;
-}
+
 
 // update arbiters from candidate body pairs produed by SAP
 // marks touched arbiters via a set of keys and remove arbiters that were not touched
@@ -208,9 +198,11 @@ void PhysicsWorld::UpdateArbitersFromCandidates(const std::vector<std::pair<Phys
 		Arbiter newArb(b1, b2);
 		ArbiterKey key(b1, b2);
 
+
 		if (newArb.m_numContacts > 0)
 		{
 			touchedKeys.insert(key);
+			
 			ArbIter iter = m_arbiters.find(key);
 			if (iter == m_arbiters.end())
 			{
@@ -221,7 +213,7 @@ void PhysicsWorld::UpdateArbitersFromCandidates(const std::vector<std::pair<Phys
 				iter->second.UpdateContacts(newArb.m_contacts, newArb.m_numContacts); // existing arbiter: update contacts
 			}
 		}
-		else
+		else 
 		{
 			// no contacts: we dont insert a touched key
 		}
@@ -241,49 +233,54 @@ void PhysicsWorld::UpdateArbitersFromCandidates(const std::vector<std::pair<Phys
 	}
 }
 
-void PhysicsWorld::NotifyContactBegin(const Arbiter& arb)
-{
-	if (!m_contactListener)
-		return;
 
-	for (int i = 0; i < arb.m_numContacts; ++i)
+// Helper: create collision event from arbiter
+static CollisionEvent CreateCollisionEvent(const Arbiter& arb)
+{
+	CollisionEvent event;
+	event.bodyA = arb.m_body1;
+	event.bodyB = arb.m_body2;
+
+	event.numContacts = arb.m_numContacts;
+
+	event.contacts.resize(event.numContacts);
+
+	for (int i = 0; i < event.numContacts; i++)
 	{
-		ContactEvent event = CreateContactEvent(arb, i);
-		m_contactListener->OnContactBegin(event);
+		event.contacts[i].position = arb.m_contacts[i].m_position;
+		event.contacts[i].normal = arb.m_contacts[i].m_normal;
+		event.contacts[i].penetration = -arb.m_contacts[i].m_separation;
 	}
+
+	return event;
 }
 
-void PhysicsWorld::NotifyContactEnd(const ArbiterKey& key)
+void PhysicsWorld::NotifyCollisionBegin(const Arbiter& arb)
 {
-	if (!m_contactListener)
+	if (!m_CollisionListener)
 		return;
-	ContactEvent event;
+
+	m_CollisionListener->OnCollisionBegin(CreateCollisionEvent(arb));
+}
+
+void PhysicsWorld::NotifyCollisionStay(const Arbiter& arb)
+{
+	if (!m_CollisionListener)
+		return;
+
+	m_CollisionListener->OnCollisionBegin(CreateCollisionEvent(arb));
+}
+
+void PhysicsWorld::NotifyCollisionEnd(const ArbiterKey& key)
+{
+	if (!m_CollisionListener)
+		return;
+	CollisionEvent event;
 	event.bodyA = key.m_body1;
 	event.bodyB = key.m_body2;
-	m_contactListener->OnContactEnd(event);
+	m_CollisionListener->OnCollisionEnd(event);
 }
 
-void PhysicsWorld::NotifyContactPreSolve(const Arbiter& arb)
-{
-	if (!m_contactListener)
-		return;
-	for (int i = 0; i < arb.m_numContacts; ++i)
-	{
-		ContactEvent event = CreateContactEvent(arb, i);
-		m_contactListener->OnContactPreSolve(event);
-	}
-}
-
-void PhysicsWorld::NotifyContactPostSolve(const Arbiter& arb)
-{
-	if (!m_contactListener)
-		return;
-	for (int i = 0; i < arb.m_numContacts; ++i)
-	{
-		ContactEvent event = CreateContactEvent(arb, i);
-		m_contactListener->OnContactPostSolve(event);
-	}
-}
 
 void PhysicsWorld::Update(float dt)
 {
@@ -342,49 +339,48 @@ void PhysicsWorld::Step(float dt)
 	std::map<ArbiterKey, bool> currentContacts;
 	for (auto& arbPair : m_arbiters)
 	{
-		currentContacts[arbPair.first] = true;
+		const ArbiterKey& key = arbPair.first;
+		const Arbiter& arb = arbPair.second;
+
+		currentContacts[key] = true;
+
+		auto prevIt = m_previousCollisions.find(key);
 
 		// begin contact: present now but not in previous frame
-		if (m_previousContacts.find(arbPair.first) == m_previousContacts.end())
+		if (prevIt == m_previousCollisions.end())
 		{
-			NotifyContactBegin(arbPair.second);
+			NotifyCollisionBegin(arb);
+		}
+		else // contact continues
+		{
+			NotifyCollisionStay(arb);
 		}
 	}
 
 	// end contact: present in previous frame but not now
-	for (auto& prevContact : m_previousContacts)
+	for (auto& prevContact : m_previousCollisions)
 	{
 		if (currentContacts.find(prevContact.first) == currentContacts.end())
 		{
-			NotifyContactEnd(prevContact.first);
+			NotifyCollisionEnd(prevContact.first);
 		}
 	}
 
 	// swap contact maps for next frame
-	m_previousContacts = std::move(currentContacts);
+	m_previousCollisions = std::move(currentContacts);
 
 
 	// 4) solve contacts and constraints
-
-	// notify pre-solve
-	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
-	{
-		NotifyContactPreSolve(arb->second);
-	}
 	
-
 	// perform pre-steps
 	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
 	{
 		arb->second.PreStep(inv_dt);
 	}
-
 	for (int i = 0; i < (int)m_joints.size(); i++)
 	{
 		m_joints[i]->PreStep(inv_dt);
 	}
-
-
 	// perform Sequential Impulse
 	for (int i = 0; i < m_ImpulseIterations; ++i)
 	{
@@ -399,53 +395,8 @@ void PhysicsWorld::Step(float dt)
 		}
 	}
 
-	// notify post-solve
-	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
-	{
-		NotifyContactPostSolve(arb->second);
-	}
 
-	//static int frame = 0;
-	//if (frame < 60)
-	//{
-	//	for (auto& kv : m_arbiters)
-	//	{
-	//		Arbiter& a = kv.second;
-	//		if (a.m_numContacts > 0)
-	//		{
-	//			Contact& c = a.m_contacts[0];
-	//			std::cout << "[Frame " << frame << "] Separation: " << c.m_separation << " bias: " << c.m_bias << " Jn: " << c.m_Jn << " Jt: " << c.m_Jt << " b1pos: (" << a.m_body1->m_position.x << "," << a.m_body1->m_position.y << ") b2pos: (" << a.m_body2->m_position.x << "," << a.m_body2->m_position.y << " b1vel: (" << a.m_body1->m_velocity.x << "," << a.m_body1->m_velocity.y << ") b2vel: (" << a.m_body2->m_velocity.x << "," << a.m_body2->m_velocity.y << ")\n";
-	//			break; // one log per frame
-	//		}
-	//	}
-	//	frame++;
-	//}
-
-
-	// 5) position correction (baumgarte)
-	/*for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
-	{
-		Arbiter& a = arb->second;
-		for (int i = 0; i < a.m_numContacts; ++i)
-		{
-			Contact& c = a.m_contacts[i];
-			float correctionMag = std::max((c.m_separation + m_positionCorrectionSlop), 0.0f);
-			correctionMag *= m_positionCorrectionPercent;
-			Vec2 correction = c.m_normal * correctionMag;
-			PhysicsBody* b1 = a.m_body1;
-			PhysicsBody* b2 = a.m_body2;
-			if (b1->m_type == PhysicsBodyType::dynamicBody)
-			{
-				b1->m_position -= correction * b1->m_invMass / (b1->m_invMass + b2->m_invMass);
-			}
-			if (b2->m_type == PhysicsBodyType::dynamicBody)
-			{
-				b2->m_position += correction * b2->m_invMass / (b1->m_invMass + b2->m_invMass);
-			}
-		}
-	}*/
-
-	// 6) integrate velocities to positions
+	// 5) integrate velocities to positions
 	for (int i = 0; i < (int)m_bodies.size(); i++)
 	{
 		PhysicsBody* b = m_bodies[i];
@@ -466,7 +417,7 @@ void PhysicsWorld::Step(float dt)
 		b->ClearForces();
 	}
 
-	// 7) sleep check: detect low motion bodies and put to sleep
+	// 6) sleep check: detect low motion bodies and put to sleep
 	for (int i = 0; i < (int)m_bodies.size(); i++)
 	{
 		PhysicsBody* b = m_bodies[i];
@@ -491,7 +442,7 @@ void PhysicsWorld::Step(float dt)
 		}
 	}
 	
-	// 8) wake bodies involved in contacts
+	// 7) wake bodies involved in contacts
 	for (ArbIter arb = m_arbiters.begin(); arb != m_arbiters.end(); ++arb)
 	{
 		PhysicsBody* b1 = arb->second.m_body1;

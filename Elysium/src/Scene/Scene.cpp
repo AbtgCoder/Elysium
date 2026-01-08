@@ -26,6 +26,29 @@
 #define DEG_PER_RAD 57.2957795F
 
 
+namespace Elysium
+{
+	SceneCollisionListener::SceneCollisionListener(const std::shared_ptr<Scene>& scene)
+		: m_Scene(scene)
+	{
+	}
+
+	void SceneCollisionListener::OnCollisionBegin(const CollisionEvent& event)
+	{
+		ScriptEngine::OnCollisionEnter(event);
+	}
+
+	void SceneCollisionListener::OnCollisionStay(const CollisionEvent& event)
+	{
+		ScriptEngine::OnCollisionStay(event);
+	}
+
+	void SceneCollisionListener::OnCollisionEnd(const CollisionEvent& event)
+	{
+		ScriptEngine::OnCollisionExit(event);
+	}
+}
+
 
 Scene::Scene()
 	: Scene("Untitled")
@@ -363,22 +386,14 @@ void Scene::OnRuntimeStart()
 		}
 	}
 
-	// Instantiate script
-	//for (auto e : m_entityManager.GetEntities())
-	//{
-	//	if (e.hasComponent<CNativeScriptComponent>())
-	//	{
-	//		auto& nsc = e.getComponent<CNativeScriptComponent>();
-	//		//nsc.instance = nsc.InstantiateScript();
-	//		nsc.instance = TryLoadScript();
-	//		nsc.instance->m_Entity = e;
-	//		nsc.instance->m_EntityManager = &m_entityManager;
-	//		nsc.instance->OnCreate();
-	//	}
-	//}
 
 	// Physics world initialization
 	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.8f}, 10);
+
+	// set contact listener, create it here too ig...
+	//m_PhysicsWorld->SetContactListener((ContactListener*)(new Elysium::SceneContactListener(this)));
+	m_PhysicsWorld->SetContactListener(static_cast<CollisionListener*>(new Elysium::SceneCollisionListener(shared_from_this())));
+
 	for (auto e : m_entityManager.GetEntities())
 	{
 		if (e.hasComponent<CRigidBody>())
@@ -392,6 +407,7 @@ void Scene::OnRuntimeStart()
 		//	body->m_velocity = transform.velocity;
 		//	body->m_angularVelocity = transform.angularVelocity;
 			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
+			body->m_UserData = e.GetUUID(); //TODO: idk if we should use UUID or entity_id for this...
 			rb2d.runtimeBody = body;
 
 			if (e.hasComponent<CBoundingBox>())
@@ -564,9 +580,9 @@ void Scene::OnUpdateRuntime(float dt)
 
 		// Physics
 		{
-			m_PhysicsWorld->Update(dt);
+			//m_PhysicsWorld->Update(dt);
 
-			//m_PhysicsWorld->Step(dt);
+			m_PhysicsWorld->Step(dt);
 
 			// Debug: Display contact points
 			std::map<ArbiterKey, Arbiter>::const_iterator iter;
