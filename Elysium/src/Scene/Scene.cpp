@@ -435,6 +435,20 @@ void Scene::CreatePhysicsBody(Entity e)
 
 }
 
+void Scene::DestroyPhysicsBody(Entity e)
+{
+	if (!e.hasComponent<CRigidBody>())
+		return;
+
+	auto& rb = e.getComponent<CRigidBody>();
+
+	if (!rb.runtimeBody)
+		return;
+
+	m_PhysicsWorld->DestroyBody((PhysicsBody*)rb.runtimeBody);
+	rb.runtimeBody = nullptr;
+}
+
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");

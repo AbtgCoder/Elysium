@@ -580,6 +580,12 @@ static void RegisterComponent()
 
 	s_EntityRemoveComponentFuncs[managedType] = [](Entity entity) -> void
 	{
+		if constexpr (std::is_same_v<TComponent, CRigidBody>)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			scene->DestroyPhysicsBody(entity);
+		}
+
 		entity.removeComponent<TComponent>();
 	};
 

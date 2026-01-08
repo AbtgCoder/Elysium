@@ -26,7 +26,7 @@ public class PhysicsTest : Entity
 		e.AddComponent<RigidBodyComponent>();
 
 		Entity e2 = new Entity("script_circle");
-		e2.GetComponent<TransformComponent>().Position = new Vector3(-1, 2, 0);
+		e2.GetComponent<TransformComponent>().Position = new Vector3(4, 2, 0);
 		e2.AddComponent<CircleComponent>().Radius = 0.5f;
 		e2.AddComponent<CircleColliderComponent>().Radius = e2.GetComponent<CircleComponent>().Radius;
 		e2.AddComponent<RigidBodyComponent>().Type = RigidBodyComponent.BodyType.Dynamic;
@@ -54,6 +54,11 @@ public class PhysicsTest : Entity
     public override void OnCollisionEnter(Collision2D collision)
     {
 		Debug.Log($"{Tag} just started collision with {collision.OtherEntity.Tag} !!");
+
+		if (collision.OtherEntity.Tag == "script_circle")
+		{
+			collision.OtherEntity.RemoveComponent<RigidBodyComponent>();
+		}
     }
 
     public override void OnCollisionStay(Collision2D collision)

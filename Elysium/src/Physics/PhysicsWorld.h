@@ -39,6 +39,7 @@ public:
 
 	void AddBody(PhysicsBody* body);
 	void AddJoint(PhysicsHingeJoint* joint);
+	void DestroyBody(PhysicsBody* body);
 
 	void Clear();
 

@@ -84,6 +84,56 @@ void PhysicsWorld::AddJoint(PhysicsHingeJoint* joint)
 	m_joints.push_back(joint);
 }
 
+void PhysicsWorld::DestroyBody(PhysicsBody* body)
+{
+	if (!body)
+		return;
+
+	// remove joints involving this body
+	for (auto it = m_joints.begin(); it != m_joints.end();)
+	{
+		PhysicsHingeJoint* joint = *it;
+		if (joint->m_body1 == body || joint->m_body2 == body)
+		{
+			delete joint;
+			it = m_joints.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	// remove body from arbiters
+	for (auto it = m_arbiters.begin(); it != m_arbiters.end();)
+	{
+		const ArbiterKey& key = it->first;
+
+		if (key.m_body1 == body || key.m_body2 == body)
+		{
+			// Notify collision end before removal ig...
+			NotifyCollisionEnd(key);
+
+			// remove from previous collisions map
+			m_previousCollisions.erase(key);
+
+			it = m_arbiters.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	// remove from bodies vector
+	auto it = std::find(m_bodies.begin(), m_bodies.end(), body);
+	if (it != m_bodies.end())
+		m_bodies.erase(it);
+
+	// delete body
+	delete body;
+}
+
 void PhysicsWorld::Clear()
 {
 	for (auto body : m_bodies) {
@@ -97,6 +147,8 @@ void PhysicsWorld::Clear()
 	m_joints.clear();
 	
 	m_arbiters.clear();
+
+	m_previousCollisions.clear();
 
 	delete m_CollisionListener;//TODO: maybe shouldn't be doing this here...
 }
