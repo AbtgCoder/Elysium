@@ -62,6 +62,7 @@ public:
 	void OnUpdateRuntime(float dt);
 	void OnUpdateEditor(EditorCamera& camera);
 	void OnViewportResize(uint32_t width, uint32_t height);
+	void CreatePhysicsBody(Entity e);
 
 	// Physics
 	//void LaunchBomb(sf::RenderTexture& renderTexture);

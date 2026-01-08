@@ -39,6 +39,17 @@ namespace Elysium
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void RectangleComponent_SetColor(ulong entityID, ref Vector4 color);
 
+        #region CircleComponent
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleComponent_GetRadius(ulong entityID, out float radius);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleComponent_SetRadius(ulong entityID, ref float radius);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleComponent_GetColor(ulong entityID, out Vector4 color);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        internal extern static void CircleComponent_SetColor(ulong entityID, ref Vector4 color);
+        #endregion
+
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void TransformComponent_GetTranslation(ulong entityID, out Vector3 translation);
@@ -64,6 +75,10 @@ namespace Elysium
         internal extern static void SpriteRendererComponent_SetTexture(ulong entityID, ulong textureID);
 
         #region RigiBodyComponent
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static RigidBodyComponent.BodyType RigidBodyComponent_GetType(ulong entityID);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void RigidBodyComponent_SetType(ulong entityID, RigidBodyComponent.BodyType type);
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         internal extern static void RigidBodyComponent_ApplyLinearImpulse(ulong entityID, ref Vector2 impulse, ref Vector2 point);
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -72,6 +87,23 @@ namespace Elysium
         internal extern static void RigidBodyComponent_GetLinearVelocities(ulong entityID, out Vector2 linearVelocity);
         #endregion
 
+        #region BoundingBox
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void BoundingBox_GetSize(ulong entityID, out Vector2 size);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void BoundingBox_SetSize(ulong entityID, ref Vector2 size);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void BoundingBox_GetOffset(ulong entityID, out Vector2 offset);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void BoundingBox_SetOffset(ulong entityID, ref Vector2 offset);
+        #endregion
+
+        #region CircleCollider
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void CircleCollider_GetRadius(ulong entityID, out float radius);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void CircleCollider_SetRadius(ulong entityID, ref float radius);
+        #endregion
 
         #region Logging
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -80,7 +112,6 @@ namespace Elysium
         internal extern static void Debug_LogWarning(string message);
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static void Debug_LogError(string message);
-
         #endregion
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

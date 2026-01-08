@@ -103,6 +103,9 @@ static void Entity_AddComponent(Elysium::UUID entityID, MonoReflectionType* comp
 	if (s_EntityAddComponentFuncs.find(managedType) != s_EntityAddComponentFuncs.end())
 	{
 		s_EntityAddComponentFuncs.at(managedType)(entity);
+
+		if (scene->IsRunning() && entity.hasComponent<CRigidBody>())
+			scene->CreatePhysicsBody(entity);
 	}
 	else
 	{
@@ -249,6 +252,71 @@ static void RectangleComponent_SetColor(Elysium::UUID entityID, glm::vec4* color
 	entity.getComponent<CRectangle>().color = *color;
 }
 
+static void CircleComponent_GetRadius(Elysium::UUID entityID, float* outRadius)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	if (!entity.hasComponent<CCircle>())
+	{
+		Logger::Log("Entity does not have a Circle component", "Script Engine", LOG_TYPE::WARNING);
+		return;
+	}
+
+	*outRadius = entity.getComponent<CCircle>().radius;
+}
+
+static void CircleComponent_SetRadius(Elysium::UUID entityID, float* radius)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	if (!entity.hasComponent<CCircle>())
+	{
+		Logger::Log("Entity does not have a Circle component", "Script Engine", LOG_TYPE::WARNING);
+		return;
+	}
+
+	entity.getComponent<CCircle>().radius = *radius;
+}
+
+static void CircleComponent_GetColor(Elysium::UUID entityID, glm::vec4* outColor)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	if (!entity.hasComponent<CCircle>())
+	{
+		Logger::Log("Entity does not have a Circle component", "Script Engine", LOG_TYPE::WARNING);
+		return;
+	}
+
+	*outColor = entity.getComponent<CCircle>().color;
+}
+
+static void CircleComponent_SetColor(Elysium::UUID entityID, glm::vec4* color)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	if (!entity.hasComponent<CCircle>())
+	{
+		Logger::Log("Entity does not have a Circle component", "Script Engine", LOG_TYPE::WARNING);
+		return;
+	}
+
+	entity.getComponent<CCircle>().color = *color;
+}
+
+
 static void TransformComponent_GetTranslation(Elysium::UUID entityID, glm::vec3* outTranslation)
 {
 	Scene* scene = ScriptEngine::GetSceneContext();
@@ -349,6 +417,32 @@ void SpriteRendererComponent_SetTexture(uint64_t entityID, uint64_t textureID)
 	entity.getComponent<CSpriteRenderer>().texture = textureID;
 }
 
+static CRigidBody::BodyType RigidBodyComponent_GetType(Elysium::UUID entityID)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	auto& rb2d = entity.getComponent<CRigidBody>();
+	return rb2d.Type;
+}
+
+static void RigidBodyComponent_SetType(Elysium::UUID entityID, CRigidBody::BodyType bodyType)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	auto& rb2d = entity.getComponent<CRigidBody>();
+	rb2d.Type = bodyType;
+	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+	body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
+	body->ResetMassData(5.7f); // need to recalculate all mass and inertia etc data if isnt a static body
+	//TODO: its probably really bad to do stuff like this, box2d ensures that the world is not insde a timestep and does a bunch of other stuff too
+}
+
 static void RigidBodyComponent_ApplyLinearImpulse(Elysium::UUID entityID, glm::vec2* impulse, glm::vec2* point)
 {
 	Scene* scene = ScriptEngine::GetSceneContext();
@@ -384,6 +478,73 @@ static void RigidBodyComponent_GetLinearVelocity(Elysium::UUID entityID, glm::ve
 	PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
 	const Vec2& linearVelocity = body->m_velocity;
 	*outLinearVelocity = glm::vec2(linearVelocity.x, linearVelocity.y);
+}
+
+static void BoundingBox_GetSize(Elysium::UUID entityID, Vec2* outSize)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& bb = entity.getComponent<CBoundingBox>();
+	*outSize = bb.size;
+}
+
+static void BoundingBox_SetSize(Elysium::UUID entityID, Vec2* size)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& bb = entity.getComponent<CBoundingBox>();
+	bb.size = *size;
+	bb.halfSize = *size * 0.5f;
+}
+
+static void BoundingBox_GetOffset(Elysium::UUID entityID, Vec2* outOffset)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& bb = entity.getComponent<CBoundingBox>();
+	*outOffset = bb.offset;
+}
+
+static void BoundingBox_SetOffset(Elysium::UUID entityID, Vec2* offset)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& bb = entity.getComponent<CBoundingBox>();
+	bb.offset = *offset;
+}
+
+static void CircleCollider_GetRadius(Elysium::UUID entityID, float* outRadius)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& cc = entity.getComponent<CCircleCollider>();
+	*outRadius = cc.radius;
+}
+
+static void CircleCollider_SetRadius(Elysium::UUID entityID, float* radius)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity is valid
+
+	auto& cc = entity.getComponent<CCircleCollider>();
+	cc.radius = *radius;
 }
 
 static bool Input_IsKeyDown(KeyCode key)
@@ -434,8 +595,12 @@ void ScriptGlue::RegisterComponents()
 	RegisterComponent<CTag>();
 	RegisterComponent<CCamera>();
 	RegisterComponent<CRectangle>();
+	RegisterComponent<CCircle>();
 	RegisterComponent<CSpriteRenderer>();
 	RegisterComponent<CRigidBody>();
+	RegisterComponent<CBoundingBox>();
+	RegisterComponent<CCircleCollider>();
+	RegisterComponent<CPolygonCollider>();
 	//TODO: register other components as needed
 }
 
@@ -465,6 +630,11 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(RectangleComponent_GetColor);
 	ESM_ADD_INTERNAL_CALL(RectangleComponent_SetColor);
 
+	ESM_ADD_INTERNAL_CALL(CircleComponent_GetRadius);
+	ESM_ADD_INTERNAL_CALL(CircleComponent_SetRadius);
+	ESM_ADD_INTERNAL_CALL(CircleComponent_GetColor);
+	ESM_ADD_INTERNAL_CALL(CircleComponent_SetColor);
+
 	ESM_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 	ESM_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
 	ESM_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
@@ -477,9 +647,19 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
 	ESM_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
 
+	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_GetType);
+	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_SetType);
 	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_ApplyLinearImpulse);
 	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_ApplyLinearImpulseToCenter);
 	ESM_ADD_INTERNAL_CALL(RigidBodyComponent_GetLinearVelocity);
+
+	ESM_ADD_INTERNAL_CALL(BoundingBox_GetSize);
+	ESM_ADD_INTERNAL_CALL(BoundingBox_SetSize);
+	ESM_ADD_INTERNAL_CALL(BoundingBox_GetOffset);
+	ESM_ADD_INTERNAL_CALL(BoundingBox_SetOffset);
+
+	ESM_ADD_INTERNAL_CALL(CircleCollider_GetRadius);
+	ESM_ADD_INTERNAL_CALL(CircleCollider_SetRadius);
 
 	ESM_ADD_INTERNAL_CALL(Input_IsKeyDown);
 }

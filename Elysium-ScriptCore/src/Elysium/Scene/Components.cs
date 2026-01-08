@@ -103,6 +103,35 @@ namespace Elysium
         }
     }
 
+    public class CircleComponent : Component
+    {
+        public float Radius
+        {
+            get
+            {
+                InternalCalls.CircleComponent_GetRadius(Entity.ID, out float radius);
+                return radius;
+            }
+            set
+            {
+                InternalCalls.CircleComponent_SetRadius(Entity.ID, ref value);
+            }
+        }
+
+        public Vector4 Color
+        {
+            get
+            {
+                InternalCalls.CircleComponent_GetColor(Entity.ID, out Vector4 color);
+                return color;
+            }
+            set
+            {
+                InternalCalls.CircleComponent_SetColor(Entity.ID, ref value);
+            }
+        }
+    }
+
     public class SpriteRendererComponent : Component
     {
         public Texture2D Texture
@@ -124,6 +153,12 @@ namespace Elysium
     {
         public enum BodyType { Static = 0, Dynamic, Kinematic }
 
+        public BodyType Type
+        {
+            get => InternalCalls.RigidBodyComponent_GetType(Entity.ID);
+            set => InternalCalls.RigidBodyComponent_SetType(Entity.ID, value);
+        }
+
         public Vector2 LinearVelocity
         {
             get
@@ -141,6 +176,50 @@ namespace Elysium
         public void ApplyLinearImpulse(Vector2 impulse)
         {
             InternalCalls.RigidBodyComponent_ApplyLinearImpulseToCenter(Entity.ID, ref impulse);
+        }
+    }
+
+    public class BoundingBoxComponent : Component
+    {
+        public Vector2 Size
+        {
+            get
+            {
+                InternalCalls.BoundingBox_GetSize(Entity.ID, out Vector2 size);
+                return size;
+            }
+            set
+            {
+                InternalCalls.BoundingBox_SetSize(Entity.ID, ref value);
+            }
+        }
+        public Vector2 Offset
+        {
+            get
+            {
+                InternalCalls.BoundingBox_GetOffset(Entity.ID, out Vector2 offset);
+                return offset;
+            }
+            set
+            {
+                InternalCalls.BoundingBox_SetOffset(Entity.ID, ref value);
+            }
+        }
+    }
+
+    public class CircleColliderComponent : Component
+    {
+        public float Radius
+        {
+            get
+            {
+                InternalCalls.CircleCollider_GetRadius(Entity.ID, out float radius);
+                return radius;
+            }
+            set
+            {
+                InternalCalls.CircleCollider_SetRadius(Entity.ID, ref value);
+            }
         }
     }
 }

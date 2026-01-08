@@ -1,10 +1,10 @@
+using Elysium;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using Elysium;
 
 public class PhysicsTest : Entity
 {
@@ -15,7 +15,22 @@ public class PhysicsTest : Entity
 	public override void OnCreate()
 	{
 		m_Rigidbody = GetComponent<RigidBodyComponent>();
-	}
+
+		Entity e = new Entity("script_rectangle");
+        e.AddComponent<TransformComponent>().Position = new Vector3(1, -4, 0);
+		e.AddComponent<RectangleComponent>();
+		RectangleComponent rect = e.GetComponent<RectangleComponent>();
+		rect.Size = new Vector2(1.5f, 1.5f);
+		rect.Color = new Vector4(1, 0, 0, 1);
+		e.AddComponent<BoundingBoxComponent>().Size = rect.Size;
+		e.AddComponent<RigidBodyComponent>();
+
+		Entity e2 = new Entity("script_circle");
+		e2.GetComponent<TransformComponent>().Position = new Vector3(-1, 2, 0);
+		e2.AddComponent<CircleComponent>().Radius = 0.5f;
+		e2.AddComponent<CircleColliderComponent>().Radius = e2.GetComponent<CircleComponent>().Radius;
+		e2.AddComponent<RigidBodyComponent>().Type = RigidBodyComponent.BodyType.Dynamic;
+    }
 
 	public override void OnUpdate(float deltaTime)
 	{

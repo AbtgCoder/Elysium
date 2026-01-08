@@ -364,6 +364,77 @@ ScriptableEntity* TryLoadScript()
 	return createFunc();
 }
 
+void Scene::CreatePhysicsBody(Entity e)
+{
+	if (!e.hasComponent<CRigidBody>())
+	{
+		return;
+	}
+
+	auto& rb2d = e.getComponent<CRigidBody>();
+	if (rb2d.runtimeBody)
+		return; // already created
+
+
+	auto& transform = e.getComponent<CTransform>();
+
+	PhysicsBody* body = new PhysicsBody();
+	body->m_position = { transform.Translation.x, transform.Translation.y };
+	body->m_rotation = transform.Rotation.z;
+	body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
+	body->m_UserData = e.GetUUID(); //TODO: idk if we should use UUID or entity_id for this...
+
+	// Shape
+	if (e.hasComponent<CBoundingBox>())
+	{
+		auto& bb2d = e.getComponent<CBoundingBox>();
+		PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
+		boxShape->SetAsBox(bb2d.halfSize.x * transform.Scale.x, bb2d.halfSize.y * transform.Scale.y, bb2d.offset, 0.0f);
+		body->m_shape = boxShape;
+	}
+	else if (e.hasComponent<CPolygonCollider>())
+	{
+		auto& pc2d = e.getComponent<CPolygonCollider>();
+		std::vector<Vec2> vertices = pc2d.colliderVertices;
+		std::vector<Vec2> points;
+		for (size_t i = 0; i < vertices.size(); i++)
+		{
+			Vec2 point = vertices[i];
+			points.push_back({ point.x, point.y });
+		}
+		PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
+		polyShape->Set(points);
+		body->m_shape = polyShape;
+	}
+	else if (e.hasComponent<CCircleCollider>())
+	{
+		PhysicsCircleShape* circleShape = new PhysicsCircleShape();
+		circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
+		circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().Scale.x;
+		body->m_shape = circleShape;
+	}
+	else
+	{
+		Logger::Log("Rigidbody added without collider", "Physics", LOG_TYPE::WARNING);
+		delete body;
+		return;
+	}
+
+	// Physics Material
+	if (e.hasComponent<CPhysicsMaterial>())
+	{
+		auto& pm = e.getComponent<CPhysicsMaterial>();
+		body->m_friction = pm.friction;
+		body->m_restitution = pm.restitutionCoefficient;
+	}
+	
+	body->ResetMassData(5.7f);
+
+	rb2d.runtimeBody = body;
+	m_PhysicsWorld->AddBody(body);
+
+}
+
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");
@@ -372,7 +443,114 @@ void Scene::OnRuntimeStart()
 
 	UpdateTransforms();
 
-	// Scripting
+	// Physics
+	{
+		m_PhysicsWorld = new PhysicsWorld({ 0.0f, -9.8f }, 10);
+
+		// set contact listener, create it here too ig...
+		//m_PhysicsWorld->SetContactListener((ContactListener*)(new Elysium::SceneContactListener(this)));
+		m_PhysicsWorld->SetContactListener(static_cast<CollisionListener*>(new Elysium::SceneCollisionListener(shared_from_this())));
+
+		for (auto e : m_entityManager.GetEntities())
+		{
+			CreatePhysicsBody(e);
+
+#if 0
+			if (e.hasComponent<CRigidBody>())
+			{
+				auto& transform = e.getComponent<CTransform>();
+				auto& rb2d = e.getComponent<CRigidBody>();
+
+				PhysicsBody* body = new PhysicsBody();
+				body->m_position = { transform.GlobalTranslation.x, transform.GlobalTranslation.y };
+				body->m_rotation = transform.GlobalRotation.z;
+				//	body->m_velocity = transform.velocity;
+				//	body->m_angularVelocity = transform.angularVelocity;
+				body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
+				body->m_UserData = e.GetUUID(); //TODO: idk if we should use UUID or entity_id for this...
+				rb2d.runtimeBody = body;
+
+				if (e.hasComponent<CBoundingBox>())
+				{
+					auto& bb2d = e.getComponent<CBoundingBox>();
+					PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
+					boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x, bb2d.halfSize.y * transform.GlobalScale.y, bb2d.offset, 0.0f);
+					body->m_shape = boxShape;
+				}
+				else if (e.hasComponent<CPolygonCollider>())
+				{
+					auto& pc2d = e.getComponent<CPolygonCollider>();
+					std::vector<Vec2> vertices = pc2d.colliderVertices;
+					std::vector<Vec2> points;
+					for (size_t i = 0; i < vertices.size(); i++)
+					{
+						Vec2 point = vertices[i];
+						points.push_back({ point.x, point.y });
+					}
+					PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
+					polyShape->Set(points);
+					body->m_shape = polyShape;
+				}
+				else if (e.hasComponent<CCircleCollider>())
+				{
+					PhysicsCircleShape* circleShape = new PhysicsCircleShape();
+					circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
+					circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x;
+					body->m_shape = circleShape;
+				}
+
+				if (e.hasComponent<CPhysicsMaterial>())
+				{
+					auto& pm = e.getComponent<CPhysicsMaterial>();
+					body->m_friction = pm.friction;
+					body->m_restitution = pm.restitutionCoefficient;
+					body->ResetMassData(5.7f);
+				}
+				else
+				{
+					body->ResetMassData(5.7f);
+				}
+
+				m_PhysicsWorld->AddBody(body);
+			}
+#endif
+
+		}
+
+		for (auto e : m_entityManager.GetEntities())
+		{
+			if (e.hasComponent<CJoint>())
+			{
+				auto& jointComponent = e.getComponent<CJoint>();
+				if (!IsEntityUUIDValid(jointComponent.entity2Id))
+				{
+					continue;
+				}
+				auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
+				if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>())) //TODO: should we be doing these checks here ??
+				{
+					continue;
+				}
+				PhysicsBody* body1 = (PhysicsBody*)(e.getComponent<CRigidBody>().runtimeBody);
+				PhysicsBody* body2 = (PhysicsBody*)(entity2.getComponent<CRigidBody>().runtimeBody);
+				if (body1->m_type == PhysicsBodyType::staticBody && body2->m_type == PhysicsBodyType::staticBody)
+				{
+					continue;
+				}
+				Vec2 anchorWorldPos = jointComponent.anchorPos + Vec2(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
+				PhysicsHingeJoint* joint = new PhysicsHingeJoint();
+				joint->Set(body1, body2, Vec2(anchorWorldPos.x, anchorWorldPos.y));
+				// TODO: add softness & bias to the joint component ??
+				joint->m_softness = 0.00098884f;
+				joint->m_biasFactor = 0.130132;
+				jointComponent.runtimeJoint = joint;
+				m_PhysicsWorld->AddJoint(joint);
+			}
+		}
+	}
+	
+
+	// Scripting (doing this after physics , as if someone adds an entity with a rigidbody in OnCreate then that needs scene_>physicsWorld)
 	{
 		ScriptEngine::OnRuntimeStart(this);
 
@@ -383,108 +561,6 @@ void Scene::OnRuntimeStart()
 			{
 				ScriptEngine::OnCreateEntity(e);
 			}
-		}
-	}
-
-
-	// Physics world initialization
-	m_PhysicsWorld = new PhysicsWorld({0.0f, -9.8f}, 10);
-
-	// set contact listener, create it here too ig...
-	//m_PhysicsWorld->SetContactListener((ContactListener*)(new Elysium::SceneContactListener(this)));
-	m_PhysicsWorld->SetContactListener(static_cast<CollisionListener*>(new Elysium::SceneCollisionListener(shared_from_this())));
-
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.hasComponent<CRigidBody>())
-		{
-			auto& transform = e.getComponent<CTransform>();
-			auto& rb2d = e.getComponent<CRigidBody>();
-
-			PhysicsBody* body = new PhysicsBody();
-			body->m_position = { transform.GlobalTranslation.x, transform.GlobalTranslation.y };
-			body->m_rotation = transform.GlobalRotation.z;
-		//	body->m_velocity = transform.velocity;
-		//	body->m_angularVelocity = transform.angularVelocity;
-			body->m_type = rb2d.Type == CRigidBody::BodyType::Static ? PhysicsBodyType::staticBody : PhysicsBodyType::dynamicBody;
-			body->m_UserData = e.GetUUID(); //TODO: idk if we should use UUID or entity_id for this...
-			rb2d.runtimeBody = body;
-
-			if (e.hasComponent<CBoundingBox>())
-			{
-				auto& bb2d = e.getComponent<CBoundingBox>();
-				PhysicsPolygonShape* boxShape = new PhysicsPolygonShape();
-				boxShape->SetAsBox(bb2d.halfSize.x * transform.GlobalScale.x, bb2d.halfSize.y * transform.GlobalScale.y, bb2d.offset, 0.0f);
-				body->m_shape = boxShape;
-			}
-			else if (e.hasComponent<CPolygonCollider>())
-			{
-				auto& pc2d = e.getComponent<CPolygonCollider>();
-				std::vector<Vec2> vertices = pc2d.colliderVertices;
-				std::vector<Vec2> points;
-				for (size_t i = 0; i < vertices.size(); i++)
-				{
-					Vec2 point = vertices[i];
-					points.push_back({ point.x, point.y });
-				}
-				PhysicsPolygonShape* polyShape = new PhysicsPolygonShape();
-				polyShape->Set(points);
-				body->m_shape = polyShape;
-			}
-			else if (e.hasComponent<CCircleCollider>())
-			{
-				PhysicsCircleShape* circleShape = new PhysicsCircleShape();
-				circleShape->m_p.Set(0.0f, 0.0f); // TODO: should be offset
-				circleShape->m_radius = e.getComponent<CCircleCollider>().radius * e.getComponent<CTransform>().GlobalScale.x;
-				body->m_shape = circleShape;
-			}
-
-			if (e.hasComponent<CPhysicsMaterial>())
-			{
-				auto& pm = e.getComponent<CPhysicsMaterial>();
-				body->m_friction = pm.friction;
-				body->m_restitution = pm.restitutionCoefficient;
-				body->ResetMassData(5.7f);
-			}
-			else
-			{
-				body->ResetMassData(5.7f);
-			}
-
-			m_PhysicsWorld->AddBody(body);
-		}
-		
-
-	}
-	
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.hasComponent<CJoint>())
-		{
-			auto& jointComponent = e.getComponent<CJoint>();
-			if (!IsEntityUUIDValid(jointComponent.entity2Id))
-			{
-				continue;
-			}
-			auto entity2 = GetEntityByUUID(jointComponent.entity2Id);
-			if (!(e.hasComponent<CRigidBody>() && entity2.hasComponent<CRigidBody>())) //TODO: should we be doing these checks here ??
-			{
-				continue;
-			}
-			PhysicsBody* body1 = (PhysicsBody*)(e.getComponent<CRigidBody>().runtimeBody);
-			PhysicsBody* body2 = (PhysicsBody*)(entity2.getComponent<CRigidBody>().runtimeBody);
-			if (body1->m_type == PhysicsBodyType::staticBody && body2->m_type == PhysicsBodyType::staticBody)
-			{
-				continue;
-			}
-			Vec2 anchorWorldPos = jointComponent.anchorPos + Vec2(e.getComponent<CTransform>().GlobalTranslation.x, e.getComponent<CTransform>().GlobalTranslation.y);
-			PhysicsHingeJoint* joint = new PhysicsHingeJoint();
-			joint->Set(body1, body2, Vec2(anchorWorldPos.x, anchorWorldPos.y));
-			// TODO: add softness & bias to the joint component ??
-			joint->m_softness = 0.00098884f;
-			joint->m_biasFactor = 0.130132;
-			jointComponent.runtimeJoint = joint;
-			m_PhysicsWorld->AddJoint(joint);
 		}
 	}
 }
@@ -760,6 +836,8 @@ void Scene::OnViewportResize(uint32_t width, uint32_t height)
 		}
 	}
 }
+
+
 
 void Scene::Step(int frames)
 {
