@@ -12,12 +12,14 @@ public class PhysicsTest : Entity
 
 	public float Speed = 1.0f;
 
+	public Vector3 rectPos;
+
 	public override void OnCreate()
 	{
 		m_Rigidbody = GetComponent<RigidBodyComponent>();
 
 		Entity e = new Entity("script_rectangle");
-        e.AddComponent<TransformComponent>().Position = new Vector3(1, -4, 0);
+        e.AddComponent<TransformComponent>().Position = rectPos;
 		e.AddComponent<RectangleComponent>();
 		RectangleComponent rect = e.GetComponent<RectangleComponent>();
 		rect.Size = new Vector2(1.5f, 1.5f);
@@ -26,10 +28,17 @@ public class PhysicsTest : Entity
 		e.AddComponent<RigidBodyComponent>();
 
 		Entity e2 = new Entity("script_circle");
-		e2.GetComponent<TransformComponent>().Position = new Vector3(4, 2, 0);
+		e2.GetComponent<TransformComponent>().Position = new Vector3(3, 2, 0);
 		e2.AddComponent<CircleComponent>().Radius = 0.5f;
 		e2.AddComponent<CircleColliderComponent>().Radius = e2.GetComponent<CircleComponent>().Radius;
 		e2.AddComponent<RigidBodyComponent>().Type = RigidBodyComponent.BodyType.Dynamic;
+
+		JointComponent joint = e.AddComponent<JointComponent>();
+		joint.ConnectedEntity = e2;
+		joint.Anchor = new Vector2(0, 0);
+		joint.Softness = 0.001f;
+		joint.Bias = 0.15f;
+
     }
 
 	public override void OnUpdate(float deltaTime)

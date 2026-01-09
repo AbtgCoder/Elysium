@@ -105,6 +105,17 @@ namespace Elysium
         internal static extern void CircleCollider_SetRadius(ulong entityID, ref float radius);
         #endregion
 
+        #region JointComponent
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void JointComponent_SetConnectedEntity(ulong entityID, ulong entity2ID);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void JointComponent_SetAnchor(ulong entityID, ref Vector2 anchor);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void JointComponent_SetSoftness(ulong entityID, ref float softness);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void JointComponent_SetBias(ulong entityID, ref float bias);
+        #endregion
+
         #region Logging
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static void Debug_Log(string message);

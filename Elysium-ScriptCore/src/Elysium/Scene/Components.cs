@@ -222,4 +222,27 @@ namespace Elysium
             }
         }
     }
+
+    public class JointComponent : Component
+    {
+        public Entity ConnectedEntity
+        {
+            set => InternalCalls.JointComponent_SetConnectedEntity(Entity.ID, value.ID);
+        }
+        
+        public Vector2 Anchor
+        {
+            set => InternalCalls.JointComponent_SetAnchor(Entity.ID, ref value);
+        }
+
+        public float Softness
+        {
+            set => InternalCalls.JointComponent_SetSoftness(Entity.ID, ref value);
+        }
+
+        public float Bias
+        {
+            set => InternalCalls.JointComponent_SetBias(Entity.ID, ref value);
+        }
+    }
 }

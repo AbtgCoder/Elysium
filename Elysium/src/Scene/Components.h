@@ -303,6 +303,9 @@ public:
 	Elysium::UUID entity2Id; // TODO: only works if this is a valid entityID)
 	Vec2 anchorPos; // NOTE: this is relative to entity1 pos
 
+	float softness = 0.0f;
+	float bias = 0.2f;
+
 	// storage for runtime
 	void* runtimeJoint = nullptr;
 

@@ -79,11 +79,6 @@ void PhysicsWorld::AddBody(PhysicsBody* body)
 	m_bodies.push_back(body);
 }
 
-void PhysicsWorld::AddJoint(PhysicsHingeJoint* joint)
-{
-	m_joints.push_back(joint);
-}
-
 void PhysicsWorld::DestroyBody(PhysicsBody* body)
 {
 	if (!body)
@@ -133,6 +128,24 @@ void PhysicsWorld::DestroyBody(PhysicsBody* body)
 	// delete body
 	delete body;
 }
+
+void PhysicsWorld::AddJoint(PhysicsHingeJoint* joint)
+{
+	m_joints.push_back(joint);
+}
+
+void PhysicsWorld::DestroyJoint(PhysicsHingeJoint* joint)
+{
+	if (!joint)
+		return;
+
+	auto it = std::find(m_joints.begin(), m_joints.end(), joint);
+	if (it != m_joints.end())
+		m_joints.erase(it);
+
+	delete joint;
+}
+
 
 void PhysicsWorld::Clear()
 {

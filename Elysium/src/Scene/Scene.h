@@ -64,6 +64,8 @@ public:
 	void OnViewportResize(uint32_t width, uint32_t height);
 	void CreatePhysicsBody(Entity e);
 	void DestroyPhysicsBody(Entity e);
+	void CreatePhysicsHingeJoint(Entity e);
+	void DestroyPhysicsHingeJoint(Entity e);
 
 	// Physics
 	//void LaunchBomb(sf::RenderTexture& renderTexture);

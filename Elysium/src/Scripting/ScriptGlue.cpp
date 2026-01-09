@@ -103,9 +103,6 @@ static void Entity_AddComponent(Elysium::UUID entityID, MonoReflectionType* comp
 	if (s_EntityAddComponentFuncs.find(managedType) != s_EntityAddComponentFuncs.end())
 	{
 		s_EntityAddComponentFuncs.at(managedType)(entity);
-
-		if (scene->IsRunning() && entity.hasComponent<CRigidBody>())
-			scene->CreatePhysicsBody(entity);
 	}
 	else
 	{
@@ -547,6 +544,59 @@ static void CircleCollider_SetRadius(Elysium::UUID entityID, float* radius)
 	cc.radius = *radius;
 }
 
+static void JointComponent_SetConnectedEntity(Elysium::UUID entityID, Elysium::UUID entity2ID)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	auto& joint = entity.getComponent<CJoint>();
+	joint.entity2Id = entity2ID;
+	
+	scene->DestroyPhysicsHingeJoint(entity);
+	scene->CreatePhysicsHingeJoint(entity);
+}
+
+static void JointComponent_SetAnchor(Elysium::UUID entityID, Vec2* anchor)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	entity.getComponent<CJoint>().anchorPos = *anchor;
+
+	scene->DestroyPhysicsHingeJoint(entity);
+	scene->CreatePhysicsHingeJoint(entity);
+}
+
+static void JointComponent_SetSoftness(Elysium::UUID entityID, float* softness)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	entity.getComponent<CJoint>().softness = *softness;
+
+	scene->DestroyPhysicsHingeJoint(entity);
+	scene->CreatePhysicsHingeJoint(entity);
+}
+
+static void JointComponent_SetBias(Elysium::UUID entityID, float* bias)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// assert scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert entity
+
+	entity.getComponent<CJoint>().bias = *bias;
+
+	scene->DestroyPhysicsHingeJoint(entity);
+	scene->CreatePhysicsHingeJoint(entity);
+}
+
 static bool Input_IsKeyDown(KeyCode key)
 {
 	return Input::IsKeyPressed(key);
@@ -576,6 +626,17 @@ static void RegisterComponent()
 	s_EntityAddComponentFuncs[managedType] = [](Entity entity) -> void
 	{
 		entity.addComponent<TComponent>();
+		
+		if constexpr (std::is_same_v<TComponent, CRigidBody>)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			scene->CreatePhysicsBody(entity);
+		}
+		else if constexpr (std::is_same_v<TComponent, CJoint>)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			scene->CreatePhysicsHingeJoint(entity);
+		}
 	};
 
 	s_EntityRemoveComponentFuncs[managedType] = [](Entity entity) -> void
@@ -584,6 +645,11 @@ static void RegisterComponent()
 		{
 			Scene* scene = ScriptEngine::GetSceneContext();
 			scene->DestroyPhysicsBody(entity);
+		}
+		else if constexpr (std::is_same_v<TComponent, CJoint>)
+		{
+			Scene* scene = ScriptEngine::GetSceneContext();
+			scene->DestroyPhysicsHingeJoint(entity);
 		}
 
 		entity.removeComponent<TComponent>();
@@ -607,6 +673,7 @@ void ScriptGlue::RegisterComponents()
 	RegisterComponent<CBoundingBox>();
 	RegisterComponent<CCircleCollider>();
 	RegisterComponent<CPolygonCollider>();
+	RegisterComponent<CJoint>();
 	//TODO: register other components as needed
 }
 
@@ -666,6 +733,11 @@ void ScriptGlue::RegisterFunctions()
 
 	ESM_ADD_INTERNAL_CALL(CircleCollider_GetRadius);
 	ESM_ADD_INTERNAL_CALL(CircleCollider_SetRadius);
+
+	ESM_ADD_INTERNAL_CALL(JointComponent_SetConnectedEntity);
+	ESM_ADD_INTERNAL_CALL(JointComponent_SetAnchor);
+	ESM_ADD_INTERNAL_CALL(JointComponent_SetSoftness);
+	ESM_ADD_INTERNAL_CALL(JointComponent_SetBias);
 
 	ESM_ADD_INTERNAL_CALL(Input_IsKeyDown);
 }

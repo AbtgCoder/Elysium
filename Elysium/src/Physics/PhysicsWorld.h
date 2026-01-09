@@ -37,9 +37,11 @@ public:
 	PhysicsWorld(const Vec2& gravity, int iterations);
 	~PhysicsWorld();
 
+	
 	void AddBody(PhysicsBody* body);
-	void AddJoint(PhysicsHingeJoint* joint);
 	void DestroyBody(PhysicsBody* body);
+	void AddJoint(PhysicsHingeJoint* joint);
+	void DestroyJoint(PhysicsHingeJoint* joint);
 
 	void Clear();
 

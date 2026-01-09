@@ -449,6 +449,59 @@ void Scene::DestroyPhysicsBody(Entity e)
 	rb.runtimeBody = nullptr;
 }
 
+void Scene::CreatePhysicsHingeJoint(Entity e)
+{
+	if (!e.hasComponent<CJoint>())
+		return;
+
+	auto& jointComp = e.getComponent<CJoint>();
+	if (jointComp.runtimeJoint)
+		return;
+
+	if (!IsEntityUUIDValid(jointComp.entity2Id))
+		return;
+
+	Entity e2 = GetEntityByUUID(jointComp.entity2Id);
+
+	if (!(e.hasComponent<CRigidBody>() && e2.hasComponent<CRigidBody>()))
+		return;
+
+	PhysicsBody* body1 = (PhysicsBody*)e.getComponent<CRigidBody>().runtimeBody;
+	PhysicsBody* body2 = (PhysicsBody*)e2.getComponent<CRigidBody>().runtimeBody;
+
+	if (!body1 || !body2)
+		return;
+
+	if (body1->m_type == PhysicsBodyType::staticBody && body2->m_type == PhysicsBodyType::staticBody)
+		return;
+
+	Vec2 anchorWorldPos = jointComp.anchorPos + Vec2(e.getComponent<CTransform>().Translation.x, e.getComponent<CTransform>().Translation.y);
+
+	PhysicsHingeJoint* joint = new PhysicsHingeJoint();
+	joint->Set(body1, body2, anchorWorldPos);
+
+	joint->m_softness = jointComp.softness;
+	joint->m_biasFactor = jointComp.bias;
+
+	jointComp.runtimeJoint = joint;
+	m_PhysicsWorld->AddJoint(joint);
+
+}
+
+void Scene::DestroyPhysicsHingeJoint(Entity e)
+{
+	if (!e.hasComponent<CJoint>())
+		return;
+
+	auto& jointComp = e.getComponent<CJoint>();
+	if (!jointComp.runtimeJoint)
+		return;
+
+	m_PhysicsWorld->DestroyJoint(static_cast<PhysicsHingeJoint*>(jointComp.runtimeJoint));
+
+	jointComp.runtimeJoint = nullptr;
+}
+
 void Scene::OnRuntimeStart()
 {
 	//Logger::Log("Starting Runtime");
@@ -533,6 +586,9 @@ void Scene::OnRuntimeStart()
 
 		for (auto e : m_entityManager.GetEntities())
 		{
+			CreatePhysicsHingeJoint(e);
+
+#if 0
 			if (e.hasComponent<CJoint>())
 			{
 				auto& jointComponent = e.getComponent<CJoint>();
@@ -560,6 +616,7 @@ void Scene::OnRuntimeStart()
 				jointComponent.runtimeJoint = joint;
 				m_PhysicsWorld->AddJoint(joint);
 			}
+#endif
 		}
 	}
 	
