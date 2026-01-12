@@ -139,47 +139,51 @@ void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		// Fields
 		std::shared_ptr<ScriptClass> entityClass = ScriptEngine::GetEntityClass(scriptComponent.ClassName);
-		const auto& fields = entityClass->GetFields();
-		if (fields.size() > 0)
+		if (entityClass)
 		{
-			out << YAML::Key << "ScriptFields" << YAML::Value;
-			auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-			out << YAML::BeginSeq;
-			for (const auto& [name, field] : fields)
+			const auto& fields = entityClass->GetFields();
+			if (fields.size() > 0)
 			{
-				if (entityFields.find(name) == entityFields.end())
-					continue;
-
-				out << YAML::BeginMap; // ScriptField
-				
-				out << YAML::Key << "Name" << YAML::Value << name;
-				out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
-
-				out << YAML::Key << "Data" << YAML::Value;
-				ScriptFieldInstance& scriptField = entityFields.at(name);
-				switch (field.Type)
+				out << YAML::Key << "ScriptFields" << YAML::Value;
+				auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
+				out << YAML::BeginSeq;
+				for (const auto& [name, field] : fields)
 				{
-					WRITE_SCRIPT_FIELD(Float, float);
-					WRITE_SCRIPT_FIELD(Double, double);
-					WRITE_SCRIPT_FIELD(Bool, bool);
-					WRITE_SCRIPT_FIELD(Char, char);
-					WRITE_SCRIPT_FIELD(Byte, int8_t);
-					WRITE_SCRIPT_FIELD(Short, int16_t);
-					WRITE_SCRIPT_FIELD(Int, int32_t);
-					WRITE_SCRIPT_FIELD(Long, int64_t);
-					WRITE_SCRIPT_FIELD(UByte, uint8_t);
-					WRITE_SCRIPT_FIELD(UShort, uint16_t);
-					WRITE_SCRIPT_FIELD(UInt, uint32_t);
-					WRITE_SCRIPT_FIELD(ULong, uint64_t);
-					//WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
-					WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
-					WRITE_SCRIPT_FIELD(Texture2D, uint64_t);
-					WRITE_SCRIPT_FIELD(Entity, Elysium::UUID);
-				}
+					if (entityFields.find(name) == entityFields.end())
+						continue;
 
-				out << YAML::EndMap; // ScriptField
+					out << YAML::BeginMap; // ScriptField
+
+					out << YAML::Key << "Name" << YAML::Value << name;
+					out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+
+					out << YAML::Key << "Data" << YAML::Value;
+					ScriptFieldInstance& scriptField = entityFields.at(name);
+					switch (field.Type)
+					{
+						WRITE_SCRIPT_FIELD(Float, float);
+						WRITE_SCRIPT_FIELD(Double, double);
+						WRITE_SCRIPT_FIELD(Bool, bool);
+						WRITE_SCRIPT_FIELD(Char, char);
+						WRITE_SCRIPT_FIELD(Byte, int8_t);
+						WRITE_SCRIPT_FIELD(Short, int16_t);
+						WRITE_SCRIPT_FIELD(Int, int32_t);
+						WRITE_SCRIPT_FIELD(Long, int64_t);
+						WRITE_SCRIPT_FIELD(UByte, uint8_t);
+						WRITE_SCRIPT_FIELD(UShort, uint16_t);
+						WRITE_SCRIPT_FIELD(UInt, uint32_t);
+						WRITE_SCRIPT_FIELD(ULong, uint64_t);
+						//WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
+						WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
+						WRITE_SCRIPT_FIELD(Texture2D, uint64_t);
+						WRITE_SCRIPT_FIELD(Entity, Elysium::UUID);
+					}
+
+					out << YAML::EndMap; // ScriptField
+				}
+				out << YAML::EndSeq;
 			}
-			out << YAML::EndSeq;
+
 		}
 
 		out << YAML::EndMap;
@@ -356,12 +360,13 @@ void SceneSerializer::Serialize(const std::filesystem::path& filepath)
 	out << YAML::EndMap;
 	
 	out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-	for (auto entity : m_Scene->m_entityManager.GetEntities())
+	for (auto e : m_Scene->m_Registry.entities())
 	{
-		if (entity.isActive())
-		{
-			SerializeEntity(out, entity);
-		}
+		Entity entity = { e, m_Scene.get() };
+		if (!entity)
+			return;
+		
+		SerializeEntity(out, entity);
 	}
 	out << YAML::EndSeq;
 	out << YAML::EndMap;

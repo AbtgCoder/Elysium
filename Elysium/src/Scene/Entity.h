@@ -1,60 +1,69 @@
 #pragma once
 
-//#include <string>
-//#include <vector>
-
-#include "EntityMemoryPool.h"
+#include "Scene.h"
+#include "Components.h"
+#include "ECS.h"
 
 class Entity
 {
 public:
 	Entity() = default;
+	Entity(ECS::Entity handle, Scene* scene);
+	Entity(const Entity& other) = default;
 
-	Entity(size_t index)
-		: m_Id(index), m_IsValidEntity(true) {}
-
-	size_t id() const { return m_Id; }
-
-	bool isActive()
+	template<typename T, typename... Args>
+	T& addComponent(Args&&... args)
 	{
-		return EntityMemoryPool::Instance().isActive(m_Id);
+		// assert !hascomponent
+		T& component = m_Scene->m_Registry.emplace<T>(m_EntityHandle, std::forward<Args>(args)...);
+		return component;
+	}
+
+	template<typename T>
+	T& addComponent(const T& component)
+	{
+		// assert !hascomponent
+		return m_Scene->m_Registry.emplaceCopy<T>(m_EntityHandle, component);
 	}
 
 	template<typename T>
 	T& getComponent()
 	{
-		return EntityMemoryPool::Instance().getComponent<T>(m_Id);
+		// assert hascomponent
+		return m_Scene->m_Registry.get<T>(m_EntityHandle);
 	}
 
-	// has component
 	template<typename T>
 	bool hasComponent()
 	{
-		return EntityMemoryPool::Instance().hasComponent<T>(m_Id);
+		return m_Scene->m_Registry.has<T>(m_EntityHandle);
 	}
-	// add component
-	template <typename T, typename... TArgs>
-	T& addComponent(TArgs&&... mArgs)
-	{
-		return EntityMemoryPool::Instance().addComponent<T>(m_Id, std::forward<TArgs>(mArgs)...);
-	}
-	// remove component
-	template <typename T>
+
+	template<typename T>
 	void removeComponent()
 	{
-		EntityMemoryPool::Instance().removeComponent<T>(m_Id);
+		// assert HasComponent...
+		m_Scene->m_Registry.remove<T>(m_EntityHandle);
 	}
 
-	void destroy()
+	operator bool() const { return m_EntityHandle != ECS::NullEntity; }
+	operator ECS::Entity() const { return m_EntityHandle; }
+	//operator uint32_t() const { return (uint32_t)m_EntityHandle; }
+
+	Elysium::UUID GetUUID() { return getComponent<CId>().id;  }
+	const std::string& GetName() { return getComponent<CTag>().tag; }
+
+	bool operator== (const Entity& other) const
 	{
-		EntityMemoryPool::Instance().destroy(m_Id);
+		return m_EntityHandle == other.m_EntityHandle && m_Scene == other.m_Scene;
 	}
 
-	operator bool() const { return m_IsValidEntity; }
-
-	Elysium::UUID GetUUID() { return getComponent<CId>().id; }
+	bool operator != (const Entity& other) const
+	{
+		return !(*this == other);
+	}
 
 private:
-	bool m_IsValidEntity = false;
-	size_t m_Id;
+	ECS::Entity m_EntityHandle{ ECS::NullEntity };
+	Scene* m_Scene = nullptr;
 };

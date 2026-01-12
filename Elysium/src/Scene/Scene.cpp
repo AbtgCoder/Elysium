@@ -20,6 +20,8 @@
 
 #include <windows.h>
 
+#include <unordered_set>
+
 // Pixels per meter. Box2D uses metric units, so we need to define a conversion
 #define PPM 30.0F
 // SFML uses degrees for angles while Box2D uses radians
@@ -91,11 +93,16 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 	scene->m_KDTreeBroadPhaseCollision = other->m_KDTreeBroadPhaseCollision;
 
 	// create entities in new Scene
-	for (auto e : other->m_entityManager.GetEntities())
+	for (auto entity : other->m_Registry.entities())
 	{
+		Entity e = { entity, other.get() };
 		auto runtimeEntity = scene->AddEntityWithUUID(e.getComponent<CId>().id, e.getComponent<CTag>().tag);
-		runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
-		runtimeEntity.addComponent<CParent>(e.getComponent<CParent>());
+
+		//runtimeEntity.addComponent<CTransform>(e.getComponent<CTransform>());
+		//runtimeEntity.addComponent<CParent>(e.getComponent<CParent>());
+		
+		runtimeEntity.getComponent<CTransform>() = e.getComponent<CTransform>();
+		runtimeEntity.getComponent<CParent>() = e.getComponent<CParent>(); //TODO: still need to test if this works with the new ECS
 
 		CopyComponentsIfExists<
 			CSpriteRenderer,
@@ -116,8 +123,6 @@ std::shared_ptr<Scene> Scene::Copy(std::shared_ptr<Scene> other)
 
 	}
 
-	scene->m_entityManager.update();
-
 	return scene;
 }
 
@@ -128,14 +133,13 @@ Entity Scene::AddEntity(const std::string& name)
 
 Entity Scene::AddEntityWithUUID(Elysium::UUID uuid, const std::string& name)
 {
-	Entity e = m_entityManager.addEntity();
+	Entity e = {m_Registry.create(), this};
 	e.addComponent<CId>(uuid);
 	e.addComponent<CTransform>();
 	e.addComponent<CParent>();
 	auto& tag = e.addComponent<CTag>();
 	tag.tag = name.empty() ? "Entity" : name;
-	m_entityManager.update();
-
+	
 	m_EntityMap[uuid] = e; // Store the entity in the map with its UUID
 
 	return e;
@@ -155,7 +159,9 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 {
 	// Create a duplicate of the current entity
 	auto duplicateEntity = AddEntity(e.getComponent<CTag>().tag);
-	duplicateEntity.addComponent<CTransform>(e.getComponent<CTransform>());
+
+	//duplicateEntity.addComponent<CTransform>(e.getComponent<CTransform>());
+	duplicateEntity.getComponent<CTransform>() = e.getComponent<CTransform>();
 
 	// Handle Parent Component
 	auto& originalParentComponent = e.getComponent<CParent>();
@@ -208,55 +214,33 @@ Entity Scene::DuplicateEntity(Entity e, std::optional<Elysium::UUID> newParentID
 		DuplicateEntity(originalChildEntity, duplicateEntity.getComponent<CId>().id);
 	}
 
-	m_entityManager.update();
 	return duplicateEntity;
 }
 
 Entity Scene::GetEntityByUUID(Elysium::UUID id)
 {
 	//TODO: assert valid id probably
-	//for (auto e : m_entityManager.GetEntities())
-	//{
-	//	if (e.getComponent<CId>().id == id)
-	//	{
-	//		return e;
-	//	}
-	//}
-
 	if (m_EntityMap.find(id) != m_EntityMap.end())
 	{
-		return m_EntityMap.at(id);
+		return { m_EntityMap.at(id), this };
 	}
 	else
 	{
-		//Logger::Log("Entity with UUID not found: " + id.ToString(), "Scene", LOG_TYPE::WARNING);
-		return Entity(); // Return an invalid entity if not found
-	}
-
-}
-
-Entity Scene::GetEntityByEntityID(size_t id)
-{
-	//TODO: assert valid id probably
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.id() == id)
-		{
-			return e;
-		}
+		Logger::Log("Entity with UUID not found: " + std::to_string((uint64_t)id), "Scene", LOG_TYPE::WARNING);
+		return {}; // Return an invalid entity if not found
 	}
 }
 
 Entity Scene::FindEntityByName(const std::string& name)
 {
-	for (auto entity : m_entityManager.GetEntities())
+	auto view = m_Registry.view<CTag>();
+	for (auto entity : view)
 	{
-		if (entity.hasComponent<CTag>() && entity.getComponent<CTag>().tag == name)
-		{
-			return entity;
-		}
+		const auto& tc = view.get<CTag>(entity);
+		if (tc.tag == name)
+			return Entity{ entity, this };
 	}
-	return Entity();
+	return {};
 }
 
 void Scene::DestroyEntity(Entity entity)
@@ -278,39 +262,30 @@ void Scene::DestroyEntity(Entity entity)
 
 	m_EntityMap.erase(entity.GetUUID()); // Remove the entity from the map using its UUID
 
-	entity.destroy();
+	m_Registry.destroy(entity);
 }
 
 Camera Scene::GetPrimaryCamera()
 {
-	// Rendering
-	for (auto e : m_entityManager.GetEntities())
+	auto view = m_Registry.view<CCamera>();
+	for (auto entity : view)
 	{
-		if (e.hasComponent<CCamera>())
-		{
-			auto& camera = e.getComponent<CCamera>();
-			if (camera.primary)
-			{
-				return camera.Camera;
-			}
-		}
+		const auto& camera = view.get<CCamera>(entity);
+		if (camera.primary)
+			return camera.Camera;
 	}
+
 	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
 }
 
 glm::mat4 Scene::GetPrimaryCameraViewMatrix()
 {
-	// Rendering
-	for (auto e : m_entityManager.GetEntities())
+	auto view = m_Registry.view<CTransform, CCamera>();
+	for (auto entity : view)
 	{
-		if (e.hasComponent<CCamera>())
-		{
-			auto& camera = e.getComponent<CCamera>();
-			if (camera.primary)
-			{
-				return  glm::inverse(e.getComponent<CTransform>().GetTransform());
-			}
-		}
+		auto [transform, camera] = view.get<CTransform, CCamera>(entity);
+		if (camera.primary)
+			return glm::inverse(transform.GetTransform());
 	}
 	Logger::Log("there are is no primary camera in scene!", "editor", LOG_TYPE::WARNING);
 	//TODO: return zero matrix ig idk...
@@ -318,27 +293,7 @@ glm::mat4 Scene::GetPrimaryCameraViewMatrix()
 
 bool Scene::IsEntityUUIDValid(Elysium::UUID uuid)
 {
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.getComponent<CId>().id == uuid)
-		{
-			return true;
-		}
-	}*/
 	return m_EntityMap.find(uuid) != m_EntityMap.end();
-}
-
-std::vector<Entity>& Scene::GetAllPhysicsEntities()
-{
-	std::vector<Entity> physicsEntities;
-	for (auto e : m_entityManager.GetEntities())
-	{
-		if (e.hasComponent<CBoundingBox>())
-		{
-			physicsEntities.push_back(e);
-		}
-	}
-	return physicsEntities;
 }
 
 ScriptableEntity* TryLoadScript()
@@ -363,11 +318,6 @@ ScriptableEntity* TryLoadScript()
 
 void Scene::CreatePhysicsBody(Entity e)
 {
-	if (!e.hasComponent<CRigidBody>())
-	{
-		return;
-	}
-
 	auto& rb2d = e.getComponent<CRigidBody>();
 	if (rb2d.runtimeBody)
 		return; // already created
@@ -448,9 +398,6 @@ void Scene::DestroyPhysicsBody(Entity e)
 
 void Scene::CreatePhysicsHingeJoint(Entity e)
 {
-	if (!e.hasComponent<CJoint>())
-		return;
-
 	auto& jointComp = e.getComponent<CJoint>();
 	if (jointComp.runtimeJoint)
 		return;
@@ -503,8 +450,6 @@ void Scene::DestroyPhysicsHingeJoint(Entity e)
 
 void Scene::OnRuntimeStart()
 {
-	//Logger::Log("Starting Runtime");
-
 	m_IsRunning = true;
 
 	UpdateTransforms();
@@ -517,29 +462,31 @@ void Scene::OnRuntimeStart()
 		//m_PhysicsWorld->SetContactListener((ContactListener*)(new Elysium::SceneContactListener(this)));
 		m_PhysicsWorld->SetContactListener(static_cast<CollisionListener*>(new Elysium::SceneCollisionListener(shared_from_this())));
 
-		for (auto e : m_entityManager.GetEntities())
+		auto view = m_Registry.view<CRigidBody>();
+		for (auto e : view)
 		{
-			CreatePhysicsBody(e);
+			Entity ent = { e, this };
+			CreatePhysicsBody(ent);
 		}
 
-		for (auto e : m_entityManager.GetEntities())
+		auto jointView = m_Registry.view<CRigidBody, CJoint>();
+		for (auto e : jointView)
 		{
-			CreatePhysicsHingeJoint(e);
+			Entity ent = { e, this };
+			CreatePhysicsHingeJoint(ent);
 		}
 	}
-	
 
 	// Scripting (doing this after physics , as if someone adds an entity with a rigidbody in OnCreate then that needs scene_>physicsWorld)
 	{
 		ScriptEngine::OnRuntimeStart(this);
 
 		// instantiate scripts for entities that have them
-		for (auto e : m_entityManager.GetEntities())
+		auto view = m_Registry.view<CScript>();
+		for (auto e : view)
 		{
-			if (e.hasComponent<CScript>())
-			{
-				ScriptEngine::OnCreateEntity(e);
-			}
+			Entity entity = { e, this };
+			ScriptEngine::OnCreateEntity(entity);
 		}
 	}
 
@@ -549,12 +496,9 @@ void Scene::OnRuntimeStart()
 		auto e2 = GetEntityByUUID(joint->m_body2->m_UserData);
 
 		Logger::Log("joint for: " + e1.getComponent<CTag>().tag + " and " + e2.getComponent<CTag>().tag, "scene");
-
 	}
 
 }
-
-
 
 void Scene::OnRuntimeStop()
 {
@@ -562,31 +506,18 @@ void Scene::OnRuntimeStop()
 
 	ScriptEngine::OnRuntimeStop();
 
-	// Destroy script
-	//for (auto e : m_entityManager.GetEntities())
-	//{
-	//	if (e.hasComponent<CNativeScriptComponent>())
-	//	{
-	//		auto& nsc = e.getComponent<CNativeScriptComponent>();
-	//		nsc.instance->OnDestroy();
-	//		delete nsc.instance;
-	//		nsc.instance = nullptr;
-	//		//nsc.DestroyScript(&nsc);
-	//	}
-	//}
-
 	// Physics world deletion
 	delete m_PhysicsWorld;
 }
 
-
 void Scene::UpdateTransforms()
 {
 	// calculate all global transforms..
-	for (auto e : m_entityManager.GetEntities())
+	auto transformView = m_Registry.view<CTransform, CParent>();
+	for (auto entity : transformView)
 	{
-		auto& transform = e.getComponent<CTransform>();
-		if (!e.getComponent<CParent>().HasParent)
+		auto [transform, parentComponent] = transformView.get<CTransform, CParent>(entity);
+		if (!parentComponent.HasParent)
 		{
 			transform.GlobalTranslation = transform.Translation;
 			transform.GlobalRotation = transform.Rotation;
@@ -598,7 +529,6 @@ void Scene::UpdateTransforms()
 		glm::vec3 globalOrientation = transform.Rotation;
 		glm::vec3 globalScale = transform.Scale;
 
-		auto parentComponent = e.getComponent<CParent>();
 		while (parentComponent.HasParent)
 		{
 			auto& parentTransform = GetEntityByUUID(parentComponent.ParentID).getComponent<CTransform>();
@@ -622,30 +552,21 @@ void Scene::OnUpdateRuntime(float dt)
 
 		// Update Scripts
 		{
-			for (auto e : m_entityManager.GetEntities())
+			auto view = m_Registry.view<CScript>();
+			for (auto e : view)
 			{
-				if (e.hasComponent<CScript>())
-				{
-					ScriptEngine::OnUpdateEntity(e, dt);
-				}
+				Entity entity = { e, this };
+				ScriptEngine::OnUpdateEntity(entity, dt);
 			}
-
-			/*for (auto e : m_entityManager.GetEntities())
-			{
-				if (e.hasComponent<CNativeScriptComponent>())
-				{
-					auto& nsc = e.getComponent<CNativeScriptComponent>();
-					if (nsc.instance)
-						nsc.instance->OnUpdate(dt);
-				}
-			}*/
 		}
 
 		// Physics
 		{
-			// update joints
-			for (auto e : m_entityManager.GetEntities())
+			//TODO:  update joints that may have been modified by scripts ig...
+			auto jointView = m_Registry.view<CJoint>();
+			for (auto ent : jointView)
 			{
+				Entity e = { ent, this };
 				if (e.hasComponent<CJoint>() && e.getComponent<CJoint>().dirty)
 					CreatePhysicsHingeJoint(e);
 			}
@@ -666,31 +587,30 @@ void Scene::OnUpdateRuntime(float dt)
 				}
 			}
 
-			for (auto e : m_entityManager.GetEntities())
+			auto view = m_Registry.view<CRigidBody>();
+			for (auto e :view)
 			{
-				if (e.hasComponent<CRigidBody>())
+				Entity entity = { e, this };
+				auto& rb2d = entity.getComponent<CRigidBody>();
+				if (rb2d.runtimeBody)
 				{
-					auto& rb2d = e.getComponent<CRigidBody>();
-					if (rb2d.runtimeBody)
-					{
-						//TODO: fix this for when entity e has a parent....
-						PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
-						auto& transform = e.getComponent<CTransform>();
-						transform.Translation.x = body->m_position.x;
-						transform.Translation.y = body->m_position.y;
-						transform.Rotation.z = body->m_rotation;
-					}
+					//TODO: fix this for when entity e has a parent....
+					PhysicsBody* body = (PhysicsBody*)rb2d.runtimeBody;
+					auto& transform = entity.getComponent<CTransform>();
+					transform.Translation.x = body->m_position.x;
+					transform.Translation.y = body->m_position.y;
+					transform.Rotation.z = body->m_rotation;
 				}
 			}
 
 		}
 		
 		// Animation
-		for (auto e : m_entityManager.GetEntities())
 		{
-			if (e.hasComponent<CAnimator>())
+			auto view = m_Registry.view<CAnimator>();
+			for (auto e : view)
 			{
-				auto& animController = e.getComponent<CAnimator>().Controller;
+				auto& animController = view.get<CAnimator>(e).Controller;
 				animController.Update(dt);
 			}
 		}
@@ -703,17 +623,16 @@ void Scene::OnUpdateRuntime(float dt)
 	// Rendering
 	Camera* mainCamera = nullptr;
 	CTransform cameraTransform;
-	for (auto e : m_entityManager.GetEntities())
+	auto cameraView = m_Registry.view<CCamera>();
+	for (auto e : cameraView)
 	{
-		if (e.hasComponent<CCamera>())
+		auto& camera = cameraView.get<CCamera>(e);
+		if (camera.primary)
 		{
-			auto& camera = e.getComponent<CCamera>();
-			if (camera.primary)
-			{
-				mainCamera = &camera.Camera;
-				cameraTransform = e.getComponent<CTransform>();
-				break;
-			}
+			mainCamera = &camera.Camera;
+			Entity ent = { e, this };
+			cameraTransform = ent.getComponent<CTransform>();
+			break;
 		}
 	}
 
@@ -722,67 +641,110 @@ void Scene::OnUpdateRuntime(float dt)
 
 		Renderer2D::BeginScene(*mainCamera, cameraTransform.GetTransform());
 
-		for (auto entity : m_entityManager.GetEntities())
+		// draw rectangles
 		{
-			auto transform = entity.getComponent<CTransform>();
+			auto view = m_Registry.view<CTransform, CRectangle>();
 
-			if (entity.hasComponent<CRectangle>())
+			for (auto e : view)
 			{
-				auto rect = entity.getComponent<CRectangle>();
-				glm::mat4 t = entity.getComponent<CTransform>().GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
+				auto [transform, rect] = view.get<CTransform, CRectangle>(e);
 
-				Renderer2D::DrawQuad(t, rect.color, (int)entity.id());
+				glm::mat4 t = transform.GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
 
-				//Renderer2D::DrawRotatedQuad({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, rect.color, (int)entity.id());
+				Renderer2D::DrawQuad(t, rect.color, ECS::ToEntityID(e));
 			}
+		}
 
-			if (entity.hasComponent<CCircle>())
+		// draw circles
+		{
+			auto view = m_Registry.view<CTransform, CCircle>();
+
+			for (auto e : view)
 			{
-				auto circle = entity.getComponent<CCircle>();
-				Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, (int)entity.id());
+				auto [transform, circle] = view.get<CTransform, CCircle>(e);
+
+				Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, ECS::ToEntityID(e));
 			}
+		}
 
-			if (entity.hasComponent<CPolygon>())
+		// draw polygons
+		{
+			auto view = m_Registry.view<CTransform, CPolygon>();
+
+			for (auto e : view)
 			{
-				auto polygon = entity.getComponent<CPolygon>();
-				Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, (int)entity.id());
+				auto [transform, polygon] = view.get<CTransform, CPolygon>(e);
+
+				Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, ECS::ToEntityID(e));
 			}
+		}
 
-			bool renderSpriteFromSpriteRenderer = true;
-			if (entity.hasComponent<CAnimator>())
+		// draw animation and sprites
+		{
+			std::unordered_set<uint32_t> renderedEntities;
+
+			// Animator pass
 			{
-				auto& animController = entity.getComponent<CAnimator>().Controller;
+				auto view = m_Registry.view<CTransform, CAnimator>();
 
-				if (animController.m_States.contains(animController.m_CurrentState))
+				for (auto e : view)
 				{
-					const auto& clip = animController.m_States.at(animController.m_CurrentState).Clip;
-					if (clip && clip->m_SpriteSheetTexture)
+					auto [transform, animator] =
+						view.get<CTransform, CAnimator>(e);
+
+					auto& controller = animator.Controller;
+
+					if (!controller.m_States.contains(controller.m_CurrentState))
+						continue;
+
+					const auto& clip =
+						controller.m_States.at(controller.m_CurrentState).Clip;
+
+					if (!clip || !clip->m_SpriteSheetTexture)
+						continue;
+
+					auto frame = controller.GetCurrentFrame();
+
+					Renderer2D::DrawQuad(
+						transform.GetTransform(),
+						clip->m_SpriteSheetTexture,
+						glm::vec4(1.0f),
+						frame.UVmin,
+						frame.UVMax,
+						ECS::ToEntityID(e)
+					);
+
+					renderedEntities.insert(ECS::ToEntityID(e));
+				}
+			}
+
+			// spriterenderer pass
+			{
+				auto view = m_Registry.view<CTransform, CSpriteRenderer>();
+
+				for (auto e : view)
+				{
+					uint32_t id = ECS::ToEntityID(e);
+
+					// skip entities already rendered by the animator
+					if (renderedEntities.contains(id))
+						continue;
+
+					auto [transform, sprite] = view.get<CTransform, CSpriteRenderer>(e);
+
+					if (sprite.texture != 0)
 					{
-						renderSpriteFromSpriteRenderer = false;
-
-						auto animFrame = animController.GetCurrentFrame();
-
-						// draw quad with texture and frames's uv coordinates
-						Renderer2D::DrawQuad(transform.GetTransform(), clip->m_SpriteSheetTexture, glm::vec4(1.0f), animFrame.UVmin, animFrame.UVMax, (int)entity.id());
+						auto texture = AssetManager::GetAsset<Texture2D>(sprite.texture);
+						Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), id);
 					}
-				}
-
-			}
-			if (entity.hasComponent<CSpriteRenderer>() && renderSpriteFromSpriteRenderer)
-			{
-				auto& src = entity.getComponent<CSpriteRenderer>();
-
-				if (src.texture != 0)
-				{
-					std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
-					Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f),(int)entity.id());
-				}
-				else
-				{
-					Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), (int)entity.id());
+					else
+					{
+						Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), id);
+					}
 				}
 			}
 		}
+
 
 
 		// debug draw : physics contact points
@@ -839,17 +801,13 @@ void Scene::OnViewportResize(uint32_t width, uint32_t height)
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
 
-	for (auto e : m_entityManager.GetEntities())
+	auto view = m_Registry.view<CCamera>();
+	for (auto e : view)
 	{
-		if (e.hasComponent<CCamera>())
-		{
-			auto& cameraComponent = e.getComponent<CCamera>();
-			cameraComponent.Camera.SetViewportSize(width, height);
-		}
+		auto& cameraComponent = view.get<CCamera>(e);
+		cameraComponent.Camera.SetViewportSize(width, height);
 	}
 }
-
-
 
 void Scene::Step(int frames)
 {
@@ -860,6 +818,7 @@ void Scene::RenderScene(EditorCamera& camera)
 {
 	Renderer2D::BeginScene(camera);
 
+#if 0
 	for (auto entity : m_entityManager.GetEntities())
 	{
 		auto transform = entity.getComponent<CTransform>();
@@ -902,7 +861,65 @@ void Scene::RenderScene(EditorCamera& camera)
 			}
 		}
 	}
+#endif
 
+	// draw rectangles
+	{
+		auto view = m_Registry.view<CTransform, CRectangle>();
+
+		for (auto e : view)
+		{
+			auto [transform, rect] = view.get<CTransform, CRectangle>(e);
+
+			glm::mat4 t = transform.GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
+
+			Renderer2D::DrawQuad(t, rect.color, ECS::ToEntityID(e));
+		}
+	}
+
+	// draw circles
+	{
+		auto view = m_Registry.view<CTransform, CCircle>();
+
+		for (auto e : view)
+		{
+			auto [transform, circle] = view.get<CTransform, CCircle>(e);
+
+			Renderer2D::DrawCircle({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, circle.radius, circle.color, ECS::ToEntityID(e));
+		}
+	}
+
+	// draw polygons
+	{
+		auto view = m_Registry.view<CTransform, CPolygon>();
+
+		for (auto e : view)
+		{
+			auto [transform, polygon] = view.get<CTransform, CPolygon>(e);
+
+			Renderer2D::DrawPolygon(transform.GetTransform(), polygon.size, polygon.sides, polygon.color, ECS::ToEntityID(e));
+		}
+	}
+
+	// draw sprites
+	{
+		auto view = m_Registry.view<CTransform, CSpriteRenderer>();
+		for (auto e : view)
+		{
+			auto [transform, src] = view.get<CTransform, CSpriteRenderer>(e);
+
+			if (src.texture != 0)
+			{
+				std::shared_ptr<Texture2D> texture = AssetManager::GetAsset<Texture2D>(src.texture);
+				Renderer2D::DrawQuad(transform.GetTransform(), texture, glm::vec4(1.0f), ECS::ToEntityID(e));
+			}
+			else
+			{
+				Renderer2D::DrawQuad(transform.GetTransform(), glm::vec4(1.0f), ECS::ToEntityID(e));
+			}
+		}
+	}
+	
 
 #if 0
 	//TODO: editor setting for draw joints should be enabled to see this ig...

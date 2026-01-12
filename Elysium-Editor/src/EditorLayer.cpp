@@ -122,7 +122,7 @@ void EditorLayer::OnUpdate(float ts)
 	{
 		// read pixel data
 		int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
-		m_HoveredEntity = pixelData == -1 ? Entity() : m_ActiveScene->GetEntityByEntityID(pixelData);
+		m_HoveredEntity = pixelData == -1 ? Entity() : Entity(ECS::GetEntityFromEntityID(pixelData), m_ActiveScene.get());
 	}
 
 	// overlay render
@@ -453,10 +453,7 @@ void EditorLayer::OnOverlayRender()
 				auto rect = inspectedEntity.getComponent<CRectangle>();
 				glm::mat4 t = inspectedEntity.getComponent<CTransform>().GetTransform() * glm::scale(glm::mat4(1.0f), { rect.size.x, rect.size.y, 1.0f });
 
-				Renderer2D::DrawRect(t, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), (int)inspectedEntity.id());
-
-				/*auto rect = inspectedEntity.getComponent<CRectangle>();
-				Renderer2D::DrawRotatedRect({ transform.GlobalTranslation.x, transform.GlobalTranslation.y }, { rect.size.x, rect.size.y }, transform.GlobalRotation.z, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));*/
+				Renderer2D::DrawRect(t, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), ECS::ToEntityID((ECS::Entity)inspectedEntity));
 			}
 
 			if (inspectedEntity.hasComponent<CSpriteRenderer>())

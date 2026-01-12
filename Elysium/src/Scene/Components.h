@@ -17,13 +17,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-class Component
-{
-public:
-	bool has = false;
-};
 
-class CId : public Component
+class CId
 {
 public:
 	Elysium::UUID id;
@@ -33,18 +28,18 @@ public:
 	CId(const CId&) = default;
 };
 
-class CTag : public Component
+class CTag
 {
 public:
 	std::string tag;
 	CTag() {}
 	CTag(const std::string& t)
 		: tag(t) {}
-	CTag(CTag& other)
+	CTag(const CTag& other)
 		: tag(other.tag) {}
 };
 
-class CTransform : public Component
+class CTransform
 {
 public:
 	glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
@@ -60,7 +55,7 @@ public:
 		: Translation(p) {}
 	CTransform(const glm::vec3& p, const glm::vec3& sc, const glm::vec3& a)
 		: Translation(p), Scale(sc), Rotation(a) {}
-	CTransform(CTransform& other) = default;
+	CTransform(const CTransform& other) = default;
 
 	glm::mat4 GetTransform() const
 	{
@@ -74,7 +69,7 @@ public:
 	}
 };
 
-class CParent : public Component
+class CParent
 {
 public:
 	bool HasParent = false;
@@ -82,7 +77,7 @@ public:
 	std::vector<Elysium::UUID> Children;
 
 	CParent() = default;
-	CParent(CParent& other)
+	CParent(const CParent& other)
 		: HasParent(other.HasParent), ParentID(other.ParentID), Children(other.Children) {}
 
 	bool RemoveChild(Elysium::UUID childId)
@@ -99,7 +94,7 @@ public:
 	}
 };
 
-class CCamera : public Component
+class CCamera
 {
 public:
 	SceneCamera Camera;
@@ -111,7 +106,7 @@ public:
 	CCamera(const CCamera&) = default;
 };
 
-class CAnimator : public Component
+class CAnimator
 {
 public:
 	AnimationController Controller;
@@ -121,7 +116,7 @@ public:
 		: Controller(controller) {}
 };
 
-class CScript : public Component
+class CScript
 {
 public:
 	std::string ClassName; // name of the script class
@@ -132,7 +127,7 @@ public:
 
 // forward declaration
 class ScriptableEntity;
-class CNativeScriptComponent : public Component
+class CNativeScriptComponent
 {
 public:
 	ScriptableEntity* instance = nullptr;
@@ -149,7 +144,7 @@ public:
 	}
 };
 
-class CRectangle : public Component
+class CRectangle
 {
 public:
 	Vec2 size = { 1.0f, 1.0f};
@@ -166,7 +161,7 @@ public:
 
 };
 
-class CCircle : public Component
+class CCircle
 {
 public:
 	float radius = 1.0f;
@@ -177,10 +172,10 @@ public:
 	CCircle() {}
 	CCircle(float r)
 		: radius(r) {}
-	CCircle(CCircle& other) = default;
+	CCircle(const CCircle& other) = default;
 };
 
-class CPolygon : public Component
+class CPolygon
 {
 public:
 	int sides = 3; // this must be >= 3
@@ -192,7 +187,7 @@ public:
 	CPolygon(const CPolygon&) = default;
 };
 
-class CLifespan : public Component
+class CLifespan
 {
 public:
 	int lifespan = 0;
@@ -200,11 +195,11 @@ public:
 	CLifespan() {}
 	CLifespan(int duration, int frame)
 		: lifespan(duration), frameCreated(frame) {}
-	CLifespan(CLifespan& other)
+	CLifespan(const CLifespan& other)
 		: lifespan(other.lifespan), frameCreated(other.frameCreated) {}
 };
 
-class CInput : public Component
+class CInput
 {
 public:
 	bool up = false;
@@ -216,7 +211,7 @@ public:
 	bool canJump = true;
 	
 	CInput() {}
-	CInput(CInput& other)
+	CInput(const CInput& other)
 		: up(other.up)
 		, left(other.left)
 		, right(other.right)
@@ -226,7 +221,7 @@ public:
 		, canJump(other.canJump) {}
 };
 
-class CBoundingBox : public Component
+class CBoundingBox
 {
 public:
 	Vec2 size;
@@ -237,11 +232,11 @@ public:
 		: size(s), halfSize(s.x/2,s.y/2) {}
 	CBoundingBox(const Vec2& s, const Vec2& o)
 		: size(s), halfSize(s.x / 2, s.y / 2), offset(o) {}
-	CBoundingBox(CBoundingBox& other)
+	CBoundingBox(const CBoundingBox& other)
 		: size(other.size), halfSize(other.halfSize), offset(other.offset) {}
 };
 
-class CRigidBody : public Component
+class CRigidBody
 {
 public:
 	enum class BodyType { Static = 0, Dynamic, Kinematic};
@@ -254,18 +249,18 @@ public:
 	CRigidBody(const CRigidBody&) = default;
 };
 
-class CCircleCollider : public Component
+class CCircleCollider
 {
 public:
 	float radius = 0.0f;
 	CCircleCollider() {}
 	CCircleCollider(float r)
 		: radius(r) {}
-	CCircleCollider(CCircleCollider& other)
+	CCircleCollider(const CCircleCollider& other)
 		: radius(other.radius) {}
 };
 
-class CPolygonCollider : public Component
+class CPolygonCollider
 {
 public:
 	std::vector<Vec2> colliderVertices;
@@ -276,11 +271,11 @@ public:
 		: colliderVertices(vertices) {}
 	CPolygonCollider(const Vec2& s, const std::vector<Vec2>& vertices)
 		: size(s), colliderVertices(vertices) {}
-	CPolygonCollider(CPolygonCollider& other)
+	CPolygonCollider(const CPolygonCollider& other)
 		: size(other.size), colliderVertices(other.colliderVertices), offset(other.offset) {}
 };
 
-class CPhysicsMaterial : public Component
+class CPhysicsMaterial
 {
 public:
 	float mass = 1.0f; // in Kgs //TODO: should be > 0 
@@ -293,10 +288,10 @@ public:
 		: mass(m) {}
 	CPhysicsMaterial(float m, float e)
 		: mass(m), restitutionCoefficient(e) {}
-	CPhysicsMaterial(CPhysicsMaterial& other) = default;
+	CPhysicsMaterial(const CPhysicsMaterial& other) = default;
 };
 
-class CJoint : public Component
+class CJoint
 {
 public:
 	Elysium::UUID entity1Id; // TODO: only works if this is a valid entityID)
@@ -322,7 +317,7 @@ public:
 		: entity1Id(id1), entity2Id(id2), anchorPos(aPos) {}
 };
 
-class CSpriteRenderer : public Component
+class CSpriteRenderer
 {
 public:
 	AssetHandle texture = 0;
@@ -332,25 +327,25 @@ public:
 };
 
 
-class CState : public Component
+class CState
 {
 public:
 	std::string state = "standing";
 	CState() {}
 	CState(const std::string& s)
 		: state(s) {}
-	CState(CState& other)
+	CState(const CState& other)
 		: state(other.state) {}
 };
 
-class CScore : public Component
+class CScore
 {
 public:
 	int score = 0;
 	CScore() {}
 	CScore(int s)
 		: score(s) {}
-	CScore(CScore& other)
+	CScore(const CScore& other)
 		: score(other.score) {}
 };
 

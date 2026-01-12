@@ -2,6 +2,8 @@
 #include <cmath>
 #define INFINITE            0xFFFFFFFF
 
+#if 0
+
 void Physics::NarrowPhaseCollision(KDTreeNode* node)
 {
 	if (node->left || node->right)
@@ -690,3 +692,6 @@ std::vector<Vec2> Physics::SAT(Entity a, Entity b)
 
 	return empty;
 }
+
+
+#endif

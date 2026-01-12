@@ -2,18 +2,18 @@
 
 void RotateEntity::OnCreate()
 {
-	std::cout << "wow created!\n";
+	//std::cout << "wow created!\n";
 }
 
 void RotateEntity::OnDestroy()
 {
-	std::cout << "wow destroyed! zoo-wee-mama\n";
+	//std::cout << "wow destroyed! zoo-wee-mama\n";
 }
 
 void RotateEntity::OnUpdate(float ts)
 {
-	auto& transform = getComponent<CTransform>();
+	/*auto& transform = getComponent<CTransform>();
 	float speed = 15.0f;
 
-	transform.Rotation.z += speed * ts;
+	transform.Rotation.z += speed * ts;*/
 }

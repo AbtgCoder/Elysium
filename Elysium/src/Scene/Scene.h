@@ -7,23 +7,17 @@
 
 #include "Renderer/EditorCamera.h"
 
-#include "EntityManager.h"
+#include "ECS.h"
 
 #include <string>
 #include <optional>
 
+
+class Entity;
+
 namespace Elysium
 {
-    class SceneCollisionListener : public CollisionListener
-    {
-    public:
-		SceneCollisionListener(const std::shared_ptr<Scene>& scene);
-        void OnCollisionBegin(const CollisionEvent& event) override;
-		void OnCollisionStay(const CollisionEvent& event) override;
-        void OnCollisionEnd(const CollisionEvent& event) override;
-    private:
-        std::shared_ptr<Scene> m_Scene;
-    };
+	class SceneCollisionListener;
 }
 
 class Scene : public Asset, public std::enable_shared_from_this<Scene>
@@ -42,15 +36,12 @@ public:
 	Entity DuplicateEntity(Entity entity, std::optional<Elysium::UUID> newParentID = std::nullopt);
 	Entity GetEntityByUUID(Elysium::UUID id);
 	Entity FindEntityByName(const std::string& name);
-	Entity GetEntityByEntityID(size_t id);
 	void DestroyEntity(Entity entity);
 
 	Camera GetPrimaryCamera();
 	glm::mat4 GetPrimaryCameraViewMatrix();
 
 	bool IsEntityUUIDValid(Elysium::UUID uuid);
-
-	std::vector<Entity>& GetAllPhysicsEntities();
 
 	virtual AssetType GetType() const { return AssetType::Scene; }
 
@@ -78,15 +69,12 @@ public:
 
 	void Step(int frames = 1);
 private:
-
-	Entity m_player = {};
-
 	void RenderScene(EditorCamera& camera);
 private:
-	EntityManager m_entityManager;
-	
-	std::unordered_map<Elysium::UUID, Entity> m_EntityMap;
-	
+	ECS::Registry m_Registry;
+	std::unordered_map<Elysium::UUID, ECS::Entity> m_EntityMap;
+
+
 	bool m_IsRunning = false;
 	bool m_IsPaused = false;
 	int m_StepFrames = 0;
@@ -100,15 +88,28 @@ private:
 	bool m_drawPhysicsColliders = false;
 	bool m_KDTreeBroadPhaseCollision = false;
 	std::vector<Vec2> m_contactPoints;
-	//Entity m_bomb;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 
 	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
-
+	friend class Entity;
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;
 	friend class PhysicsConfigPanel;
 	friend class Elysium::SceneCollisionListener;
 };
+
+namespace Elysium
+{
+	class SceneCollisionListener : public CollisionListener
+	{
+	public:
+		SceneCollisionListener(const std::shared_ptr<Scene>& scene);
+		void OnCollisionBegin(const CollisionEvent& event) override;
+		void OnCollisionStay(const CollisionEvent& event) override;
+		void OnCollisionEnd(const CollisionEvent& event) override;
+	private:
+		std::shared_ptr<Scene> m_Scene;
+	};
+}
