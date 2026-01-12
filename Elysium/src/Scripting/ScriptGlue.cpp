@@ -554,8 +554,9 @@ static void JointComponent_SetConnectedEntity(Elysium::UUID entityID, Elysium::U
 	auto& joint = entity.getComponent<CJoint>();
 	joint.entity2Id = entity2ID;
 	
-	scene->DestroyPhysicsHingeJoint(entity);
-	scene->CreatePhysicsHingeJoint(entity);
+	joint.dirty = true;
+	//scene->DestroyPhysicsHingeJoint(entity);
+	//scene->CreatePhysicsHingeJoint(entity);
 }
 
 static void JointComponent_SetAnchor(Elysium::UUID entityID, Vec2* anchor)
@@ -565,10 +566,13 @@ static void JointComponent_SetAnchor(Elysium::UUID entityID, Vec2* anchor)
 	Entity entity = scene->GetEntityByUUID(entityID);
 	// assert entity
 
-	entity.getComponent<CJoint>().anchorPos = *anchor;
+	auto& joint = entity.getComponent<CJoint>();
+	joint.anchorPos = *anchor;
 
-	scene->DestroyPhysicsHingeJoint(entity);
-	scene->CreatePhysicsHingeJoint(entity);
+	joint.dirty = true;
+
+	//scene->DestroyPhysicsHingeJoint(entity);
+	//scene->CreatePhysicsHingeJoint(entity);
 }
 
 static void JointComponent_SetSoftness(Elysium::UUID entityID, float* softness)
@@ -578,10 +582,12 @@ static void JointComponent_SetSoftness(Elysium::UUID entityID, float* softness)
 	Entity entity = scene->GetEntityByUUID(entityID);
 	// assert entity
 
-	entity.getComponent<CJoint>().softness = *softness;
+	auto& joint = entity.getComponent<CJoint>();
+	joint.softness = *softness;
 
-	scene->DestroyPhysicsHingeJoint(entity);
-	scene->CreatePhysicsHingeJoint(entity);
+	joint.dirty = true;
+	//scene->DestroyPhysicsHingeJoint(entity);
+	//scene->CreatePhysicsHingeJoint(entity);
 }
 
 static void JointComponent_SetBias(Elysium::UUID entityID, float* bias)
@@ -591,10 +597,12 @@ static void JointComponent_SetBias(Elysium::UUID entityID, float* bias)
 	Entity entity = scene->GetEntityByUUID(entityID);
 	// assert entity
 
-	entity.getComponent<CJoint>().bias = *bias;
+	auto& joint = entity.getComponent<CJoint>();
+	joint.bias = *bias;
 
-	scene->DestroyPhysicsHingeJoint(entity);
-	scene->CreatePhysicsHingeJoint(entity);
+	joint.dirty = true;
+	//scene->DestroyPhysicsHingeJoint(entity);
+	//scene->CreatePhysicsHingeJoint(entity);
 }
 
 static bool Input_IsKeyDown(KeyCode key)
@@ -635,7 +643,7 @@ static void RegisterComponent()
 		else if constexpr (std::is_same_v<TComponent, CJoint>)
 		{
 			Scene* scene = ScriptEngine::GetSceneContext();
-			scene->CreatePhysicsHingeJoint(entity);
+			//scene->CreatePhysicsHingeJoint(entity);
 		}
 	};
 

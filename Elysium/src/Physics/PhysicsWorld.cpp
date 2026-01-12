@@ -242,8 +242,6 @@ void PhysicsWorld::BroadhPhaseSAP()
 }
 
 
-
-
 // update arbiters from candidate body pairs produed by SAP
 // marks touched arbiters via a set of keys and remove arbiters that were not touched
 void PhysicsWorld::UpdateArbitersFromCandidates(const std::vector<std::pair<PhysicsBody*, PhysicsBody*>>& candidates)
@@ -384,10 +382,7 @@ void PhysicsWorld::Step(float dt)
 		//TODO: damping ??
 	}
 
-
-
 	// 2) determine overlapping bodies and update contact points
-	
 	// compute AABBs for all bodies
 	for (int i = 0; i < (int)m_bodies.size(); i++)
 	{

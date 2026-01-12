@@ -47,7 +47,7 @@ void PhysicsHingeJoint::PreStep(float inv_dt)
 
 	Mat22 K2;
 	K2.col1.x =  m_body1->m_invI * m_r1.y * m_r1.y;	K2.col2.x = -m_body1->m_invI * m_r1.x * m_r1.y;
-	K2.col1.y = -m_body1->m_invI * m_r1.x * m_r1.y;	K2.col2.x =  m_body1->m_invI * m_r1.x * m_r1.x;
+	K2.col1.y = -m_body1->m_invI * m_r1.x * m_r1.y;	K2.col2.y =  m_body1->m_invI * m_r1.x * m_r1.x;
 
 	Mat22 K3;
 	K3.col1.x =  m_body2->m_invI * m_r2.y * m_r2.y; K3.col2.x = -m_body2->m_invI * m_r2.x * m_r2.y;
@@ -66,10 +66,10 @@ void PhysicsHingeJoint::PreStep(float inv_dt)
 	m_bias = dp * -1 * m_biasFactor * inv_dt;
 
 	// warm starting:
-	m_body1->m_velocity -= m_J * m_body1->m_invMass;
-	m_body1->m_angularVelocity -= Cross(m_r1, m_J) * m_body1->m_invMass;
+	/*m_body1->m_velocity -= m_J * m_body1->m_invMass;
+	m_body1->m_angularVelocity -= Cross(m_r1, m_J) * m_body1->m_invI;
 	m_body2->m_velocity += m_J * m_body2->m_invMass;
-	m_body2->m_angularVelocity += Cross(m_r2, m_J) * m_body2->m_invMass;
+	m_body2->m_angularVelocity += Cross(m_r2, m_J) * m_body2->m_invI;*/
 
 }
 
@@ -80,9 +80,9 @@ void PhysicsHingeJoint::ApplyImpulse()
 	Vec2 impulse = m_invK * (m_bias - dv - m_J * m_softness);
 	
 	m_body1->m_velocity -= impulse * m_body1->m_invMass;
-	m_body1->m_angularVelocity -= Cross(m_r1, impulse) * m_body1->m_invMass;
+	m_body1->m_angularVelocity -= Cross(m_r1, impulse) * m_body1->m_invI;
 	m_body2->m_velocity += impulse * m_body2->m_invMass;
-	m_body2->m_angularVelocity += Cross(m_r2, impulse) * m_body2->m_invMass;
+	m_body2->m_angularVelocity += Cross(m_r2, impulse) * m_body2->m_invI;
 
 	m_J += impulse;
 
