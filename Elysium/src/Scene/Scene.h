@@ -100,7 +100,7 @@ private:
 	bool m_drawPhysicsColliders = false;
 	bool m_KDTreeBroadPhaseCollision = false;
 	std::vector<Vec2> m_contactPoints;
-	Entity m_bomb;
+	//Entity m_bomb;
 
 	std::string m_Name; // TODO: Move to Asset Metadata ??
 

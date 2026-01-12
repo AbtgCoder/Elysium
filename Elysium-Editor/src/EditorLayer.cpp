@@ -374,8 +374,8 @@ void EditorLayer::OnImGuiRender()
 			);
 
 			ImGuizmo::DrawGrid(
-				glm::value_ptr(m_ActiveScene->GetPrimaryCameraViewMatrix()),
-				glm::value_ptr(m_ActiveScene->GetPrimaryCamera().GetProjection()),
+				glm::value_ptr(cameraView),
+				glm::value_ptr(cameraProjection),
 				glm::value_ptr(gridModelMatrix), 100.0f);
 
 

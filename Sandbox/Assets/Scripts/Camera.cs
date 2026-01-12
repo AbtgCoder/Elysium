@@ -6,48 +6,45 @@ using System.Threading.Tasks;
 
 using Elysium;
 
-namespace Sandbox
+public class Camera : Entity
 {
-    public class Camera : Entity
+    public float DistanceFromPlayer = 5.0f;
+
+    private Entity m_Player;
+
+    public override void OnCreate()
     {
-        public float DistanceFromPlayer = 5.0f;
+        m_Player = FindEntityByName("Player");
+    }
 
-        private Entity m_Player;
-
-        void OnCreate()
+    public override void OnUpdate(float deltaTime)
+    {
+        if (m_Player != null)
         {
-            m_Player = FindEntityByName("Player");
+            Translation = new Vector3(m_Player.Translation.XY, DistanceFromPlayer);
         }
 
-        void OnUpdate(float deltaTime)
-        {
-            if (m_Player != null)
-            {
-                Translation = new Vector3(m_Player.Translation.XY, DistanceFromPlayer);
-            }
 
+        float speed = 1.0f;
+        Vector3 velocity = Vector3.Zero;
 
-            float speed = 1.0f;
-            Vector3 velocity = Vector3.Zero;
+        if (Input.IsKeyDown(KeyCode.Up))
+            velocity.Y = 1.0f;
+        else if (Input.IsKeyDown(KeyCode.Down))
+            velocity.Y = -1.0f;
 
-            if (Input.IsKeyDown(KeyCode.Up))
-                velocity.Y = 1.0f;
-            else if (Input.IsKeyDown(KeyCode.Down))
-                velocity.Y = -1.0f;
+        if (Input.IsKeyDown(KeyCode.Left))
+            velocity.X = -1.0f;
+        else if (Input.IsKeyDown(KeyCode.Right))
+            velocity.X = 1.0f;
 
-            if (Input.IsKeyDown(KeyCode.Left))
-                velocity.X = -1.0f;
-            else if (Input.IsKeyDown(KeyCode.Right))
-                velocity.X = 1.0f;
+        //DistanceFromPlayer += deltaTime;
 
-            //DistanceFromPlayer += deltaTime;
+        velocity *= speed;
 
-            velocity *= speed;
+        Vector3 translation = Translation;
+        translation += velocity * deltaTime;
+        Translation = translation;
 
-            Vector3 translation = Translation;
-            translation += velocity * deltaTime;
-            Translation = translation;
-
-        }
     }
 }

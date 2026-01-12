@@ -309,6 +309,8 @@ public:
 	// storage for runtime
 	void* runtimeJoint = nullptr;
 
+	bool dirty = true;
+
 	CJoint() = default;
 	CJoint(Elysium::UUID id)
 		: entity1Id(id) {}

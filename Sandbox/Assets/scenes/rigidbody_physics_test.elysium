@@ -22,7 +22,7 @@ Entities:
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [15, 2]
+      Size: [45, 1]
       Color: [0.84803921, 0.555333614, 0.137182787, 255]
     PhysicsMaterial:
       Mass: 1
@@ -31,7 +31,7 @@ Entities:
       Friction: 0.400000006
     AABB:
       Offset: [0, 0]
-      Size: [15, 2]
+      Size: [45, 1]
     Rigidbody2D:
       BodyType: Static
   - Entity: 838373737969284512
@@ -65,10 +65,10 @@ Entities:
     Tag:
       Tag: rectangle_left
     Transform:
-      Translation: [-8.42007446, -0.980882406, 0]
+      Translation: [-22.9103699, 7.78541374, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-8.42007446, -0.980882406, 0]
+      GlobalTranslation: [-22.9103699, 7.78541374, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -76,7 +76,7 @@ Entities:
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [2, 15]
+      Size: [1, 30]
       Color: [0.843137264, 0.396770447, 0.396770447, 255]
     PhysicsMaterial:
       Mass: 1
@@ -85,17 +85,17 @@ Entities:
       Friction: 0.0199999996
     AABB:
       Offset: [0, 0]
-      Size: [2, 15]
+      Size: [1, 30]
     Rigidbody2D:
       BodyType: Static
   - Entity: 10192590508296581223
     Tag:
       Tag: rectangle_right
     Transform:
-      Translation: [8.58998108, -1.1920929e-07, 0]
+      Translation: [23.0952396, 7.62565517, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [8.58998108, -1.1920929e-07, 0]
+      GlobalTranslation: [23.0952396, 7.62565517, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -103,7 +103,7 @@ Entities:
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [2, 15]
+      Size: [1, 30]
       Color: [0.513431489, 0.931372523, 0.0913110226, 255]
     PhysicsMaterial:
       Mass: 1
@@ -112,17 +112,17 @@ Entities:
       Friction: 0.100000001
     AABB:
       Offset: [0, 0]
-      Size: [2, 15]
+      Size: [1, 30]
     Rigidbody2D:
       BodyType: Static
   - Entity: 7184162098460196162
     Tag:
       Tag: rectangle_top
     Transform:
-      Translation: [5.96046448e-08, 4.1162529, 0]
+      Translation: [0.168861389, 22.7305145, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [5.96046448e-08, 4.1162529, 0]
+      GlobalTranslation: [0.168861389, 22.7305145, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -130,7 +130,7 @@ Entities:
       ParentID: 0
       Children: []
     RectangleShape:
-      Size: [15, 2]
+      Size: [45, 1]
       Color: [0.114186846, 0.600040674, 0.647058845, 255]
     PhysicsMaterial:
       Mass: 1
@@ -139,7 +139,7 @@ Entities:
       Friction: 0
     AABB:
       Offset: [0, 0]
-      Size: [15, 2]
+      Size: [45, 1]
     Rigidbody2D:
       BodyType: Static
   - Entity: 15843805253312547488
@@ -195,11 +195,11 @@ Entities:
     Tag:
       Tag: Main Camera
     Transform:
-      Translation: [0, -3.0999999, 15.8000002]
-      Rotation: [0, 0, 0]
+      Translation: [0.057300508, 8.47817612, 40]
+      Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [0, -3.0999999, 15.8000002]
-      GlobalRotation: [0, 0, 0]
+      GlobalTranslation: [0.057300508, 8.47817612, 40]
+      GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: false
@@ -216,6 +216,12 @@ Entities:
         OrthographicFar: 1
       Primary: true
       BackgroundColor: [1, 0.995098054, 0.995098054, 255]
+    ScriptComponent:
+      ClassName: Camera
+      ScriptFields:
+        - Name: DistanceFromPlayer
+          Type: Float
+          Data: 10
   - Entity: 2255611465974551723
     Tag:
       Tag: polygon
@@ -249,7 +255,7 @@ Entities:
       BodyType: Dynamic
   - Entity: 2079347866313524397
     Tag:
-      Tag: Circle
+      Tag: Player
     Transform:
       Translation: [2.09832764, -5.96046448e-08, 0]
       Rotation: [0, -0, 0]
@@ -266,7 +272,7 @@ Entities:
       ScriptFields:
         - Name: Speed
           Type: Float
-          Data: 2
+          Data: 50
         - Name: rectPos
           Type: Vector3
           Data: [-3.5, 3, 0]
@@ -389,3 +395,278 @@ Entities:
       Friction: 0.0199999996
     Rigidbody2D:
       BodyType: Dynamic
+  - Entity: 3258400196439282019
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [9.34231758, -4.67484665, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [9.34231758, -4.67484665, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 3]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.0199999996
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 3]
+    Rigidbody2D:
+      BodyType: Static
+    Joint:
+      Entity1ID: 3258400196439282019
+      Entity2ID: 18227361752316801714
+      AnchorPosition: [0.5, 1.5]
+  - Entity: 2477190009454052028
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [18.9826069, -4.67484665, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [18.9826069, -4.67484665, 0]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 3]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.0199999996
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 3]
+    Rigidbody2D:
+      BodyType: Static
+  - Entity: 18227361752316801714
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [10.6795473, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [10.6795473, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 0.5
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 18227361752316801714
+      Entity2ID: 8577853625496838938
+      AnchorPosition: [0.5, 0]
+  - Entity: 8577853625496838938
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [11.8281021, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [11.8281021, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 8577853625496838938
+      Entity2ID: 10998936500086863991
+      AnchorPosition: [0.5, 0]
+  - Entity: 10998936500086863991
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [12.9932823, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [12.9932823, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 2
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 10998936500086863991
+      Entity2ID: 10193762871970552142
+      AnchorPosition: [0.5, 0]
+  - Entity: 10193762871970552142
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [14.1758308, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [14.1758308, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 3
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 10193762871970552142
+      Entity2ID: 3892983157783255411
+      AnchorPosition: [0.5, 0]
+  - Entity: 3892983157783255411
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [15.3579979, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [15.3579979, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 2
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 3892983157783255411
+      Entity2ID: 17995619350265727329
+      AnchorPosition: [0.5, 0]
+  - Entity: 17995619350265727329
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [16.5237541, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [16.5237541, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 0.5
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 17995619350265727329
+      Entity2ID: 11421108763614999179
+      AnchorPosition: [0.5, 0]
+  - Entity: 11421108763614999179
+    Tag:
+      Tag: rectangle
+    Transform:
+      Translation: [17.6720238, -3.5296731, -6.10353236e-05]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [17.6720238, -3.5296731, -6.10353236e-05]
+      GlobalRotation: [0, -0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    RectangleShape:
+      Size: [1, 0.300000012]
+      Color: [1, 1, 1, 1]
+    PhysicsMaterial:
+      Mass: 0.5
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.800000012
+    AABB:
+      Offset: [0, 0]
+      Size: [1, 0.300000012]
+    Rigidbody2D:
+      BodyType: Dynamic
+    Joint:
+      Entity1ID: 11421108763614999179
+      Entity2ID: 2477190009454052028
+      AnchorPosition: [0.5, 0]

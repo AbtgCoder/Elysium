@@ -55,7 +55,7 @@ public class PhysicsTest : Entity
 		else if (Input.IsKeyDown(KeyCode.D))
 			vel.X = 1.0f;
 
-		vel *= Speed; // * deltaTime;
+		vel *= Speed * deltaTime;
 
 		m_Rigidbody.ApplyLinearImpulse(vel);
 	}

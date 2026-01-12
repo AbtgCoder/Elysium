@@ -1,0 +1,66 @@
+Scene: Untitled
+PhysicsConfig:
+  Gravity: [0, 9.80000019]
+  ExternalForce: [5, 0]
+  VelocityIterations: 6
+  PositionIterations: 3
+  PhysicsColliders: false
+  BroadphaseCollision: false
+Entities:
+  - Entity: 7785019511506183219
+    Tag:
+      Tag: Main Camera
+    Transform:
+      Translation: [0, 0, 20]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 20]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    Camera:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.785398185
+        PerspectiveNear: 0.00999999978
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
+      BackgroundColor: [1, 1, 1, 1]
+  - Entity: 10162020272383704165
+    Tag:
+      Tag: Demo Controller
+    Transform:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      GlobalTranslation: [0, 0, 0]
+      GlobalRotation: [0, 0, 0]
+      GlobalScale: [1, 1, 1]
+    ParentComponent:
+      HasParent: false
+      ParentID: 0
+      Children: []
+    ScriptComponent:
+      ClassName: DemoScene
+      ScriptFields:
+        - Name: m_BridgeY
+          Type: Float
+          Data: -3
+        - Name: m_PlankCount
+          Type: Int
+          Data: 8
+        - Name: m_PlankHeight
+          Type: Float
+          Data: 0.25
+        - Name: m_PlankWidth
+          Type: Float
+          Data: 1
+        - Name: m_StartX
+          Type: Float
+          Data: -4
