@@ -1,6 +1,7 @@
 #pragma once
 //#include "Scene/Entity.h"
 
+#if 0
 #include "KDTree.h"
 
 class Physics
@@ -17,3 +18,5 @@ public:
 
 	static void NarrowPhaseCollision(KDTreeNode* node);
 };
+
+#endif

@@ -70,76 +70,6 @@ void SceneHierarchyPanel::DrawComponentGUI(const std::string& name, Entity entit
 	}
 }
 
-#if 0
-std::vector<Vec2> generatePolygonColliderVertices(sf::Texture entityTex, Entity e)
-{
-	sf::Texture tex = entityTex; 
-	sf::Image image = tex.copyToImage();
-	sf::Vector2u imageSize = image.getSize();
-
-	sf::Image paddedBinaryImage;
-	paddedBinaryImage.create(imageSize.x + 2, imageSize.y + 2);
-
-	for (int y = 0; y < imageSize.y + 2; ++y) {
-		for (int x = 0; x < imageSize.x + 2; ++x) {
-			if (y - 1 >= 0 && y - 1 < imageSize.y && x - 1 >= 0 && x - 1 < imageSize.x)
-			{
-				sf::Color pixelColor = image.getPixel(x - 1, y - 1);
-				int grayscaleColor = static_cast<int>((pixelColor.r + pixelColor.g + pixelColor.b) / 3);
-				if (grayscaleColor != 0)
-				{
-					paddedBinaryImage.setPixel(x, y, sf::Color::White);
-				}
-				else
-				{
-					paddedBinaryImage.setPixel(x, y, sf::Color::Black);
-				}
-			}
-			else
-			{
-				paddedBinaryImage.setPixel(x, y, sf::Color::Black);
-			}
-		}
-	}
-
-
-	// boundaryPoints = countourTracing(paddedBinaryImage) TODO: moore neighborhood contour tracing ??
-	std::vector<Vec2> boundaryPoints;
-	for (uint32_t y = 0; y < imageSize.y; ++y)
-	{
-		for (uint32_t x = 0; x < imageSize.x; ++x)
-		{
-			if (paddedBinaryImage.getPixel(x, y) == sf::Color::White &&
-				(paddedBinaryImage.getPixel(x - 1, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y - 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x - 1, y) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x - 1, y + 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x, y + 1) == sf::Color::Black ||
-					paddedBinaryImage.getPixel(x + 1, y + 1) == sf::Color::Black))
-			{
-				boundaryPoints.push_back(Vec2((float)x, (float)imageSize.y - y));
-			}
-		}
-	}
-
-	// TODO: reducing points ?? ramer-douglas-peucker algorithm
-
-	// TODO: more algs :  jarvis march, chan's algorithm etc
-	std::vector<Vec2> convexHull = grahamScan(boundaryPoints);
-
-	std::vector<Vec2> colliderVertices;
-	Vec2 eSize(tex.getSize().x, tex.getSize().y);
-	for (auto p : convexHull)
-	{
-		colliderVertices.push_back(Vec2(- eSize.x / 2 + p.x, eSize.y / 2 - p.y));
-	}
-	return colliderVertices;
-	
-}
-#endif
-
 std::vector<Vec2> generatePolygonColliderVertices(int numSides, float radius)
 {
 	std::vector<Vec2> vertices;
@@ -171,7 +101,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 
 	if (m_Scene)
 	{
-		m_Scene->m_entityManager.update(); // separate update function ??
+		//m_Scene->m_entityManager.update(); // separate update function ??
 		
 		ImGui::Begin("Scene Hierarchy");
 
@@ -187,13 +117,17 @@ void SceneHierarchyPanel::OnImGuiRender()
 		std::vector<Entity> entitiesToDisplay;
 		if (searchQuery.empty())
 		{
-			entitiesToDisplay = m_Scene->m_entityManager.GetEntities();
+			for (auto e : m_Scene->m_Registry.entities())
+			{
+				entitiesToDisplay.push_back(Entity{ e, m_Scene.get() });
+			}
 		}
 		else
 		{
 			//TODO: improve search matching
-			for (auto e : m_Scene->m_entityManager.GetEntities())
+			for (auto ent : m_Scene->m_Registry.entities())
 			{
+				Entity e = { ent, m_Scene.get() };
 				auto entityName = e.getComponent<CTag>().tag;
 				if (StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(entityName)).find(StringUtils::RemoveWhiteSpace(StringUtils::ToUpper(searchQuery))) != std::string::npos)
 				{
@@ -877,8 +811,6 @@ void SceneHierarchyPanel::DisplayAddComponentEntry(const std::string& entryName,
 	}
 }
 
-
-
 void SceneHierarchyPanel::SetInspectedEntity(Entity entity)
 {
 	m_InspectedEntity = entity;
@@ -888,7 +820,11 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 {
 	auto& tag = entity.getComponent<CTag>().tag;
 
-	ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+	//ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+	
+	ImGuiTreeNodeFlags flags = ((m_InspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+	
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 
 	auto& parent = entity.getComponent<CParent>();

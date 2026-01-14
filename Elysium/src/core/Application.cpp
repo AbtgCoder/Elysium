@@ -87,7 +87,7 @@ void Application::Run()
 {
 	while (m_Running)
 	{
-		float time = glfwGetTime();
+		float time = (float)glfwGetTime();
 		float timestep = time - m_LastFrameTime;
 		m_LastFrameTime = time;
 
