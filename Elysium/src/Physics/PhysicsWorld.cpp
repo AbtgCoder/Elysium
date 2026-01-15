@@ -331,7 +331,7 @@ void PhysicsWorld::NotifyCollisionStay(const Arbiter& arb)
 	if (!m_CollisionListener)
 		return;
 
-	m_CollisionListener->OnCollisionBegin(CreateCollisionEvent(arb));
+	m_CollisionListener->OnCollisionStay(CreateCollisionEvent(arb));
 }
 
 void PhysicsWorld::NotifyCollisionEnd(const ArbiterKey& key)
