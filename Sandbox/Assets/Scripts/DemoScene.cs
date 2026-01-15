@@ -28,7 +28,7 @@ public class DemoScene : Entity
 		//CreatePlatforms();
 		CreatePendulum();
 		//CreateBridge();
-		CreateSuspensionBridge(plankCount: 10, plankWidth: m_PlankWidth, plankHeight: m_PlankHeight, gap: 0.15f, startPosition: new Vector2(-5.0f, 0));
+		CreateSuspensionBridge(plankCount: 10, plankWidth: m_PlankWidth, plankHeight: m_PlankHeight, gap: 0.15f, startPosition: new Vector2(-10.0f, 0));
         //CreateSuspensionBridgeSafe(plankCount: 10, plankWidth: m_PlankWidth, plankHeight: m_PlankHeight, gap: 0.15f, startPosition: new Vector2(-5.0f, 0));
 
     }
@@ -198,7 +198,7 @@ public class DemoScene : Entity
 
             float x = startPosition.X + i * step;
 
-            plank.Translation = new Vector3(x, startPosition.Y, 0);
+            plank.Translation = new Vector3(x, startPosition.Y + 1.5f - plankHeight * 0.5f, 0);
 
             var rect = plank.AddComponent<RectangleComponent>();
             rect.Size = new Vector2(plankWidth, plankHeight);
@@ -226,8 +226,8 @@ public class DemoScene : Entity
             }
 
             // Suspension feel
-            joint.Softness = 0.25f;
-            joint.Bias = 0.15f;
+            //joint.Softness = 0.25f;
+            //joint.Bias = 0.15f;
 
             previousEntity = plank;
         }
@@ -242,8 +242,8 @@ public class DemoScene : Entity
             // LOCAL anchor on last plank: right edge
             joint.Anchor = new Vector2(plankWidth * 0.5f, 0.0f);
 
-            joint.Softness = 0.25f;
-            joint.Bias = 0.15f;
+            //joint.Softness = 0.25f;
+            //joint.Bias = 0.15f;
         }
     }
 

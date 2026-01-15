@@ -424,8 +424,25 @@ void Scene::CreatePhysicsHingeJoint(Entity e)
 	PhysicsHingeJoint* joint = new PhysicsHingeJoint();
 	joint->Set(body1, body2, anchorWorldPos);
 
-	joint->m_softness = jointComp.softness;
-	joint->m_biasFactor = jointComp.bias;
+	//joint->m_softness = jointComp.softness;
+	//joint->m_biasFactor = jointComp.bias;
+
+	{
+		float mass = 0.0f;
+		if (body1->m_invMass > 0.0f)
+			mass += body1->m_mass;
+		if (body2->m_invMass > 0.0f)
+			mass += body2->m_mass;
+
+		float omega = 2.0f * 3.1415926f * jointComp.frequenceHz;
+		float d = 2.0f * mass * jointComp.dampingRatio * omega;
+		float k = mass * omega * omega;
+
+		float dt = m_PhysicsWorld->m_fixedTimestep;
+
+		joint->m_softness = 1.0f / (d + dt * k);
+		joint->m_biasFactor = dt * k / (d + dt * k);
+	}
 
 	jointComp.runtimeJoint = joint;
 	m_PhysicsWorld->AddJoint(joint);

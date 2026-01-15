@@ -301,6 +301,9 @@ public:
 	float softness = 0.0f;
 	float bias = 0.2f;
 
+	float frequenceHz = 2.0f;
+	float dampingRatio = 0.7f;
+
 	// storage for runtime
 	void* runtimeJoint = nullptr;
 

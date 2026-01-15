@@ -66,10 +66,10 @@ void PhysicsHingeJoint::PreStep(float inv_dt)
 	m_bias = dp * -1 * m_biasFactor * inv_dt;
 
 	// warm starting:
-	/*m_body1->m_velocity -= m_J * m_body1->m_invMass;
+	m_body1->m_velocity -= m_J * m_body1->m_invMass;
 	m_body1->m_angularVelocity -= Cross(m_r1, m_J) * m_body1->m_invI;
 	m_body2->m_velocity += m_J * m_body2->m_invMass;
-	m_body2->m_angularVelocity += Cross(m_r2, m_J) * m_body2->m_invI;*/
+	m_body2->m_angularVelocity += Cross(m_r2, m_J) * m_body2->m_invI;
 
 }
 
