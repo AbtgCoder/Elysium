@@ -372,11 +372,11 @@ void ContentBrowserPanel::OnImGuiRender()
 					"using Elysium;\n\n"
 					"public class " + className + " : Entity\n"
 					"{\n"
-					"	void OnCreate()\n"
+					"	public override void OnCreate()\n"
 					"	{\n"
 					"	}\n"
 					"\n"
-					"	void OnUpdate(float deltaTime)\n"
+					"	public override void OnUpdate(float deltaTime)\n"
 					"	{\n"
 					"	}\n"
 					"}\n";
@@ -408,15 +408,13 @@ void ContentBrowserPanel::OnImGuiRender()
 					}
 				}
 
-				
+				// 5) Open the script solution...
+				Project::GetActive()->OpenScriptSolution();
 			}
 
 		}
 		if (ImGui::MenuItem("Open C# Project"))
 		{
-			//TODO: get from project settings
-			//ShellExecuteW(NULL, L"open", L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Sandbox Project.sln", NULL, L"D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project", SW_SHOWNORMAL);
-
 			Project::GetActive()->OpenScriptSolution();
 		}
 		
