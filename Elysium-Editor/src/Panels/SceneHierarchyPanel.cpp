@@ -25,8 +25,6 @@ void SceneHierarchyPanel::SetScene(const std::shared_ptr<Scene>& Scene)
 }
 
 
-
-
 template<typename T, typename UIFunction>
 void SceneHierarchyPanel::DrawComponentGUI(const std::string& name, Entity entity, UIFunction uiFunction)
 {
@@ -136,7 +134,7 @@ void SceneHierarchyPanel::OnImGuiRender()
 			}
 		}
 
-		
+
 		for (auto e : entitiesToDisplay)
 		{
 			if ((searchQuery.empty() && !e.getComponent<CParent>().HasParent) || !searchQuery.empty())
@@ -820,11 +818,7 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 {
 	auto& tag = entity.getComponent<CTag>().tag;
 
-	//ImGuiTreeNodeFlags flags = ((m_InspectedEntity.getComponent<CId>().id == entity.getComponent<CId>().id) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-	
 	ImGuiTreeNodeFlags flags = ((m_InspectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-	
 	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 
 	auto& parent = entity.getComponent<CParent>();
@@ -839,18 +833,6 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 
 	//ImGui::SetItemAllowOverlap();
 	bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(entity.getComponent<CId>().id), flags, tag.c_str());
-
-	/*if (!searchQuery.empty() && searchIt != std::string::npos)
-	{
-		int firstLetterFoundIndex = static_cast<int>(searchIt);
-		const auto foundStr = tag.substr(0, firstLetterFoundIndex + searchQuery.size());
-		auto highlightBeginPos = ImGui::CalcTextSize(foundStr.c_str());
-		auto highlightEndPos = ImGui::CalcTextSize(searchQuery.c_str());
-
-		auto fg = ImGui::GetForegroundDrawList();
-		auto rgbColor = IM_COL32(97.0f, 0.0f, 255.0f, 0.2f * 255.0f);
-		fg->AddRectFilled(ImVec2(cursorPosition.x + 20.0f, cursorPosition.y + 4.0f), ImVec2(cursorPosition.x + highlightEndPos.x + 26.0f, cursorPosition.y + highlightEndPos.y + 6.0f), rgbColor, 4.0f);
-	}*/
 
 	if (ImGui::IsItemHovered())
 	{

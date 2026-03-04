@@ -97,6 +97,7 @@ private:
 	friend class SceneSerializer;
 	friend class SceneHierarchyPanel;
 	friend class PhysicsConfigPanel;
+	friend class EditorLayer;
 	friend class Elysium::SceneCollisionListener;
 };
 

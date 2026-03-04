@@ -506,15 +506,6 @@ void Scene::OnRuntimeStart()
 			ScriptEngine::OnCreateEntity(entity);
 		}
 	}
-
-	for (auto joint : m_PhysicsWorld->m_joints)
-	{
-		auto e1 = GetEntityByUUID(joint->m_body1->m_UserData);
-		auto e2 = GetEntityByUUID(joint->m_body2->m_UserData);
-
-		Logger::Log("joint for: " + e1.getComponent<CTag>().tag + " and " + e2.getComponent<CTag>().tag, "scene");
-	}
-
 }
 
 void Scene::OnRuntimeStop()
@@ -546,15 +537,26 @@ void Scene::UpdateTransforms()
 		glm::vec3 globalOrientation = transform.Rotation;
 		glm::vec3 globalScale = transform.Scale;
 
-		while (parentComponent.HasParent)
+		Elysium::UUID currentParentID = parentComponent.ParentID;
+
+		while (true)
 		{
-			auto& parentTransform = GetEntityByUUID(parentComponent.ParentID).getComponent<CTransform>();
+			Entity parent = GetEntityByUUID(currentParentID);
+			auto& parentTransform = parent.getComponent<CTransform>();
+
 			globalPosition += parentTransform.Translation;
 			globalOrientation += parentTransform.Rotation;
 			globalScale.x *= parentTransform.Scale.x;
 			globalScale.y *= parentTransform.Scale.y;
-			parentComponent = GetEntityByUUID(parentComponent.ParentID).getComponent<CParent>();
+
+			auto& parentParent = parent.getComponent<CParent>();
+
+			if (!parentParent.HasParent)
+				break;
+
+			currentParentID = parentParent.ParentID;
 		}
+
 		transform.GlobalTranslation = globalPosition;
 		transform.GlobalRotation = globalOrientation;
 		transform.GlobalScale = globalScale;
