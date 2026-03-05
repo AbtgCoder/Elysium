@@ -116,6 +116,17 @@ namespace Elysium
         internal static extern void JointComponent_SetBias(ulong entityID, ref float bias);
         #endregion
 
+        #region AnimatorComponent
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Animator_Play(ulong entityID, string state);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Animator_SetBool(ulong entityID, string name, bool value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Animator_SetFloat(ulong entityID, string name, float value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Animator_SetTrigger(ulong entityID, string name);
+        #endregion
+
         #region Logging
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static void Debug_Log(string message);

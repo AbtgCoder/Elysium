@@ -245,4 +245,27 @@ namespace Elysium
             set => InternalCalls.JointComponent_SetBias(Entity.ID, ref value);
         }
     }
+
+    public class AnimatorComponent : Component
+    {
+        public void Play(string state)
+        {
+            InternalCalls.Animator_Play(Entity.ID, state);
+        }
+
+        public void SetBool(string name, bool value)
+        {
+            InternalCalls.Animator_SetBool(Entity.ID, name, value);
+        }
+
+        public void SetFloat(string name, float value)
+        {
+            InternalCalls.Animator_SetFloat(Entity.ID, name , value);
+        }
+
+        public void SetTrigger(string name)
+        {
+            InternalCalls.Animator_SetTrigger(Entity.ID, name);
+        }
+    }
 }

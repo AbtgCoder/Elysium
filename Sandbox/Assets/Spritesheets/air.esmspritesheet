@@ -1,5 +1,5 @@
 SpriteSheet: air
-Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/air.png
+Texture: textures/air.png
 SubSprites:
   - Subsprite: 0
     Name: air

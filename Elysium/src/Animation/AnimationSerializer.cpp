@@ -1,6 +1,7 @@
 #include "AnimationSerializer.h"
 
 #include "Asset/TextureImporter.h"
+#include "Project/Project.h"
 
 #include "Utils/YAMLutils.h"
 
@@ -65,7 +66,7 @@ bool AnimationSerializer::Deserialize(const std::filesystem::path& filepath)
 
 	m_AnimationClip->m_Name = data["AnimationClip"].as<std::string>();
 	m_AnimationClip->m_SpriteSheetTexturePath = data["SpriteSheetTexture"].as<std::string>();
-	m_AnimationClip->m_SpriteSheetTexture = TextureImporter::LoadTexture2D(m_AnimationClip->m_SpriteSheetTexturePath);
+	m_AnimationClip->m_SpriteSheetTexture = TextureImporter::LoadTexture2D(Project::GetActiveAssetDirectory() / m_AnimationClip->m_SpriteSheetTexturePath);
 	m_AnimationClip->m_Loop = data["Loop"].as<bool>();
 
 	auto animFrames = data["Frames"];

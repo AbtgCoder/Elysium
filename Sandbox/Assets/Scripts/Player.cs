@@ -6,88 +6,95 @@ using System.Threading.Tasks;
 
 using Elysium;
 
-namespace Sandbox
+public class Player : Entity
 {
-    public class Player : Entity
+    private TransformComponent m_Transform;
+
+    public float Speed;
+
+    public Entity tile;
+
+    public Texture2D pipeTexture;
+
+    private Entity newRectangle;
+
+    private RectangleComponent rectangleComponent;
+
+    private SpriteRendererComponent sr;
+
+    private AnimatorComponent _animator;
+    public override void OnCreate()
     {
-        private TransformComponent m_Transform;
+        Console.WriteLine($"Player.OnCreate - {ID}");
+        Console.WriteLine($"Tile ID: {tile.ID}");
 
-        public float Speed;
+        m_Transform = GetComponent<TransformComponent>();
 
-        public Entity tile;
+        newRectangle = new Entity("New Rectangle");
+        Vector3 newEntityTranslation = new Vector3(5.0f, 3.0f, 0.0f);
+        newRectangle.Translation = newEntityTranslation;
 
-        public Texture2D pipeTexture;
+        sr = newRectangle.AddComponent<SpriteRendererComponent>();
+        //ulong textureHandle = 12063736264547966939;
+        sr.Texture = pipeTexture; // new Texture2D(textureHandle);
 
-        private Entity newRectangle;
+        //rectangleComponent = newRectangle.AddComponent<RectangleComponent>();
+        //rectangleComponent.Color = new Vector4(0.0f, 1.0f, 0.6f, 1.0f);
 
-        private RectangleComponent rectangleComponent;
+        _animator = GetComponent<AnimatorComponent>();
+    }
 
-        private SpriteRendererComponent sr;
+   public override void OnUpdate(float deltaTime)
+    {
+        //rectangleComponent.Size += new Vector2(deltaTime, deltaTime);
 
-        void OnCreate()
+        float speed = Speed;
+        Vector3 velocity = Vector3.Zero;
+
+        if (Input.IsKeyDown(KeyCode.W))
         {
-            Console.WriteLine($"Player.OnCreate - {ID}");
-            Console.WriteLine($"Tile ID: {tile.ID}");
-
-            m_Transform = GetComponent<TransformComponent>();
-
-            newRectangle = new Entity("New Rectangle");
-            Vector3 newEntityTranslation = new Vector3(5.0f, 3.0f, 0.0f);
-            newRectangle.Translation = newEntityTranslation;
-
-            sr = newRectangle.AddComponent<SpriteRendererComponent>();
-            //ulong textureHandle = 12063736264547966939;
-            sr.Texture = pipeTexture; // new Texture2D(textureHandle);
-
-            //rectangleComponent = newRectangle.AddComponent<RectangleComponent>();
-            //rectangleComponent.Color = new Vector4(0.0f, 1.0f, 0.6f, 1.0f);
+            velocity.Y = 1.0f;
+        }
+        else if (Input.IsKeyDown(KeyCode.S))
+        {
+            velocity.Y = -1.0f;
         }
 
-        void OnUpdate(float deltaTime)
+        if (Input.IsKeyDown(KeyCode.A))
         {
-           //rectangleComponent.Size += new Vector2(deltaTime, deltaTime);
-
-            float speed = Speed;
-            Vector3 velocity = Vector3.Zero;
-
-            if (Input.IsKeyDown(KeyCode.W))
-            {
-                velocity.Y = 1.0f;
-            }
-            else if (Input.IsKeyDown(KeyCode.S))
-            {
-                velocity.Y = -1.0f;
-            }
-
-            if (Input.IsKeyDown(KeyCode.A))
-            {
-                velocity.X = -1.0f;
-            }
-            else if (Input.IsKeyDown(KeyCode.D))
-            {
-                velocity.X = 1.0f;
-            }
-
-            Entity cameraEntity = FindEntityByName("Main Camera");
-            if (cameraEntity != null)
-            {
-                Camera camera = cameraEntity.As<Camera>();
-
-                if (Input.IsKeyDown(KeyCode.Q))
-                    camera.DistanceFromPlayer += speed * 2.0f * deltaTime;
-                else if (Input.IsKeyDown(KeyCode.E))
-                    camera.DistanceFromPlayer -= speed * 2.0f * deltaTime;
-            }
-
-            Vector3 tileTranslation = tile.Translation;
-            tileTranslation.X -= deltaTime;
-            tile.Translation = tileTranslation;
-
-            velocity *= speed;
-
-            Vector3 translation = m_Transform.Translation;
-            translation += velocity * deltaTime;
-            m_Transform.Translation = translation;
+            velocity.X = -1.0f;
         }
+        else if (Input.IsKeyDown(KeyCode.D))
+        {
+            velocity.X = 1.0f;
+            //_animator.Play("run");
+            _animator.SetBool("IsRunning", true);
+        }
+        else
+        {
+            _animator.SetBool("IsRunning", false);
+            //_animator.Play("idle");
+        }
+
+        Entity cameraEntity = FindEntityByName("Main Camera");
+        if (cameraEntity != null)
+        {
+            Camera camera = cameraEntity.As<Camera>();
+
+            if (Input.IsKeyDown(KeyCode.Q))
+                camera.DistanceFromPlayer += speed * 2.0f * deltaTime;
+            else if (Input.IsKeyDown(KeyCode.E))
+                camera.DistanceFromPlayer -= speed * 2.0f * deltaTime;
+        }
+
+        Vector3 tileTranslation = tile.Translation;
+        tileTranslation.X -= deltaTime;
+        tile.Translation = tileTranslation;
+
+        velocity *= speed;
+
+        Vector3 translation = m_Transform.Translation;
+        translation += velocity * deltaTime;
+        m_Transform.Translation = translation;
     }
 }

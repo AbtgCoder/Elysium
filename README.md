@@ -27,8 +27,8 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 
 ### Animation System  
 - [X] Add and play simple 2d sprite sheet based Animation
-- [ ] Animation state Transitions
-- [ ] Multiple animation tracks: position, scale, etc
+- [X] Animation state Transitions
+- [ ] Multiple animation tracks: position, scale, etc.
 - [ ] Event support
 - [ ] multiple animation layers support
 - [ ] Enhanced editing tools which make creating Animations easier
@@ -39,7 +39,7 @@ Elysium is a personal passion project of mine. The long-term goal is to make a f
 - [X] Ability to get, add and remove components through c# scripts
 - [X] Texture and Sprite Renderer in c# API
 - [ ] Extension of Parent-Child Relation in c# API
-- [ ] Rigidbody interface and control physics through c# scripts
+- [X] Rigidbody interface and control physics through c# scripts
 
 ### Features to come
 - [ ] Prefabs

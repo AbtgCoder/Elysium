@@ -11,10 +11,10 @@ Entities:
     Tag:
       Tag: Big Pipe
     Transform:
-      Translation: [-12.3900213, -1.68794632, 0]
+      Translation: [-5.85843563, -1.68794632, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [-12.3900213, -1.68794632, 0]
+      GlobalTranslation: [-5.85843563, -1.68794632, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -75,7 +75,7 @@ Entities:
       ParentID: 0
       Children: []
     ScriptComponent:
-      ClassName: Sandbox.Player
+      ClassName: Player
       ScriptFields:
         - Name: Speed
           Type: Float
@@ -91,14 +91,42 @@ Entities:
       Layer: 0
     Animator:
       CurrentState: run
+      Parameters:
+        - Name: IsRunning
+          Type: 0
+          BoolValue: false
       AnimationStates:
         - Name: run
           AnimationClipHandle: 2125454497768711909
+          Transitions:
+            - ToState: idle
+              HasExitTime: false
+              ExitTime: 1
+              Conditions:
+                - Parameter: IsRunning
+                  Type: 1
+                  Threshold: 0
         - Name: jump
           AnimationClipHandle: 4015087165318153660
-    AABB:
-      Offset: [0, 0]
-      Size: [60, 73]
+          Transitions:
+            []
+        - Name: idle
+          AnimationClipHandle: 9463410564571201708
+          Transitions:
+            - ToState: run
+              HasExitTime: false
+              ExitTime: 1
+              Conditions:
+                - Parameter: IsRunning
+                  Type: 0
+                  Threshold: 0
+    PhysicsMaterial:
+      Mass: 1
+      RestitutionCoefficient: 0
+      RestitutionThreshold: 0.5
+      Friction: 0.0199999996
+    Rigidbody2D:
+      BodyType: Static
   - Entity: 17184699621355724851
     Tag:
       Tag: Tile2
@@ -158,10 +186,10 @@ Entities:
     Tag:
       Tag: rectangle
     Transform:
-      Translation: [2.18702126, 0.513198853, 0]
+      Translation: [2.16012001, 0.282907456, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [2.18702126, 0.513198853, 0]
+      GlobalTranslation: [2.16012001, 0.282907456, 0]
       GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
@@ -232,7 +260,7 @@ Entities:
       Primary: true
       BackgroundColor: [0.854901969, 0.572549045, 0.572549045, 0.631372571]
     ScriptComponent:
-      ClassName: Sandbox.Camera
+      ClassName: Camera
       ScriptFields:
         - Name: DistanceFromPlayer
           Type: Float
@@ -241,18 +269,18 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [0.766921997, 0.914905667, 0]
+      Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [2.18702126, 0.513198853, 0]
-      GlobalRotation: [0, 0, 0]
+      GlobalTranslation: [2.92704201, 1.19781315, 0]
+      GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1, 1]
     ParentComponent:
       HasParent: true
       ParentID: 11791852490085644340
       Children: []
     CircleShape:
-      Radius: 22.1599998
+      Radius: 0.200000003
       Color: [27, 167, 27, 255]
   - Entity: 2476516049887498935
     Tag:
@@ -278,18 +306,18 @@ Entities:
     Tag:
       Tag: Circle
     Transform:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [0.538175583, -1.20885742, -2.83762347e-10]
+      Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-      GlobalTranslation: [3.60569191, -1.35758591, 0]
-      GlobalRotation: [0, 0, 0]
+      GlobalTranslation: [4.14386749, -2.56644344, -2.83762347e-10]
+      GlobalRotation: [0, -0, 0]
       GlobalScale: [1, 1.39123976, 1]
     ParentComponent:
       HasParent: true
       ParentID: 2476516049887498935
       Children: []
     CircleShape:
-      Radius: 22.1599998
+      Radius: 0.300000012
       Color: [27, 167, 27, 255]
   - Entity: 11192484903683650386
     Tag:

@@ -1,5 +1,5 @@
 SpriteSheet: bush
-Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/bush.png
+Texture: textures/bush.png
 SubSprites:
   - Subsprite: 0
     Name: bush

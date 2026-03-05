@@ -1,5 +1,5 @@
 SpriteSheet: runright
-Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runright.png
+Texture: textures/runright.png
 SubSprites:
   - Subsprite: 0
     Name: runright_0

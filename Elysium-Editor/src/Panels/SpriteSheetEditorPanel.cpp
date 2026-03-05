@@ -193,7 +193,7 @@ void SpriteSheetEditorPanel::SetSpriteSheetTexture(const std::string& texturePat
 	}
 
 	m_SpriteSheet = std::make_shared<SpriteSheet>();
-	m_SpriteSheet->m_SourcePath = texturePath;
+	m_SpriteSheet->m_SourcePath = std::filesystem::relative(std::filesystem::path(texturePath), Project::GetActiveAssetDirectory()).string();
 	m_SpriteSheet->m_Texture = TextureImporter::LoadTexture2D(texturePath);
 	m_SpriteSheet->m_SubSprites.clear();
 

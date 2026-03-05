@@ -1,5 +1,5 @@
 SpriteSheet: runleft
-Texture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runleft.png
+Texture: textures/runleft.png
 SubSprites:
   - Subsprite: 0
     Name: runleft_0

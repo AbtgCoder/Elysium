@@ -313,7 +313,6 @@ static void CircleComponent_SetColor(Elysium::UUID entityID, glm::vec4* color)
 	entity.getComponent<CCircle>().color = *color;
 }
 
-
 static void TransformComponent_GetTranslation(Elysium::UUID entityID, glm::vec3* outTranslation)
 {
 	Scene* scene = ScriptEngine::GetSceneContext();
@@ -605,6 +604,66 @@ static void JointComponent_SetBias(Elysium::UUID entityID, float* bias)
 	//scene->CreatePhysicsHingeJoint(entity);
 }
 
+static void Animator_Play(Elysium::UUID entityID, MonoString* state)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// asse: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	char* stateCStr = mono_string_to_utf8(state);
+	
+	auto& animController = entity.getComponent<CAnimator>().Controller;
+	animController.Play(std::string(stateCStr));
+
+	mono_free(stateCStr);
+}
+
+static void Animator_SetBool(Elysium::UUID entityID, MonoString* name, bool value)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// asse: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	char* parameterName = mono_string_to_utf8(name);
+
+	auto& animController = entity.getComponent<CAnimator>().Controller;
+	animController.SetBool(std::string(parameterName), value);
+
+	mono_free(parameterName);
+}
+
+static void Animator_SetFloat(Elysium::UUID entityID, MonoString* name, float value)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// asse: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	char* parameterName = mono_string_to_utf8(name);
+
+	auto& animController = entity.getComponent<CAnimator>().Controller;
+	animController.SetFloat(std::string(parameterName), value);
+
+	mono_free(parameterName);
+}
+
+static void Animator_SetTrigger(Elysium::UUID entityID, MonoString* name)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	// asse: scene
+	Entity entity = scene->GetEntityByUUID(entityID);
+	// assert: entity is valid
+
+	char* parameterName = mono_string_to_utf8(name);
+
+	auto& animController = entity.getComponent<CAnimator>().Controller;
+	animController.SetTrigger(std::string(parameterName));
+
+	mono_free(parameterName);
+}
+
 static bool Input_IsKeyDown(KeyCode key)
 {
 	return Input::IsKeyPressed(key);
@@ -682,6 +741,7 @@ void ScriptGlue::RegisterComponents()
 	RegisterComponent<CCircleCollider>();
 	RegisterComponent<CPolygonCollider>();
 	RegisterComponent<CJoint>();
+	RegisterComponent<CAnimator>();
 	//TODO: register other components as needed
 }
 
@@ -746,6 +806,11 @@ void ScriptGlue::RegisterFunctions()
 	ESM_ADD_INTERNAL_CALL(JointComponent_SetAnchor);
 	ESM_ADD_INTERNAL_CALL(JointComponent_SetSoftness);
 	ESM_ADD_INTERNAL_CALL(JointComponent_SetBias);
+
+	ESM_ADD_INTERNAL_CALL(Animator_Play);
+	ESM_ADD_INTERNAL_CALL(Animator_SetBool);
+	ESM_ADD_INTERNAL_CALL(Animator_SetFloat);
+	ESM_ADD_INTERNAL_CALL(Animator_SetTrigger);
 
 	ESM_ADD_INTERNAL_CALL(Input_IsKeyDown);
 }

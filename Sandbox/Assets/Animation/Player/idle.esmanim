@@ -1,5 +1,5 @@
-AnimationClip: jump
-SpriteSheetTexture: textures/air.png
+AnimationClip: idle
+SpriteSheetTexture: textures/player.png
 Loop: true
 Frames:
   - Frame: 0

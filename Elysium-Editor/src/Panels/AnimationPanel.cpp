@@ -3,6 +3,7 @@
 
 #include "core/Logger.h"
 
+#include "Asset/TextureImporter.h"
 #include "Asset/AnimationImporter.h"
 #include "Asset/AssetManager.h"
 #include "Project/Project.h"
@@ -86,25 +87,70 @@ void AnimationPanel::OnImGuiRender()
 				ImGui::Text("Animation States");
 				ImGui::Separator();
 
-				static int selectedStateIndex = -1;
 				int i = 0;
 				for (auto& [stateName, state] : animController.m_States)
 				{
-					bool isSelected = (i == selectedStateIndex);
+					bool isSelected = (i == m_SelectedStateIndex);
 					if (ImGui::Selectable(state.Clip->m_Name.c_str(), isSelected))
 					{
-						selectedStateIndex = i;
+						m_SelectedStateIndex = i;
 						animController.m_CurrentState = stateName;
 					}
 					i++;
 				}
+
+				ImGui::Separator();
+				ImGui::Text("Parameters");
+				ImGui::Separator();
+
+				for (auto& [name, param] : animController.m_Parameters)
+				{
+					ImGui::PushID(name.c_str());
+
+					ImGui::Text("%s", name.c_str());
+					ImGui::SameLine(120);
+
+					if (param.Type == AnimatorParameterType::Bool)
+					{
+						ImGui::Checkbox("##bool", &param.BoolValue);
+					}
+					else if (param.Type == AnimatorParameterType::Float)
+					{
+						ImGui::DragFloat("##float", &param.FloatValue, 0.1f);
+					}
+					else if (param.Type == AnimatorParameterType::Trigger)
+					{
+						if (ImGui::Button("Fire"))
+							param.Triggered = true;
+					}
+
+					ImGui::PopID();
+				}
+
+				ImGui::Separator();
+				ImGui::InputText("Name", m_NewParameterName, sizeof(m_NewParameterName));
+
+				const char* types[] = { "Bool", "Float", "Trigger" };
+				ImGui::Combo("Type", &m_NewParameterType, types, IM_ARRAYSIZE(types));
+
+				if (ImGui::Button("+ Add Parameter"))
+				{
+					if (strlen(m_NewParameterName) > 0)
+					{
+						AnimatorParameterType type = (AnimatorParameterType)m_NewParameterType;
+						animController.AddParameter(m_NewParameterName, type);
+						memset(m_NewParameterName, 0, sizeof(m_NewParameterName));
+					}
+				}
+
+				ImGui::Separator();
+				ImGui::Separator();
 
 				if (ImGui::Button("+ Create New Clip"))
 				{
 					CreateAnimationClip();
 
 				}
-				//TODO: add an exisiting clip...
 			}
 			ImGui::EndChild();
 
@@ -159,6 +205,19 @@ void AnimationPanel::OnImGuiRender()
 								}
 								
 								Logger::Log("Added spritesheet to animaiton clip", "editor");
+							}
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_Image"))
+							{
+								char* file = (char*)payload->Data;
+								std::string fullPath = std::string(file, 256);
+								auto relativePath = std::filesystem::relative(fullPath, Project::GetActiveAssetDirectory());
+
+								clip->m_SpriteSheetTexture = TextureImporter::LoadTexture2D(fullPath);
+								clip->m_SpriteSheetTexturePath = relativePath.string();
+
+								clip->AddFrame({ 0.0f, 0.0f }, { 1.0f, 1.0f }, 1.0f / 12.0f); // one single frame
+
+								Logger::Log("Added sprite to animaiton clip", "editor");
 							}
 							//TODO: accept drag drop payload "animation clip"....
 							ImGui::EndDragDropTarget();
@@ -215,6 +274,107 @@ void AnimationPanel::OnImGuiRender()
 				else
 				{
 					ImGui::Text("No valid animation clip selected.");
+				}
+
+				ImGui::Separator();
+				ImGui::Text("Transitions");
+				ImGui::Separator();
+
+				if (!animController.m_CurrentState.empty())
+				{
+					auto& state = animController.m_States[animController.m_CurrentState];
+
+					int tIndex = 0;
+					for (auto& transition : state.Transitions)
+					{
+						ImGui::PushID(tIndex);
+
+						bool selected = (m_SelectedTransitionIndex == tIndex);
+						std::string label = "-> " + transition.ToState;
+
+						if (ImGui::Selectable(label.c_str(), selected))
+							m_SelectedTransitionIndex = tIndex;
+
+						ImGui::PopID();
+						tIndex++;
+					}
+
+					if (m_SelectedTransitionIndex >= 0 && m_SelectedTransitionIndex < state.Transitions.size())
+					{
+						auto& transition = state.Transitions[m_SelectedTransitionIndex];
+
+						ImGui::Separator();
+						ImGui::Text("Conditions");
+
+						int cIndex = 0;
+						for (auto& condition : transition.Conditions)
+						{
+							ImGui::PushID(cIndex);
+
+							auto& parameterName = condition.ParameterName;
+							char buffer[256];
+							memset(buffer, 0, sizeof(buffer));
+							strncpy_s(buffer, sizeof(buffer), parameterName.c_str(), sizeof(buffer));
+							if (ImGui::InputText("##parameter", buffer, sizeof(buffer)))
+							{
+								parameterName = std::string(buffer);
+							}
+
+							const char* condTypes[] =
+							{
+								"BoolTrue",
+								"BoolFalse",
+								"FloatGreater",
+								"FloatLess",
+								"Trigger"
+							};
+							
+							int condType = (int)condition.ConditionType;
+							ImGui::Combo("Condition", &condType, condTypes, IM_ARRAYSIZE(condTypes));
+							condition.ConditionType = (AnimatorConditionType)condType;
+
+							if (condition.ConditionType == AnimatorConditionType::FloatGreater || condition.ConditionType == AnimatorConditionType::FloatLess)
+							{
+								ImGui::DragFloat("Threshold", &condition.Threshold, 0.1f);
+							}
+
+							if (ImGui::Button("Delete Condition"))
+							{
+								transition.Conditions.erase(transition.Conditions.begin() + cIndex);
+								ImGui::PopID();
+								break;
+							}
+
+							ImGui::PopID();
+							cIndex++;
+						}
+
+						if (ImGui::Button("+ Add Condition"))
+						{
+							AnimatorCondition c;
+							transition.Conditions.push_back(c);
+						}
+
+						/*ImGui::Separator();
+						ImGui::Checkbox("Has Exit Time", &transition.HasExitTime);
+						ImGui::DragFloat("Exit Time", &transition.ExitTime, 0.01f, 0.0f, 1.0f);*/
+					}
+
+
+					ImGui::Separator();
+					ImGui::InputText("To State", m_NewTransitionToState, sizeof(m_NewTransitionToState)); //TODO: problem is user has to manually type in the name of the "ToState" which could be wrong, ig we need to make a proper node-graph editor...
+					if (ImGui::Button("+ Add Transition"))
+					{
+						if (strlen(m_NewTransitionToState) > 0)
+						{
+							AnimationTransition t;
+							t.FromState = animController.m_CurrentState;
+							t.ToState = m_NewTransitionToState;
+
+							state.Transitions.push_back(t);
+							memset(m_NewTransitionToState, 0, sizeof(m_NewTransitionToState));
+						}
+					}
 				}
 			}
 			ImGui::EndChild();

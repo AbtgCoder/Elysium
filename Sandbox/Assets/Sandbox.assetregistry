@@ -38,6 +38,9 @@ AssetRegistry:
   - Handle: 8456894967352546499
     FilePath: textures/air.png
     Type: AssetType::Texture2D
+  - Handle: 9463410564571201708
+    FilePath: Animation/Player/idle.esmanim
+    Type: AssetType::AnimationClip
   - Handle: 9785990741684801335
     FilePath: textures/pipesmall.png
     Type: AssetType::Texture2D

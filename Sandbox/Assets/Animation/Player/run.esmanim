@@ -1,5 +1,5 @@
 AnimationClip: run
-SpriteSheetTexture: D:/Game Development/Game_Engine_Programming/Elysium/Sandbox Project/Assets/textures/runright.png
+SpriteSheetTexture: textures/runright.png
 Loop: true
 Frames:
   - Frame: 0

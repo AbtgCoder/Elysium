@@ -2,6 +2,7 @@
 
 #include "Core/UUID.h"
 #include "Project/Project.h"
+#include "core/Logger.h"
 
 #include "Scripting/ScriptEngine.h"
 
@@ -255,8 +256,37 @@ void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 
 		out << YAML::Key << "CurrentState" << YAML::Value << animController.m_CurrentState;
 
+		out << YAML::Key << "Parameters";
+		out << YAML::BeginSeq;
+
+		for (auto& [name, param] : animController.m_Parameters)
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "Name" << YAML::Value << name;
+			out << YAML::Key << "Type" << YAML::Value << (int)param.Type;
+
+			switch (param.Type)
+			{
+			case AnimatorParameterType::Bool:
+				out << YAML::Key << "BoolValue" << YAML::Value << param.BoolValue;
+				break;
+
+			case AnimatorParameterType::Float:
+				out << YAML::Key << "FloatValue" << YAML::Value << param.FloatValue;
+				break;
+
+			case AnimatorParameterType::Trigger:
+				break;
+			}
+
+			out << YAML::EndMap;
+		}
+
+		out << YAML::EndSeq;
+
 		out << YAML::Key << "AnimationStates" << YAML::BeginSeq;
-		for (auto [stateName, animState] : animController.m_States)
+		for (auto& [stateName, animState] : animController.m_States)
 		{
 			out << YAML::BeginMap;
 
@@ -264,6 +294,38 @@ void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 			// when saving the scene, save the animation clip as well at its proper location..TODO: maybe find a better way to handle this
 			AnimationImporter::SaveAnimationClip(animState.Clip, Project::GetActive()->GetEditorAssetManager()->GetFilePath(animState.Clip->Handle));
 			out << YAML::Key << "AnimationClipHandle" << YAML::Value << animState.Clip->Handle; //NOTE: this should always be a valid asset handle, as whenever we add the clip, we always import it as an asset as well...
+
+			out << YAML::Key << "Transitions";
+			out << YAML::BeginSeq;
+
+			for (auto& transition : animState.Transitions)
+			{
+				out << YAML::BeginMap;
+
+				out << YAML::Key << "ToState" << YAML::Value << transition.ToState;
+				out << YAML::Key << "HasExitTime" << YAML::Value << transition.HasExitTime;
+				out << YAML::Key << "ExitTime" << YAML::Value << transition.ExitTime;
+
+				out << YAML::Key << "Conditions";
+				out << YAML::BeginSeq;
+
+				for (auto& condition : transition.Conditions)
+				{
+					out << YAML::BeginMap;
+
+					out << YAML::Key << "Parameter" << YAML::Value << condition.ParameterName;
+					out << YAML::Key << "Type" << YAML::Value << (int)condition.ConditionType;
+					out << YAML::Key << "Threshold" << YAML::Value << condition.Threshold;
+
+					out << YAML::EndMap;
+				}
+
+				out << YAML::EndSeq;
+
+				out << YAML::EndMap;
+			}
+
+			out << YAML::EndSeq;
 
 			out << YAML::EndMap;
 		}
@@ -488,7 +550,7 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				if (scriptFields)
 				{
 					//TODO: ig if script field exists, then project must have solution, 
-					// so ig we maybe reload assembly here
+					// so ig we maybe reload assembly here, probably shouldn't be doing this for every entity with script, maybe just once at top...
 					ScriptEngine::ReloadAppAssembly();
 
 					std::shared_ptr<ScriptClass> entityClass = ScriptEngine::GetEntityClass(script.ClassName);
@@ -550,15 +612,72 @@ bool SceneSerializer::Deserialize(const std::filesystem::path& filepath)
 				AnimationController animController;
 				animController.m_CurrentState = animatorComponent["CurrentState"].as<std::string>();
 
+				auto parameters = animatorComponent["Parameters"];
+				if (parameters)
+				{
+					for (auto paramNode : parameters)
+					{
+						std::string name = paramNode["Name"].as<std::string>();
+						AnimatorParameterType type = (AnimatorParameterType)paramNode["Type"].as<int>();
+
+						animController.AddParameter(name, type);
+
+						auto& param = animController.m_Parameters[name];
+
+						if (type == AnimatorParameterType::Bool)
+							param.BoolValue = paramNode["BoolValue"].as<bool>();
+
+						if (type == AnimatorParameterType::Float)
+							param.FloatValue = paramNode["FloatValue"].as<float>();
+					}
+				}
+
 				auto animStates = animatorComponent["AnimationStates"];
 				if (animStates)
 				{
 					for (auto animState : animStates)
 					{
+						std::string stateName = animState["Name"].as<std::string>();
+
 						animController.AddState(
-							animState["Name"].as<std::string>(),
+							stateName,
 							AssetManager::GetAsset<AnimationClip>(animState["AnimationClipHandle"].as<AssetHandle>())
 						);
+
+						auto& state = animController.m_States[stateName];
+
+						auto transitions = animState["Transitions"];
+						if (transitions)
+						{
+							for (auto transNode : transitions)
+							{
+								AnimationTransition transition;
+
+								transition.FromState = stateName;
+								transition.ToState = transNode["ToState"].as<std::string>();
+								transition.HasExitTime = transNode["HasExitTime"].as<bool>();
+								transition.ExitTime = transNode["ExitTime"].as<float>();
+
+								auto conditions = transNode["Conditions"];
+								if (conditions)
+								{
+									for (auto condNode : conditions)
+									{
+										AnimatorCondition condition;
+
+										condition.ParameterName = condNode["Parameter"].as<std::string>();
+										condition.ConditionType =
+											(AnimatorConditionType)condNode["Type"].as<int>();
+
+										condition.Threshold = condNode["Threshold"].as<float>();
+
+										transition.Conditions.push_back(condition);
+									}
+								}
+
+								state.Transitions.push_back(transition);
+							}
+						}
 					}
 				}
 
